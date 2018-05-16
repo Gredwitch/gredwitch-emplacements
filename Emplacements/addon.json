@@ -1,0 +1,6 @@
+{
+"title" : "Gredwitch's Emplacements Pack",
+"type" : "weapon",
+"tags" : ["fun","realism"],
+"ignore" : ["*.psd", "*.ini", "*.svn*"]
+}

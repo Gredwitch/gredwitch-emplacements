@@ -1,0 +1,10 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/gredwitch/he111/mg15_c"
+	
+	"$normalmapalphaenvmapmask" "1"
+	"$phong" 					"1"
+	"$phongexponent" 			"69"
+	"$phongboost"   			"0.1"
+	"$phongfresnelranges"   	"[8 4 8]"
+}
