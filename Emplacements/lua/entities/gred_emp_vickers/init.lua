@@ -65,7 +65,7 @@ function ENT:Initialize()
 	self.shootPos:SetRenderMode(RENDERMODE_TRANSCOLOR)
 	self.shootPos:SetColor(Color(255,255,255,1))
 	if (SERVER) then
-		redcolor = Color(248,152,29) 
+		redcolor = Color(255,0,0) 
 		bcolor = Color(255,255,0)
 		num1   = 5
 		num2   = 0.05

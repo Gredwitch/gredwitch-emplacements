@@ -34,13 +34,14 @@ if (SERVER) then
 			phys:Wake()
 		end
 		self.nextUse = 0
-		
+		self:SetSkin(math.random(0,3))
 		local nebelTubes = ents.Create("gred_emp_nebelwerfer_tubes")
 		nebelTubes:SetPos(self:GetPos() + Vector(0,0,43.8))
 		-- nebelTubes:SetParent(self)
 		nebelTubes:SetAngles(self:GetAngles() + Angle(0,0,math.random(5,-45)))
 		nebelTubes:Spawn()
 		nebelTubes:Activate()
+		nebelTubes:SetSkin(self:GetSkin())
 		self.nebelTubes = nebelTubes
 		constraint.Axis(nebelTubes,self,0,0,Vector(0,0,0),self:WorldToLocal(nebelTubes:LocalToWorld(Vector(0,1,0))),0,0,10,1,Vector(90,0,0))
 	end

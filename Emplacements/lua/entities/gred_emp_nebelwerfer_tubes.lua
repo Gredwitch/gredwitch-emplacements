@@ -67,6 +67,7 @@ if (SERVER) then
 			ent.DEFAULT_PHYSFORCE_PLYAIR         = 0
 			ent.DEFAULT_PHYSFORCE_PLYGROUND      = 0
 			ent.ExplosionSound = table.Random(ExploSnds)
+			ent.WaterExplosionSound = table.Random(ExploSnds)
 		else end
 		ent.FuelBurnoutTime = math.random(1.7,1.85)
 		ent:Activate()
