@@ -21,6 +21,7 @@ ENT.ReloadTime						=	GetConVarNumber("gred_emp_nebel_reloadtime")
 ENT.Dump							=	false
 ENT.Smoke							=	false
 ENT.FireRate						=	1.67
+ENT.Range							=	GetConVarNumber("gred_emp_nebel_range_divider")
 
 if (SERVER) then
 	function ENT:SpawnFunction( ply, tr, ClassName )
@@ -45,12 +46,12 @@ if (SERVER) then
 			phys:Wake()
 		end
 		self.nextUse=0
+		if self.Range <= 0 then self.Range = 1 end
 	end
+	
 	function ENT:Shoot()
 		if self.nextUse>CurTime() or self.Ammo == 0 then return end
 		self.nextUse = CurTime()+self.FireRate
-		local pos = self:GetPos()
-		local ang = self:GetAngles()
 		local ent = ents.Create("gb_rocket_nebel")
 		local rocket = self:GetAttachment(self:LookupAttachment("rocket"..self.Ammo))
 		ent:SetPos(rocket.Pos)
@@ -69,15 +70,16 @@ if (SERVER) then
 			ent.ExplosionSound = table.Random(ExploSnds)
 			ent.WaterExplosionSound = table.Random(ExploSnds)
 		end
-		ent.FuelBurnoutTime = math.random(1.7,1.85)
+		ent.FuelBurnoutTime = math.Rand(1.7,1.85) / self.Range
+		print(ent.FuelBurnoutTime)
 		ent:Activate()
 		ent:Spawn()
 		ent:Launch()
-		ent:SetAngles(rocket.Ang+Angle(0,math.random(5,-5),0))
+		ent:SetAngles(rocket.Ang+Angle(0,math.Rand(5,-5),0))
 		constraint.NoCollide(ent,self,0,0,true)
 		
 		self.Ammo = self.Ammo - 1
-		util.ScreenShake(pos, 30, 4, math.Rand(0.5, 0.8), 320)
+		util.ScreenShake(self:GetPos(), 30, 4, math.Rand(0.5, 0.8), 320)
 		ParticleEffect("ins_weapon_at4_frontblast", rocket.Pos, rocket.Ang)
 		ParticleEffect("ins_weapon_rpg_dust", rocket.Pos,Angle(0,0,0))
 	end
