@@ -55,7 +55,6 @@ if (SERVER) then
 		local ent = ents.Create("gb_rocket_nebel")
 		local rocket = self:GetAttachment(self:LookupAttachment("rocket"..self.Ammo))
 		ent:SetPos(rocket.Pos)
-		ent:SetOwner(caller)
 		if self.Smoke then
 			ent.Effect = "doi_smoke_artillery"
 			ent.EffectAir = "doi_smoke_artillery"
@@ -71,7 +70,6 @@ if (SERVER) then
 			ent.WaterExplosionSound = table.Random(ExploSnds)
 		end
 		ent.FuelBurnoutTime = math.Rand(1.7,1.85) / self.Range
-		print(ent.FuelBurnoutTime)
 		ent:Activate()
 		ent:Spawn()
 		ent:Launch()
