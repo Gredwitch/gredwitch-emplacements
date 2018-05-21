@@ -61,20 +61,10 @@ end
 function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
 		self:EmitSound("shootMG15")
-		if SERVER then
+		if CLIENT then
 			local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
 			local shoot1Ang=self:GetAttachment(self.MuzzleAttachment).Ang
-			if GetConVarNumber("gred_altmuzzleeffect") == 1 then
-				ParticleEffect("muzzleflash_mg42_3p",shoot1Pos,shoot1Ang,nil)
-			else
-				local effectdata = EffectData()
-				effectdata:SetStart(shoot1Pos)
-				effectdata:SetOrigin(shoot1Pos)
-				effectdata:SetAngles(shoot1Ang)
-				effectdata:SetEntity(self)
-				effectdata:SetScale( 1 )
-				util.Effect( "MuzzleEffect", effectdata )
-			end
+			ParticleEffect("muzzleflash_mg42_3p",shoot1Pos,shoot1Ang,nil)
 		end
 		if IsValid(self.shootPos) and SERVER then
 			

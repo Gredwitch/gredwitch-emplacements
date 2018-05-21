@@ -6,6 +6,7 @@ ExploSnds[1]                         =  "gred_emp/nebelwerfer/artillery_strike_s
 ExploSnds[2]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_02.wav"
 ExploSnds[3]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_03.wav"
 ExploSnds[4]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_04.wav"
+
 ENT.Spawnable		            	=	false
 ENT.AdminSpawnable		            =	false
 
@@ -42,7 +43,6 @@ if (SERVER) then
 		if (IsValid(phys)) then
 			phys:SetMass(self.Mass)
 			phys:Wake()
-			-- phys:EnableDrag(false)
 		end
 		self.nextUse=0
 	end
@@ -68,12 +68,14 @@ if (SERVER) then
 			ent.DEFAULT_PHYSFORCE_PLYGROUND      = 0
 			ent.ExplosionSound = table.Random(ExploSnds)
 			ent.WaterExplosionSound = table.Random(ExploSnds)
-		else end
+		end
 		ent.FuelBurnoutTime = math.random(1.7,1.85)
 		ent:Activate()
 		ent:Spawn()
 		ent:Launch()
 		ent:SetAngles(rocket.Ang+Angle(0,math.random(5,-5),0))
+		constraint.NoCollide(ent,self,0,0,true)
+		
 		self.Ammo = self.Ammo - 1
 		util.ScreenShake(pos, 30, 4, math.Rand(0.5, 0.8), 320)
 		ParticleEffect("ins_weapon_at4_frontblast", rocket.Pos, rocket.Ang)
