@@ -21,7 +21,6 @@ ENT.ReloadTime						=	GetConVarNumber("gred_emp_nebel_reloadtime")
 ENT.Dump							=	false
 ENT.Smoke							=	false
 ENT.FireRate						=	1.67
-ENT.Range							=	GetConVarNumber("gred_emp_nebel_range_divider")
 
 if (SERVER) then
 	function ENT:SpawnFunction( ply, tr, ClassName )
@@ -46,7 +45,6 @@ if (SERVER) then
 			phys:Wake()
 		end
 		self.nextUse=0
-		if self.Range <= 0 then self.Range = 1 end
 	end
 	
 	function ENT:Shoot()
@@ -69,7 +67,11 @@ if (SERVER) then
 			ent.ExplosionSound = table.Random(ExploSnds)
 			ent.WaterExplosionSound = table.Random(ExploSnds)
 		end
-		ent.FuelBurnoutTime = math.Rand(1.7,1.85) / self.Range
+		if GetConVarNumber("gred_emp_nebel_range_divider") <= 0 then
+			ent.FuelBurnoutTime = math.Rand(1.7,2)
+		else
+			ent.FuelBurnoutTime = math.Rand(1.7,2) / GetConVarNumber("gred_emp_nebel_range_divider")
+		end
 		ent:Activate()
 		ent:Spawn()
 		ent:Launch()

@@ -61,9 +61,12 @@ end
 function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
 		self:EmitSound("shootVICKERS")
-		local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
-		local shoot1Ang=self:GetAttachment(self.MuzzleAttachment).Ang
-		ParticleEffect("muzzleflash_garand_3p",shoot1Pos,shoot1Ang,nil)
+		
+		if CLIENT or game.SinglePlayer() then
+			local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
+			local shoot1Ang=self:GetAttachment(self.MuzzleAttachment).Ang
+			ParticleEffect("muzzleflash_garand_3p",shoot1Pos,shoot1Ang,nil)
+		end
 		if IsValid(self.shootPos) and SERVER then
 			
 			local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
