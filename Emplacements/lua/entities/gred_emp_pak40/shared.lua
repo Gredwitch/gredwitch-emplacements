@@ -87,6 +87,7 @@ function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
 		self:EmitSound("shootPaK40")
 		
+		-- ParticleEffect("ins_weapon_rpg_dust", self:GetPos()+Vector(0,0,50),Angle(0,0,0))
 		local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
 		local shoot1Ang=self:GetAttachment(self.MuzzleAttachment).Ang
 		ParticleEffect("muzzleflash_bar_3p",shoot1Pos,shoot1Ang,nil)
@@ -121,7 +122,7 @@ function ENT:DoShot()
 				b.ExplosionSound				   = table.Random(ExploSnds)
 				b.WaterExplosionSound			   = table.Random(ExploSnds)
 			end
-			b.Owner=self.Shooter
+			b.GBOWNER=self.Shooter
 			b:Spawn()
 			b:Activate()
 			b:Launch()

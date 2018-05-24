@@ -3,7 +3,7 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include		('shared.lua')
 
-ENT.turretBaseModel="models/gredwitch/m2browning/m2_tripod.mdl"
+ENT.turretBaseModel="models/gredwitch/mg81z/mg81z_tripod.mdl"
 
 function ENT:CreateEmplacement()
 	local turretBase=ents.Create("prop_physics")
@@ -21,7 +21,7 @@ function ENT:CreateEmplacement()
 	shootPos:SetCollisionGroup(COLLISION_GROUP_WORLD)
 	self.shootPos=shootPos
 	shootPos:SetParent(self)
-	shootPos:SetNoDraw(false)
+	shootPos:SetNoDraw(true)
 	shootPos:DrawShadow(false)
     shootPos:Fire("setparentattachment","muzzle")
 	self:SetDTEntity(1,shootPos)
@@ -41,7 +41,7 @@ ENT.ShooterLast=nil
 
 
 function ENT:Initialize()
-	self:SetModel("models/gredwitch/m2browning/m2_gun.mdl")
+	self:SetModel("models/gredwitch/mg42/mg42_gun.mdl")
 	
 	self.Entity:PhysicsInit( SOLID_VPHYSICS )
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )
@@ -54,7 +54,6 @@ function ENT:Initialize()
 	end
 	
 	self.ShadowParams = {}
-	
 	self:StartMotionController()
 	if not IsValid(self.turretBase) then
 		self:CreateEmplacement()
@@ -63,11 +62,10 @@ function ENT:Initialize()
 	self.MuzzleAttachment=self:LookupAttachment("muzzle")
 	self.HookupAttachment=self:LookupAttachment("hookup")
 	self:DropToFloor()
-	self:SetPos(self:GetPos()+Vector(0,0,-20))
 	self.shootPos:SetRenderMode(RENDERMODE_TRANSCOLOR)
 	self.shootPos:SetColor(Color(255,255,255,1))
 	if (SERVER) then
-		redcolor = Color(255,0,0) 
+		greencolor = Color(0,255,0) 
 		bcolor = Color(255,255,0)
 		num1   = 5
 		num2   = 0.05
@@ -78,12 +76,12 @@ function ENT:Initialize()
 		num7   = 1 / 13 / 2 * 0.5
 	end
 	sound.Add( {
-		name = "shootM2BROWNING",
+		name = "shootMG42",
 		channel = CHAN_WEAPON,
 		volume = 1.0,
 		level = 100,
 		pitch = {100},
-		sound = "gred_emp/m2/shoot.wav"
+		sound = "gred_emp/mg42/shoot.wav"
 	} )
 end
 
@@ -98,7 +96,7 @@ function ENT:OnRemove()
 		self:FinishShooting()
 		self.Shooter=nil
 	end
-	self:StopSound("shootM2BROWNING")
+	self:StopSound("shootMG42")
 	SafeRemoveEntity(self.turretBase)
 end
 
@@ -134,7 +132,7 @@ function ENT:PhysicsSimulate( phys, deltatime )
 	phys:Wake()
  
 	self.ShadowParams.secondstoarrive = 0.01 
-	self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*40
+	self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*43.5
 	self.ShadowParams.angle =self.BaseAng+self.OffsetAng+Angle(0,0,0)
 	self.ShadowParams.maxangular = 5000
 	self.ShadowParams.maxangulardamp = 10000

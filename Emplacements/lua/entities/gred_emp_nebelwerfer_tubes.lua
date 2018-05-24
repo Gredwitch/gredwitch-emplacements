@@ -52,6 +52,7 @@ if (SERVER) then
 		self.nextUse = CurTime()+self.FireRate
 		local ent = ents.Create("gb_rocket_nebel")
 		local rocket = self:GetAttachment(self:LookupAttachment("rocket"..self.Ammo))
+		ent.Owner = self.Owner
 		ent:SetPos(rocket.Pos)
 		if self.Smoke then
 			ent.Effect = "doi_smoke_artillery"

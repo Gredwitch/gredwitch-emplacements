@@ -96,6 +96,7 @@ function ENT:OnRemove()
 		self:FinishShooting()
 		self.Shooter=nil
 	end
+	self:StopSound("shootVICKERS")
 	SafeRemoveEntity(self.turretBase)
 end
 

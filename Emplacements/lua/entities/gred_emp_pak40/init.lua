@@ -83,14 +83,6 @@ function ENT:Initialize()
 		pitch = {100},
 		sound = "gred_emp/pak40/shoot_reload.wav"
 	} )
-	sound.Add( {
-		name = "reload_AT",
-		channel = CHAN_WEAPON,
-		volume = 1.0,
-		level = 100,
-		pitch = {100},
-		sound = "gred_emp/common/Arti_reload.wav"
-	} )
 end
 
 function ENT:OnRemove()
@@ -102,6 +94,7 @@ function ENT:OnRemove()
 		self:FinishShooting()
 		self.Shooter=nil
 	end
+	self:StopSound("shootPaK40")
 	SafeRemoveEntity(self.turretBase)
 end
 
