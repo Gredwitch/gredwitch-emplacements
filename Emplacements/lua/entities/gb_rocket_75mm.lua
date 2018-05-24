@@ -32,8 +32,8 @@ CloseWaterExploSnds[2]                         =  "explosions/doi_generic_02_clo
 CloseWaterExploSnds[3]                         =  "explosions/doi_generic_03_closewater.wav"
 CloseWaterExploSnds[4]                         =  "explosions/doi_generic_04_closewater.wav"
 
-ENT.Spawnable		            	 =  true         
-ENT.AdminSpawnable		             =  true 
+ENT.Spawnable		            	 =  false         
+ENT.AdminSpawnable		             =  false 
 
 ENT.PrintName		                 =  "[ROCKETS]75mm Artillery Shell"
 ENT.Author			                 =  ""
@@ -73,9 +73,9 @@ ENT.MaxIgnitionTime                  =  0
 ENT.Life                             =  1
 ENT.MaxDelay                         =  0
 ENT.TraceLength                      =  500
-ENT.ImpactSpeed                      =  100
+ENT.ImpactSpeed                      =  10
 ENT.Mass                             =  30
-ENT.EnginePower                      =  9999
+ENT.EnginePower                      =  9999999
 ENT.FuelBurnoutTime                  =  0.7
 ENT.IgnitionDelay                    =  0       
 ENT.ArmDelay                         =  0

@@ -55,17 +55,18 @@ end
 
 function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
+	
 	if	   self.AmmoType == "AP" then
 		self.AmmoType = "HE"
-		if CLIENT or game.SinglePlayer() then plr:ChatPrint("[PaK 40] HE Shells selected") end
+		if CLIENT or game.IsDedicated() then plr:ChatPrint("[PaK 40] HE Shells selected") end
 	
 	elseif self.AmmoType == "HE" then
 		self.AmmoType = "Smoke"
-		if CLIENT or game.SinglePlayer() then plr:ChatPrint("[PaK 40] Smoke Shells selected") end
+		if CLIENT or game.IsDedicated() then plr:ChatPrint("[PaK 40] Smoke Shells selected") end
 	
 	elseif self.AmmoType == "Smoke" then
 		self.AmmoType = "AP"
-		if CLIENT or game.SinglePlayer() then plr:ChatPrint("[PaK 40] AP Shells selected") end
+		if CLIENT or game.IsDedicated() then plr:ChatPrint("[PaK 40] AP Shells selected") end
 	end
 	
 	self.NextSwitch = CurTime()+0.2
@@ -85,11 +86,10 @@ end
 function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
 		self:EmitSound("shootPaK40")
-		if CLIENT or game.SinglePlayer() then
-			local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
-			local shoot1Ang=self:GetAttachment(self.MuzzleAttachment).Ang
-			ParticleEffect("muzzleflash_bar_3p",shoot1Pos,shoot1Ang,nil)
-		end
+		
+		local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
+		local shoot1Ang=self:GetAttachment(self.MuzzleAttachment).Ang
+		ParticleEffect("muzzleflash_bar_3p",shoot1Pos,shoot1Ang,nil)
 		if IsValid(self.shootPos) and SERVER then
 			
 			local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
@@ -100,8 +100,6 @@ function ENT:DoShot()
 			b:SetPos(shoot1Pos)
 			b:SetAngles(ang)
 			b:SetOwner(self.Shooter)
-			b:Spawn()
-			b:Activate()
 			if self.AmmoType == "HE" then
 				b.Model			  = "models/gredwitch/75mm_ap.mdl"
 				b.ExplosionRadius = 750
@@ -123,6 +121,9 @@ function ENT:DoShot()
 				b.ExplosionSound				   = table.Random(ExploSnds)
 				b.WaterExplosionSound			   = table.Random(ExploSnds)
 			end
+			b.Owner=self.Shooter
+			b:Spawn()
+			b:Activate()
 			b:Launch()
 			
 			self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*9999999999999)

@@ -62,11 +62,9 @@ function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
 		self:EmitSound("shootM2BROWNING")
 		
-		if CLIENT or game.SinglePlayer() then
-			local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
-			local shoot1Ang=self:GetAttachment(self.MuzzleAttachment).Ang
-			ParticleEffect("muzzleflash_bar_3p",shoot1Pos,shoot1Ang,nil)
-		end
+		local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
+		local shoot1Ang=self:GetAttachment(self.MuzzleAttachment).Ang
+		ParticleEffect("muzzleflash_bar_3p",shoot1Pos,shoot1Ang,nil)
 		if IsValid(self.shootPos) and SERVER then
 			
 			local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
