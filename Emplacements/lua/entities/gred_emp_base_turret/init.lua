@@ -1,7 +1,7 @@
 
+include		('shared.lua')
 AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
-include		('shared.lua')
 
 function ENT:CreateEmplacement()
 	local turretBase=ents.Create("prop_physics")

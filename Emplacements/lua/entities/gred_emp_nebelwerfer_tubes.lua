@@ -67,6 +67,7 @@ if (SERVER) then
 			ent.DEFAULT_PHYSFORCE_PLYGROUND      = 0
 			ent.ExplosionSound = table.Random(ExploSnds)
 			ent.WaterExplosionSound = table.Random(ExploSnds)
+			ent.Smoke = true
 		end
 		if GetConVarNumber("gred_emp_nebel_range_divider") <= 0 then
 			ent.FuelBurnoutTime = math.Rand(1.7,2)

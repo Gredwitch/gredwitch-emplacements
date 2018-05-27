@@ -87,7 +87,7 @@ function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
 		self:EmitSound("shootPaK40")
 		
-		-- ParticleEffect("ins_weapon_rpg_dust", self:GetPos()+Vector(0,0,50),Angle(0,0,0))
+		ParticleEffect("gred_mortar_explosion_smoke_ground", self:GetPos()+Vector(0,0,50),Angle(0,0,0))
 		local shoot1Pos=self:GetAttachment(self.MuzzleAttachment).Pos
 		local shoot1Ang=self:GetAttachment(self.MuzzleAttachment).Ang
 		ParticleEffect("muzzleflash_bar_3p",shoot1Pos,shoot1Ang,nil)
@@ -103,8 +103,8 @@ function ENT:DoShot()
 			b:SetOwner(self.Shooter)
 			if self.AmmoType == "HE" then
 				b.Model			  = "models/gredwitch/75mm_ap.mdl"
-				b.ExplosionRadius = 750
-				b.Damage		  = 75
+				b.ExplosionRadius = 300
+				b.ExplosionDamage = 75
 				b.Effect		  = "ins_c4_explosion"
 				b.EffectAir		  = "ins_c4_explosion"
 			elseif self.AmmoType == "Smoke" then
@@ -121,6 +121,7 @@ function ENT:DoShot()
 				b.DEFAULT_PHYSFORCE_PLYGROUND      = 0
 				b.ExplosionSound				   = table.Random(ExploSnds)
 				b.WaterExplosionSound			   = table.Random(ExploSnds)
+				b.Smoke = true
 			end
 			b.GBOWNER=self.Shooter
 			b:Spawn()
