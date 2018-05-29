@@ -1,3 +1,5 @@
+AddCSLuaFile()
+
 ENT.Type 				= "anim"
 ENT.Base 				= "gred_emp_base_mortar"
 
@@ -16,17 +18,13 @@ ENT.Model 				= "models/gredwitch/m1_mortar/m1_mortar.mdl"
 ENT.SoundName 			= "81mmMortar"
 ENT.ShootSound			= "gred_emp/common/mortar_fire.wav"
 ENT.ShellType			= "gb_rocket_81mm"
-function ENT:SwitchAmmoType(plr)
-	if self.NextSwitch > CurTime() then return end
-	
-	if self.AmmoType == "HE" then
-		self.AmmoType = "Smoke"
-		if CLIENT or game.IsDedicated() then plr:ChatPrint("[M1 Mortar] Smoke Shells selected") end
-	
-	elseif self.AmmoType == "Smoke" then
-		self.AmmoType = "HE"
-		if CLIENT or game.IsDedicated() then plr:ChatPrint("[M1 Mortar] HE Shells selected") end
-	end
-	
-	self.NextSwitch = CurTime()+0.2
+
+function ENT:SpawnFunction( ply, tr, ClassName )
+	if (  !tr.Hit ) then return end
+	local SpawnPos = tr.HitPos + tr.HitNormal * 50
+	local ent = ents.Create(ClassName)
+	ent:SetPos(SpawnPos)
+	ent:Spawn()
+	ent:Activate()
+	return ent
 end

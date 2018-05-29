@@ -1,5 +1,5 @@
 ENT.Type 				= "anim"
-ENT.Base 				= "gred_emp_base_turret"
+ENT.Base 				= "gred_emp_base"
 
 ENT.Category			= "Gredwitch's Stuff"
 ENT.PrintName 			= "[EMP]M2 Browning"
@@ -20,3 +20,13 @@ ENT.BaseModel			= "models/gredwitch/vickers/vickers_tripod.mdl"
 ENT.Model				= "models/gredwitch/vickers/vickers_gun.mdl"
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 40
+
+function ENT:SpawnFunction( ply, tr, ClassName )
+	if (  !tr.Hit ) then return end
+	local SpawnPos = tr.HitPos + tr.HitNormal * 7
+	local ent = ents.Create(ClassName)
+	ent:SetPos(SpawnPos)
+	ent:Spawn()
+	ent:Activate()
+	return ent
+end

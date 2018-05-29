@@ -4,7 +4,7 @@ ENT.Base 				= "base_anim"
 ENT.Category			= "Gredwitch's Stuff"
 ENT.PrintName 			= "[EMP]Base Mortar"
 ENT.Author				= "Gredwitch"
-ENT.Spawnable			= true
+ENT.Spawnable			= false
 ENT.AdminSpawnable		= false
 
 ENT.TurretFloatHeight	= 0

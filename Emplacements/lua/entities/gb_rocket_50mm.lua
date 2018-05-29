@@ -35,7 +35,7 @@ CloseWaterExploSnds[4]                         =  "explosions/doi_generic_04_clo
 ENT.Spawnable		            	 =  false         
 ENT.AdminSpawnable		             =  false 
 
-ENT.PrintName		                 =  "[ROCKETS]75mm Artillery Shell"
+ENT.PrintName		                 =  "[ROCKETS]50mm Artillery Shell"
 ENT.Author			                 =  ""
 ENT.Contact			                 =  ""
 ENT.Category                         =  "Gredwitch's Stuff"
@@ -65,7 +65,7 @@ ENT.UseRandomSounds                  =  true
 ENT.SmartLaunch                      =  true  
 ENT.Timed                            =  false 
 
-ENT.ExplosionDamage                  =  750
+ENT.ExplosionDamage                  =  150
 ENT.ExplosionRadius                  =  100
 ENT.PhysForce                        =  100
 ENT.SpecialRadius                    =  10

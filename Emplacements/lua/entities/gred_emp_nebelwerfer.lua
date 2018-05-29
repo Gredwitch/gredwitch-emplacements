@@ -36,7 +36,6 @@ if (SERVER) then
 		end
 		self.nextUse = 0
 		self:SetSkin(math.random(0,3))
-		print(self:GetOwner())
 		nebelAng = self:GetAngles() + Angle(0,0,math.random(5,-45))
 		local nebelTubes = ents.Create("gred_emp_nebelwerfer_tubes")
 		nebelTubes:SetPos(self:GetPos() + Vector(0,0,43.8))
