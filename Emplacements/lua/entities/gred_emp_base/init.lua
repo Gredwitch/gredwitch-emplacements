@@ -127,18 +127,20 @@ end
 
 
 function ENT:PhysicsSimulate( phys, deltatime )
-	phys:Wake()
- 
-	self.ShadowParams.secondstoarrive = 0.01 
-	self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight
-	self.ShadowParams.angle =self.BaseAng+self.OffsetAng+Angle(0,0,0)
-	self.ShadowParams.maxangular = 5000
-	self.ShadowParams.maxangulardamp = 10000
-	self.ShadowParams.maxspeed = 1000000 
-	self.ShadowParams.maxspeeddamp = 10000
-	self.ShadowParams.dampfactor = 0.8
-	self.ShadowParams.teleportdistance = 200
-	self.ShadowParams.deltatime = deltatime
- 
-	phys:ComputeShadowControl(self.ShadowParams)
+	if IsValid(self) and IsValid(self.turretBase) then
+		phys:Wake()
+		
+		self.ShadowParams.secondstoarrive = 0.01 
+		self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight
+		self.ShadowParams.angle =self.BaseAng+self.OffsetAng+Angle(0,0,0)
+		self.ShadowParams.maxangular = 5000
+		self.ShadowParams.maxangulardamp = 10000
+		self.ShadowParams.maxspeed = 1000000 
+		self.ShadowParams.maxspeeddamp = 10000
+		self.ShadowParams.dampfactor = 0.8
+		self.ShadowParams.teleportdistance = 200
+		self.ShadowParams.deltatime = deltatime
+	 
+		phys:ComputeShadowControl(self.ShadowParams)
+	end
 end

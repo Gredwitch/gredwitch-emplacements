@@ -6,6 +6,7 @@ ENT.PrintName 			= "[EMP]Base"
 ENT.Author				= "Gredwitch"
 ENT.Spawnable			= false
 ENT.AdminSpawnable		= false
+ENT.NameToPrint			= "Base"
 
 ENT.LastShot			= 0
 ENT.MuzzleEffect		= ""
@@ -65,20 +66,22 @@ end
 
 function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
-	
-	if self.AmmoType == "AP" then
-		if SERVER then self.AmmoType = "HE" end
-		if CLIENT or game.IsDedicated() then plr:ChatPrint("[PaK 40] HE shells selected") end
-	
-	elseif self.AmmoType == "HE" then
-		if SERVER then self.AmmoType = "Smoke" end
-		if CLIENT or game.IsDedicated() then plr:ChatPrint("[PaK 40] Smoke shells selected") end
-	
-	elseif self.AmmoType == "Smoke" then
-		if SERVER then self.AmmoType = "AP" end
-		if CLIENT or game.IsDedicated() then plr:ChatPrint("[PaK 40] AP shells selected") end
+	if SERVER then
+		if self.AmmoType == "AP" then
+			self.AmmoType = "HE"
+			print("IF_AP")
+		
+		elseif self.AmmoType == "HE" then
+			self.AmmoType = "Smoke"
+			print("ELSEIF_HE")
+		
+		elseif self.AmmoType == "Smoke" then
+			self.AmmoType = "AP"
+			print("ELSEIF_SMOKE")
+		end
+		if not game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+		print(self.AmmoType)
 	end
-	
 	self.NextSwitch = CurTime()+0.2
 end
 
@@ -109,7 +112,6 @@ function ENT:ShooterStillValid()
 end
 function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
-		self:EmitSound(self.SoundName)
 		for m = 1,self.MuzzleCount do
 		
 			self.MuzzleAttachmentsClient = {}
@@ -195,6 +197,7 @@ function ENT:DoShot()
 			end
 		end
 	self.LastShot=CurTime()
+	if (SERVER and game.IsDedicated()) or CLIENT or game.SinglePlayer() then self:EmitSound(self.SoundName) end
 	end
 end
 
@@ -205,6 +208,7 @@ function ENT:Think()
 	else
 		if IsValid(self) then
 			if SERVER then
+				self.turretBase:SetSkin(self:GetSkin())
 				self.BasePos=self.turretBase:GetPos()
 				self.OffsetPos=self.turretBase:GetAngles():Up()*1
 			end
@@ -226,7 +230,7 @@ function ENT:Think()
 					pressKey  = IN_ATTACK
 					switchKey = IN_ATTACK2
 				end
-				self.SwitchAmmo = self:GetShooter():KeyDown(switchKey)
+				self.Secondary = self:GetShooter():KeyDown(switchKey)
 				self.Firing		= self:GetShooter():KeyDown(pressKey)
 			else
 				self.Firing=false
@@ -243,8 +247,8 @@ function ENT:Think()
 			if !self.Firing and self.EmplacementType == "MG" then
 				self:StopSound(self.SoundName)
 			end
-			if self.SwitchAmmo then
-				self:SwitchAmmoType(self:GetShooter())
+			if self.Secondary then
+				if self.EmplacementType == "AT" then self:SwitchAmmoType(self:GetShooter()) end
 			end
 			self:NextThink(CurTime())
 			return true

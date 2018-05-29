@@ -8,6 +8,7 @@ ENT.PrintName 			= "[EMP]PaK 38"
 ENT.Author				= "Gredwitch"
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= true
+ENT.NameToPrint			= "PaK 38"
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.ShotInterval		= 4.8

@@ -8,12 +8,12 @@ ENT.PrintName 			= "[EMP]PaK 40"
 ENT.Author				= "Gredwitch"
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= true
+ENT.NameToPrint			= "PaK 40"
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.ShotInterval		= 4.8
 ENT.BulletType			= "gb_rocket_75mm"
 ENT.MuzzleCount			= 1
-ENT.AmmoType			= "AP"
 
 ENT.HERadius			= 450
 ENT.HEDamage			= 75
