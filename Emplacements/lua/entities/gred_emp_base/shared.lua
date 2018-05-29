@@ -69,18 +69,14 @@ function ENT:SwitchAmmoType(plr)
 	if SERVER then
 		if self.AmmoType == "AP" then
 			self.AmmoType = "HE"
-			print("IF_AP")
 		
 		elseif self.AmmoType == "HE" then
 			self.AmmoType = "Smoke"
-			print("ELSEIF_HE")
 		
 		elseif self.AmmoType == "Smoke" then
 			self.AmmoType = "AP"
-			print("ELSEIF_SMOKE")
 		end
 		if not game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
-		print(self.AmmoType)
 	end
 	self.NextSwitch = CurTime()+0.2
 end
@@ -197,7 +193,7 @@ function ENT:DoShot()
 			end
 		end
 	self.LastShot=CurTime()
-	if (SERVER and game.IsDedicated()) or CLIENT or game.SinglePlayer() then self:EmitSound(self.SoundName) end
+	self:EmitSound(self.SoundName)
 	end
 end
 
