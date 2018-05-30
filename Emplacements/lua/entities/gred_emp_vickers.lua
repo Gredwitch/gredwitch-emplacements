@@ -4,7 +4,7 @@ ENT.Type 				= "anim"
 ENT.Base 				= "gred_emp_base"
 
 ENT.Category			= "Gredwitch's Stuff"
-ENT.PrintName 			= "[EMP]M2 Browning"
+ENT.PrintName 			= "[EMP]Vickers"
 ENT.Author				= "Gredwitch"
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
