@@ -1,3 +1,5 @@
+AddCSLuaFile()
+
 ENT.Type 				= "anim"
 ENT.Base 				= "gred_emp_base"
 
