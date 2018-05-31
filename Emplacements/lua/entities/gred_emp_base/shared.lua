@@ -32,6 +32,8 @@ ENT.TurretTurnMax		= 0
 ENT.BaseModel			= ""
 ENT.Model				= ""
 ENT.EmplacementType     = "MG"
+ENT.Scatter				= 1
+ENT.MaxUseDistance		= 60
 
 ENT.BasePos=Vector(0,0,0)
 ENT.BaseAng=Angle(0,0,0)
@@ -104,10 +106,15 @@ function ENT:ShooterStillValid()
 		shooter=self:GetDTEntity(0)
 	end
 	
-	return IsValid(shooter) and shooter:Alive() and ((self:GetPos()+self.TurretModelOffset):Distance(shooter:GetShootPos())<=60)
+	return IsValid(shooter) and shooter:Alive() and ((self:GetPos()+self.TurretModelOffset):Distance(shooter:GetShootPos())<=self.MaxUseDistance)
 end
 function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
+		if self.EmplacementType == "Mortar" then
+			local pos = self:GetPos()
+			util.ScreenShake(pos,5,5,0.5,200)
+			ParticleEffect("gred_mortar_explosion_smoke_ground", pos-Vector(0,0,30),Angle(90,0,0))
+		end
 		for m = 1,self.MuzzleCount do
 		
 			self.MuzzleAttachmentsClient = {}
@@ -154,7 +161,7 @@ function ENT:DoShot()
 					end
 					
 				elseif self.EmplacementType == "AT" then
-					ang = self:GetAttachment(self.MuzzleAttachments[m]).Ang + Angle(math.Rand(-1,1), math.Rand(-1,1), math.Rand(-1,1))
+					ang = self:GetAttachment(self.MuzzleAttachments[m]).Ang + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
 					b:SetPos(self:GetAttachment(self.MuzzleAttachments[m]).Pos)
 					b:SetAngles(ang)
 					if self.AmmoType == "HE" then
@@ -183,6 +190,37 @@ function ENT:DoShot()
 					b:Spawn()
 					b:Activate()
 					b:Launch()
+				elseif self.EmplacementType == "Mortar" then
+					local shootPos=util.TraceLine(util.GetPlayerTrace(self.Shooter)).HitPos
+					timer.Simple(4,function()
+						if not IsValid(self) then return end
+						
+						local b=ents.Create(self.BulletType)
+						b:SetPos(shootPos + Vector(math.random(-self.Scatter,self.Scatter),math.random(-self.Scatter,self.Scatter),1000))
+						b:SetAngles(Angle(90,0,0))
+						b:SetOwner(self.Shooter)
+						if self.AmmoType == "Smoke" then
+							b.Effect 		  				   = "doi_smoke_artillery"
+							b.EffectAir 	  				   = "doi_smoke_artillery"
+							b.ExplosionRadius 				   = 0
+							b.ExplosionDamage 				   = 0
+							b.SpecialRadius   				   = 0
+							b.PhysForce						   = 0
+							b.RSound						   = 1
+							b.DEFAULT_PHYSFORCE                = 0
+							b.DEFAULT_PHYSFORCE_PLYAIR         = 0
+							b.DEFAULT_PHYSFORCE_PLYGROUND      = 0
+							b.ExplosionSound				   = table.Random(ExploSnds)
+							b.WaterExplosionSound			   = table.Random(ExploSnds)
+							b.Smoke = true
+						elseif self.AmmoType == "WP" then
+						end
+						b.GBOWNER=self:GetShooter()
+						b:Spawn()
+						b:Activate()
+						b:EmitSound("artillery/flyby/artillery_strike_incoming_0"..(math.random(1,4))..".wav", 140, 100, 1)
+						b:Arm()
+					end)
 				end
 				b.Owner=self.Shooter
 				if self.EmplacementType == "MG" then
@@ -218,6 +256,8 @@ function ENT:Think()
 						offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
 						
 						self.OffsetAng=offsetAngNew
+					else
+						if self.EmplacementType == "Mortar" then canShoot = true end
 					end
 				end
 				local pressKey  = IN_BULLRUSH
@@ -244,7 +284,9 @@ function ENT:Think()
 				self:StopSound(self.SoundName)
 			end
 			if self.Secondary then
-				if self.EmplacementType == "AT" then self:SwitchAmmoType(self:GetShooter()) end
+				if self.EmplacementType == "AT" or self.EmplacementType == "Mortar" then 
+					self:SwitchAmmoType(self:GetShooter()) 
+				end
 			end
 			self:NextThink(CurTime())
 			return true

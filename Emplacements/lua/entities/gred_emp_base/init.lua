@@ -47,7 +47,6 @@ function ENT:Initialize()
 	if not IsValid(self.turretBase) then
 		self:CreateEmplacement()
 	end
-	
 	self.HookupAttachment=self:LookupAttachment("hookup")
 	
 	self.MuzzleAttachments = {}
