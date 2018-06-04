@@ -34,13 +34,16 @@ ENT.Model				= ""
 ENT.EmplacementType     = "MG"
 ENT.Scatter				= 1
 ENT.MaxUseDistance		= 60
+ENT.Seatable			= false
+ENT.SecondModel			= ""
 
-ENT.BasePos=Vector(0,0,0)
-ENT.BaseAng=Angle(0,0,0)
-ENT.OffsetPos=Vector(0,0,0)
-ENT.OffsetAng=Angle(0,0,0)
-ENT.Shooter=nil
-ENT.ShooterLast=nil
+ENT.BasePos				= Vector(0,0,0)
+ENT.BaseAng				= Angle(0,0,0)
+ENT.OffsetPos			= Vector(0,0,0)
+ENT.OffsetAng			= Angle(0,0,0)
+ENT.Shooter				= nil
+ENT.ShooterLast			= nil
+ENT.SeatShooting		= false
 
 local ExploSnds = {}
 ExploSnds[1]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_01.wav"
@@ -84,7 +87,6 @@ function ENT:SwitchAmmoType(plr)
 end
 
 function ENT:Use(plr)
-	
 	if not self:ShooterStillValid() then
 		self:SetShooter(plr)
 		self:StartShooting()
@@ -93,7 +95,6 @@ function ENT:Use(plr)
 		if plr==self.Shooter then
 			self:SetShooter(nil)
 			self:FinishShooting()
-			
 		end
 	end
 end
@@ -105,9 +106,14 @@ function ENT:ShooterStillValid()
 	elseif CLIENT then
 		shooter=self:GetDTEntity(0)
 	end
-	
-	return IsValid(shooter) and shooter:Alive() and ((self:GetPos()+self.TurretModelOffset):Distance(shooter:GetShootPos())<=self.MaxUseDistance)
+	if self.Seatable then
+		return IsValid(shooter) and shooter:Alive()
+	else
+		return IsValid(shooter) and shooter:Alive() and
+		((self:GetPos()+self.TurretModelOffset):Distance(shooter:GetShootPos())<=self.MaxUseDistance)
+	end
 end
+
 function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
 		if self.EmplacementType == "Mortar" then
@@ -134,14 +140,14 @@ function ENT:DoShot()
 					if self.BulletType == "wac_base_7mm" then
 						ang = self:GetAttachment(self.MuzzleAttachments[m]).Ang + Angle(math.Rand(-0.5,0.5), math.Rand(-0.5,0.5), math.Rand(-0.5,0.5))
 					elseif self.BulletType == "wac_base_12mm" then
-						ang = self:GetAttachment(self.MuzzleAttachments[m]).Ang + Angle(math.Rand(-0.5,0.5), math.Rand(-0.5,0.5), math.Rand(-0.5,0.5))
+						ang = self:GetAttachment(self.MuzzleAttachments[m]).Ang + Angle(math.Rand(-1,1), math.Rand(-1,1), math.Rand(-1,1))
 					end
 					b:SetPos(self:GetAttachment(self.MuzzleAttachments[m]).Pos)
 					b:SetAngles(ang)
 					b.Speed=1000
 					b.Size=0
 					b.Width=0
-					b.Damage=40
+					b.Damage=20
 					b.Radius=70
 					b.sequential=1
 					b.gunRPM=3600
@@ -162,7 +168,8 @@ function ENT:DoShot()
 					
 				elseif self.EmplacementType == "AT" then
 					ang = self:GetAttachment(self.MuzzleAttachments[m]).Ang + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
-					b:SetPos(self:GetAttachment(self.MuzzleAttachments[m]).Pos)
+					local shootpos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
+					b:SetPos(shootpos)
 					b:SetAngles(ang)
 					if self.AmmoType == "HE" then
 						if self.BulletType == "gb_rocket_75mm" then b.Model = "models/gredwitch/75mm_he.mdl" end
@@ -190,6 +197,8 @@ function ENT:DoShot()
 					b:Spawn()
 					b:Activate()
 					b:Launch()
+					b:SetVelocity(shootpos-self:GetAngles():Forward()*1000000)
+					
 				elseif self.EmplacementType == "Mortar" then
 					local shootPos=util.TraceLine(util.GetPlayerTrace(self.Shooter)).HitPos
 					timer.Simple(4,function()
@@ -237,7 +246,7 @@ end
 
 function ENT:Think()
 	
-	if not IsValid(self.turretBase) and SERVER then
+	if SERVER and (!IsValid(self.turretBase) or (self.Seatable and !IsValid(self.shield))) then
 		SafeRemoveEntity(self)
 	else
 		if IsValid(self) then
@@ -245,19 +254,27 @@ function ENT:Think()
 				self.turretBase:SetSkin(self:GetSkin())
 				self.BasePos=self.turretBase:GetPos()
 				self.OffsetPos=self.turretBase:GetAngles():Up()*1
+				if self.Seatable then
+					self.shield:SetSkin(self:GetSkin())
+					self.shield:SetPos(self.turretBase:GetPos())
+					self.shield:SetAngles(Angle(self.turretBase:GetAngles().p,self:GetAngles().y,self.turretBase:GetAngles().r))
+				end
 			end
 			if self:ShooterStillValid() then
 				if SERVER then
+					if self.Seatable and !self:GetShooter():InVehicle() then self:FinishShooting() end
 					local offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
 					local offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
 					local HookupPos=self:GetAttachment(self.HookupAttachment).Pos
-					if offsetDot>=self.TurretTurnMax then
-						local offsetAngNew=offsetAng:Angle()
-						offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
-						
-						self.OffsetAng=offsetAngNew
-					else
-						if self.EmplacementType == "Mortar" then canShoot = true end
+					if self.TurretTurnMax > -1 or self.EmplacementType != "MG" then
+						if offsetDot>=self.TurretTurnMax then
+							local offsetAngNew=offsetAng:Angle()
+							offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
+							
+							self.OffsetAng=offsetAngNew
+						else
+							if self.EmplacementType == "Mortar" then canShoot = true end
+						end
 					end
 				end
 				local pressKey  = IN_BULLRUSH
@@ -284,7 +301,7 @@ function ENT:Think()
 				self:StopSound(self.SoundName)
 			end
 			if self.Secondary then
-				if self.EmplacementType == "AT" or self.EmplacementType == "Mortar" then 
+				if self.EmplacementType != "MG" then 
 					self:SwitchAmmoType(self:GetShooter()) 
 				end
 			end

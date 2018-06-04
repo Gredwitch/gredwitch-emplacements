@@ -16,7 +16,7 @@ ENT.BulletType			= "gb_rocket_50mm"
 ENT.MuzzleCount			= 1
 
 ENT.HERadius			= 300
-ENT.HEDamage			= 75
+ENT.HEDamage			= 20
 ENT.EffectHE			= "gred_50mm"
 
 ENT.SoundName			= "shootPaK"

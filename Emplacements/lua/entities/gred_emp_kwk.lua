@@ -4,20 +4,20 @@ ENT.Type 				= "anim"
 ENT.Base 				= "gred_emp_base"
 
 ENT.Category			= "Gredwitch's Stuff"
-ENT.PrintName 			= "[EMP]Flak 37"
+ENT.PrintName 			= "[EMP]KwK"
 ENT.Author				= "Gredwitch"
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= true
-ENT.NameToPrint			= "Flak 37"
+ENT.NameToPrint			= "KwK"
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.ShotInterval		= 4.8
-ENT.BulletType			= "gb_rocket_88mm"
+ENT.BulletType			= "gb_rocket_50mm"
 ENT.MuzzleCount			= 1
 
-ENT.HERadius			= 500
-ENT.HEDamage			= 100
-ENT.EffectHE			= "doi_artillery_explosion"
+ENT.HERadius			= 300
+ENT.HEDamage			= 75
+ENT.EffectHE			= "gred_50mm"
 
 ENT.SoundName			= "shootPaK"
 ENT.ShootSound			= "gred_emp/pak40/shoot_reload.wav"
@@ -25,19 +25,22 @@ ENT.ShootSound			= "gred_emp/pak40/shoot_reload.wav"
 ENT.TurretHeight		= 1
 ENT.TurretFloatHeight	= 0
 ENT.TurretModelOffset	= Vector(0,0,0)
-ENT.TurretTurnMax		= 0.7
-ENT.BaseModel			= "models/gredwitch/pak38/pak38_carriage.mdl"
-ENT.Model				= "models/damik/flak 88mm/flak 37 (rargdoll).mdl"
+ENT.TurretTurnMax		= -1
+ENT.BaseModel			= "models/gredwitch/kwk/kwk_base.mdl"
+ENT.SecondModel			= "models/gredwitch/kwk/kwk_shield.mdl"
+ENT.Model				= "models/gredwitch/kwk/kwk_gun.mdl"
 ENT.EmplacementType     = "AT"
+ENT.MaxUseDistance		= 130
+ENT.Seatable			= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
-	local SpawnPos = tr.HitPos + tr.HitNormal * 41
+	local SpawnPos = tr.HitPos + tr.HitNormal
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
 	ent:SetAngles(ent:GetAngles()+Angle(0,90,0))
 	ent:Spawn()
 	ent:Activate()
-	ent:SetSkin(math.random(0,4))
+	ent:SetSkin(math.random(0,1))
 	return ent
 end

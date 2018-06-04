@@ -33,9 +33,10 @@ ENT.MaxUseDistance		= 80
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
-	local SpawnPos = tr.HitPos + tr.HitNormal * 50
+	local SpawnPos = tr.HitPos + tr.HitNormal * 45
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+	ent:SetAngles(Angle(0,0,12))
 	ent:Spawn()
 	ent:Activate()
 	return ent

@@ -24,9 +24,19 @@ function ENT:CreateEmplacement()
     shootPos:Fire("setparentattachment","muzzle")
 	self:SetDTEntity(1,shootPos)
 	
-	constraint.NoCollide(self.turretBase,self,0,0)
+	constraint.NoCollide(self.turretBase,self,0,0) 
 end
 
+function ENT:CreateShield()
+	local shield=ents.Create("prop_physics")
+	shield:SetModel(self.SecondModel)
+	shield:SetAngles(self:GetAngles()+Angle(0,90,0))
+	shield:SetPos(self:GetPos()-Vector(0,0,0))
+	shield:Spawn()
+	self.shield=shield
+	constraint.NoCollide(self.shield,self,0,0,true)
+	constraint.NoCollide(self.shield,self.turretBase,0,0,true)
+end
 
 function ENT:Initialize()
 	self:SetModel(self.Model)
@@ -35,20 +45,37 @@ function ENT:Initialize()
 	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )
 	self.Entity:SetSolid( SOLID_VPHYSICS )
 	self.Entity:SetCollisionGroup( COLLISION_GROUP_DEBRIS )
-	
 	local phys = self.Entity:GetPhysicsObject()
 	if IsValid( phys ) then
 		phys:Wake()
 		phys:SetVelocity( Vector( 0, 0, 0 ) )
 	end
-	
 	self.ShadowParams = {}
 	self:StartMotionController()
+	
 	if not IsValid(self.turretBase) then
 		self:CreateEmplacement()
 	end
-	self.HookupAttachment=self:LookupAttachment("hookup")
+	if not IsValid(self.shield) and self.Seatable then
+		self:CreateShield()
+	end
 	
+	if self.Seatable then
+		hook.Add("PlayerFootstep",self,function(ply,pos,foot,sound,volume)
+			if !self:ShooterStillValid() then
+				return false 
+			else 
+				return true 
+			end
+		end)
+		hook.Add("KeyPress",self, function(ply,key)
+			if self:ShooterStillValid() and key == IN_USE then
+				self:FinishShooting()
+			end
+		end)
+	end
+	
+	self.HookupAttachment=self:LookupAttachment("hookup")
 	self.MuzzleAttachments = {}
 	for v=1,self.MuzzleCount do
 		if v>1 then
@@ -59,6 +86,7 @@ function ENT:Initialize()
 	
 	self:SetUseType(SIMPLE_USE)
 	self:DropToFloor()
+	
 	self.shootPos:SetRenderMode(RENDERMODE_TRANSCOLOR)
 	self.shootPos:SetColor(Color(255,255,255,1))
 	if (SERVER) and self.EmplacementType == "MG" then
@@ -94,6 +122,7 @@ function ENT:OnRemove()
 	end
 	self:StopSound(self.SoundName)
 	SafeRemoveEntity(self.turretBase)
+	if self.Seatable then SafeRemoveEntity(self.shield) end
 end
 
 function ENT:StartShooting()
@@ -101,6 +130,25 @@ function ENT:StartShooting()
 	net.Start("TurretBlockAttackToggle")
 	net.WriteBit(true)
 	net.Send(self.Shooter)
+	if self.Seatable then 
+		local seat = ents.Create("prop_vehicle_prisoner_pod")
+		seat:SetAngles(self.shield:GetAttachment(self.shield:LookupAttachment("seat")).Ang-Angle(0,90,0))
+		seat:SetPos(self.shield:GetAttachment(self.shield:LookupAttachment("seat")).Pos-Vector(0,0,5))
+		seat:SetModel("models/nova/airboat_seat.mdl")
+		seat:SetKeyValue("vehiclescript", "scripts/vehicles/prisoner_pod.txt")
+		seat:SetKeyValue("limitview","0")
+		seat:Spawn()
+		seat:Activate()
+		seat:SetParent		  (self.shield)
+		seat:PhysicsInit	  (SOLID_NONE)
+		seat:SetMoveType	  (MOVETYPE_VPHYSICS)
+		seat:SetRenderMode	  (RENDERMODE_NONE)
+		seat:SetSolid		  (SOLID_NONE)
+		seat:SetCollisionGroup(COLLISION_GROUP_NONE)
+		self.Seat = seat
+		
+		self.Shooter:EnterVehicle(self.Seat) 
+	end
 end
 
 function ENT:FinishShooting()
@@ -110,6 +158,10 @@ function ENT:FinishShooting()
 		net.Start("TurretBlockAttackToggle")
 		net.WriteBit(false)
 		net.Send(self.ShooterLast)
+		if self.Seatable and IsValid(self.Seat) then
+			self.ShooterLast:ExitVehicle(self.Seat)
+			self.Seat:Remove()
+		end
 		self.ShooterLast=nil
 		self:StopSound(self.SoundName)
 	end
@@ -119,7 +171,7 @@ function ENT:GetDesiredShootPos()
 	local shootPos=self.Shooter:GetShootPos()
 	local playerTrace=util.GetPlayerTrace( self.Shooter )
 	playerTrace.filter={self.Shooter,self,self.turretBase}
-
+	
 	local shootTrace=util.TraceLine(playerTrace)
 	return shootTrace.HitPos
 end
@@ -127,10 +179,13 @@ end
 
 function ENT:PhysicsSimulate( phys, deltatime )
 	if IsValid(self) and IsValid(self.turretBase) then
+		if self.Seatable and not IsValid(self.shield) then return end
 		phys:Wake()
 		
 		self.ShadowParams.secondstoarrive = 0.01 
-		self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight
+		
+		if not self.Seatable then self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight
+		else self.ShadowParams.pos = self.BasePos + self.shield:GetUp() + self.turretBase:GetUp()*self.TurretHeight end
 		self.ShadowParams.angle =self.BaseAng+self.OffsetAng+Angle(0,0,0)
 		self.ShadowParams.maxangular = 5000
 		self.ShadowParams.maxangulardamp = 10000
