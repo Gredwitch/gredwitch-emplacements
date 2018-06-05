@@ -117,6 +117,17 @@ end
 function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
 		if self.EmplacementType == "Mortar" then
+		
+			local aimpos = self:GetAttachment(self:LookupAttachment("muzzle")).Pos
+			local tr = util.QuickTrace(aimpos,self:GetAngles():Forward()*1)
+			if !tr.HitSky then 
+				canShoot = false
+				if not game.IsDedicated() then self:GetShooter():ChatPrint("[M1 Mortar] You can't shoot there!") end
+				self.LastShot=CurTime()
+				print(self.LastShot)
+			end
+			
+			if !canShoot then return end
 			local pos = self:GetPos()
 			util.ScreenShake(pos,5,5,0.5,200)
 			ParticleEffect("gred_mortar_explosion_smoke_ground", pos-Vector(0,0,30),Angle(90,0,0))
@@ -262,20 +273,32 @@ function ENT:Think()
 			end
 			if self:ShooterStillValid() then
 				if SERVER then
-					if self.Seatable and !self:GetShooter():InVehicle() then self:FinishShooting() end
+					if self.Seatable and !self:GetShooter():InVehicle() then
+						self:SetShooter(nil)
+						self:FinishShooting()
+						if !self:ShooterStillValid() then return end
+					end
+					
 					local offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
 					local offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
-					local HookupPos=self:GetAttachment(self.HookupAttachment).Pos
 					if self.TurretTurnMax > -1 or self.EmplacementType != "MG" then
 						if offsetDot>=self.TurretTurnMax then
 							local offsetAngNew=offsetAng:Angle()
 							offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
 							
 							self.OffsetAng=offsetAngNew
-						else
 							if self.EmplacementType == "Mortar" then canShoot = true end
+						else
+							if self.EmplacementType == "Mortar" then canShoot = false end
 						end
 					end
+					
+					--[[local GetTurretHeight=self:GetAngles().r - self.turretBase:GetAngles().r
+					if GetTurretHeight <1 and self.Seatable then
+						self:SetAngles(Angle(self:GetAngles().p,self:GetAngles().y,1))
+						print(self:GetAngles())
+					end]]
+					print(self:GetAngles())
 				end
 				local pressKey  = IN_BULLRUSH
 				local switchKey = IN_ATTACK2

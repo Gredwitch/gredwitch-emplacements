@@ -15,7 +15,7 @@ ENT.ShotInterval		= 4.8
 ENT.BulletType			= "gb_rocket_50mm"
 ENT.MuzzleCount			= 1
 
-ENT.HERadius			= 300
+ENT.HERadius			= 350
 ENT.HEDamage			= 20
 ENT.EffectHE			= "gred_50mm"
 
@@ -29,6 +29,7 @@ ENT.TurretTurnMax		= 0.7
 ENT.BaseModel			= "models/gredwitch/pak38/pak38_carriage.mdl"
 ENT.Model				= "models/gredwitch/pak38/pak38_gun.mdl"
 ENT.EmplacementType     = "AT"
+ENT.Scatter				= 0.3
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

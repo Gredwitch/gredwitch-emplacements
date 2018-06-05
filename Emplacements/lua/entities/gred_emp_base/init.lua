@@ -41,14 +41,15 @@ end
 function ENT:Initialize()
 	self:SetModel(self.Model)
 	
-	self.Entity:PhysicsInit( SOLID_VPHYSICS )
-	self.Entity:SetMoveType( MOVETYPE_VPHYSICS )
-	self.Entity:SetSolid( SOLID_VPHYSICS )
-	self.Entity:SetCollisionGroup( COLLISION_GROUP_DEBRIS )
+	self.Entity:PhysicsInit			(SOLID_VPHYSICS)
+	self.Entity:SetMoveType			(MOVETYPE_VPHYSICS)
+	self.Entity:SetSolid			(SOLID_VPHYSICS)
+	self.Entity:SetCollisionGroup	(COLLISION_GROUP_DEBRIS)
+	
 	local phys = self.Entity:GetPhysicsObject()
-	if IsValid( phys ) then
+	if IsValid(phys) then
 		phys:Wake()
-		phys:SetVelocity( Vector( 0, 0, 0 ) )
+		phys:SetVelocity(Vector(0,0,0))
 	end
 	self.ShadowParams = {}
 	self:StartMotionController()
@@ -141,10 +142,9 @@ function ENT:StartShooting()
 		seat:Activate()
 		seat:SetParent		  (self.shield)
 		seat:PhysicsInit	  (SOLID_NONE)
-		seat:SetMoveType	  (MOVETYPE_VPHYSICS)
 		seat:SetRenderMode	  (RENDERMODE_NONE)
 		seat:SetSolid		  (SOLID_NONE)
-		seat:SetCollisionGroup(COLLISION_GROUP_NONE)
+		seat:SetCollisionGroup(COLLISION_GROUP_WORLD)
 		self.Seat = seat
 		
 		self.Shooter:EnterVehicle(self.Seat) 
@@ -168,6 +168,7 @@ function ENT:FinishShooting()
 end
 
 function ENT:GetDesiredShootPos()
+	if !self:ShooterStillValid() then return end
 	local shootPos=self.Shooter:GetShootPos()
 	local playerTrace=util.GetPlayerTrace( self.Shooter )
 	playerTrace.filter={self.Shooter,self,self.turretBase}
