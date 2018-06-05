@@ -118,14 +118,14 @@ function ENT:DoShot()
 	if self.LastShot+self.ShotInterval<CurTime() then
 		if self.EmplacementType == "Mortar" then
 		
-			local aimpos = self:GetAttachment(self:LookupAttachment("muzzle")).Pos
+			--[[local aimpos = self:GetAttachment(self:LookupAttachment("muzzle")).Pos
 			local tr = util.QuickTrace(aimpos,self:GetAngles():Forward()*1)
 			if !tr.HitSky then 
 				canShoot = false
 				if not game.IsDedicated() then self:GetShooter():ChatPrint("[M1 Mortar] You can't shoot there!") end
 				self.LastShot=CurTime()
 				print(self.LastShot)
-			end
+			end]]
 			
 			if !canShoot then return end
 			local pos = self:GetPos()
