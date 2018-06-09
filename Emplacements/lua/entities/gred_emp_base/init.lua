@@ -10,6 +10,7 @@ function ENT:CreateEmplacement()
 	turretBase:SetPos(self:GetPos()-Vector(0,0,0))
 	turretBase:Spawn()
 	self.turretBase=turretBase
+	if self.EmplacementType == "Mortar" then turretBase:SetMoveType(MOVETYPE_FLY) end
 	
 	local shootPos=ents.Create("prop_dynamic")
 	shootPos:SetModel("models/mm1/box.mdl")
@@ -147,7 +148,9 @@ function ENT:StartShooting()
 		seat:SetCollisionGroup(COLLISION_GROUP_WORLD)
 		self.Seat = seat
 		
-		self.Shooter:EnterVehicle(self.Seat) 
+		self.Shooter:EnterVehicle(self.Seat)
+		self.Shooter:SetEyeAngles(self:GetAngles())
+		self:SetParent(self.Shooter)
 	end
 end
 
@@ -169,7 +172,7 @@ end
 
 function ENT:GetDesiredShootPos()
 	if !self:ShooterStillValid() then return end
-	local shootPos=self.Shooter:GetShootPos()
+	local shootpos=self.Shooter:GetShootPos()
 	local playerTrace=util.GetPlayerTrace( self.Shooter )
 	playerTrace.filter={self.Shooter,self,self.turretBase}
 	

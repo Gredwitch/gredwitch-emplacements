@@ -14,6 +14,7 @@ ENT.NameToPrint			= "M1 Mortar"
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.ShotInterval		= 3
 ENT.AmmoType			= "HE"
+ENT.EffectSmoke			= "m203_smokegrenade"
 ENT.BulletType			= "gb_rocket_81mm"
 ENT.Scatter				= 400
 ENT.MuzzleCount			= 1
@@ -33,10 +34,10 @@ ENT.MaxUseDistance		= 80
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
-	local SpawnPos = tr.HitPos + tr.HitNormal * 45
+	local SpawnPos = tr.HitPos + tr.HitNormal * 38
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
-	ent:SetAngles(Angle(0,0,12))
+	ent:SetAngles(Angle(0,0,-12))
 	ent:Spawn()
 	ent:Activate()
 	return ent
