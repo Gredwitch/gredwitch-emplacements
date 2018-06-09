@@ -18,6 +18,7 @@ ENT.MuzzleCount			= 1
 ENT.HERadius			= 300
 ENT.HEDamage			= 75
 ENT.EffectHE			= "gred_50mm"
+ENT.EffectSmoke			= "m203_smokegrenade"
 
 ENT.SoundName			= "shootPaK"
 ENT.ShootSound			= "gred_emp/pak40/shoot_reload.wav"

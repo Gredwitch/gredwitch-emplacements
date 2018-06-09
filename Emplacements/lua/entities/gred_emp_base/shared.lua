@@ -125,13 +125,7 @@ function ENT:DoShot()
 			
 			local aimpos = self:GetAttachment(self:LookupAttachment("muzzle"))
 			local tr = util.QuickTrace(aimpos.Pos,aimpos.Pos + reachSky,{self,self,self.turretBase,self.shootpos} )
-			local hitent = Entity(tr.Entity:EntIndex())
 			
-			print(tr.HitSky)
-			print(tr.HitWorld)
-			print(tr.Hit)
-			print(tr.HitPos)
-			print(hitent)
 			if !tr.HitSky or (!tr.HitWorld and !tr.HitSky and !tr.Hit) then
 				canShoot = false
 				if SERVER then if PLAYER then self:GetShooter():ChatPrint("["..self.NameToPrint.."] Nothing must block the mortar's muzzle! ") end end
@@ -161,11 +155,10 @@ function ENT:DoShot()
 			self:GetAttachment(self.MuzzleAttachmentsClient[m]).Ang,nil)
 			
 			if IsValid(self.shootPos) then
-				if self.EmplacementType != "MG" then local b=ents.Create(self.BulletType) end
-				
+				b=ents.Create(self.BulletType)
 				if self.EmplacementType == "MG" then
-					local b = ents.Create("gred_base_bullet")
-					-- local b = ents.Create("wac_base_7mm")
+					b = ents.Create("gred_base_bullet")
+					
 					if self.BulletType == "wac_base_7mm" then
 						ang = self:GetAttachment(self.MuzzleAttachments[m]).Ang + Angle(math.Rand(-0.5,0.5), math.Rand(-0.5,0.5), math.Rand(-0.5,0.5))
 					elseif self.BulletType == "wac_base_12mm" then
@@ -241,8 +234,8 @@ function ENT:DoShot()
 						b:SetAngles(Angle(90,0,0))
 						b:SetOwner(self.Shooter)
 						if self.AmmoType == "Smoke" then
-							b.Effect 		  				   = "doi_smoke_artillery"
-							b.EffectAir 	  				   = "doi_smoke_artillery"
+							b.Effect 		  				   = self.EffectSmoke
+							b.EffectAir 	  				   = self.EffectSmoke
 							b.ExplosionRadius 				   = 0
 							b.ExplosionDamage 				   = 0
 							b.SpecialRadius   				   = 0
