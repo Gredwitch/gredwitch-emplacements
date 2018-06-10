@@ -46,6 +46,7 @@ ENT.RocketBurnoutTrail               =  ""
 ENT.Effect                           =  "gred_ap_impact"
 ENT.EffectAir                        =  "gred_ap_impact"
 ENT.EffectWater                      =  "ins_water_explosion"
+ENT.AngEffect						 =	true
 
 ENT.ExplosionSound                   =  table.Random(CloseExploSnds)
 ENT.FarExplosionSound				 =  table.Random(ExploSnds)

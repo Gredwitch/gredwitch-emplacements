@@ -217,7 +217,7 @@ function ENT:DoShot()
 						b.WaterExplosionSound			   = table.Random(ExploSnds)
 						b.Smoke = true
 					end
-					b.GBOWNER=self.Shooter
+					b.GBOWNER=self:GetShooter()
 					b:Spawn()
 					b:Activate()
 					b:Launch()
