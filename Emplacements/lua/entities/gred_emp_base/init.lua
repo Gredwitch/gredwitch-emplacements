@@ -48,6 +48,7 @@ function ENT:Initialize()
 	self.Entity:SetCollisionGroup	(COLLISION_GROUP_DEBRIS)
 	
 	local phys = self.Entity:GetPhysicsObject()
+	LAN = GetConVar("gred_sv_lan"):GetInt()
 	if IsValid(phys) then
 		phys:Wake()
 		phys:SetVelocity(Vector(0,0,0))

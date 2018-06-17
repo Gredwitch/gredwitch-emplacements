@@ -151,20 +151,43 @@ function ENT:DoShot()
 					self.MuzzleAttachmentsClient[v] = self:LookupAttachment("muzzle"..v.."")
 				end
 			end
-			ParticleEffect(self.MuzzleEffect,self:GetAttachment(self.MuzzleAttachmentsClient[m]).Pos,
-			self:GetAttachment(self.MuzzleAttachmentsClient[m]).Ang,nil)
+			local attPos = self:GetAttachment(self.MuzzleAttachmentsClient[m]).Pos
+			local attAng = self:GetAttachment(self.MuzzleAttachmentsClient[m]).Ang
+			if LAN == 1 then
+				if GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 1 or ((GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 0 and self.EmplacementType != "MG")) then
+					ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
+				else
+					local effectdata=EffectData()
+					effectdata:SetOrigin(attPos)
+					effectdata:SetAngles(attAng)
+					effectdata:SetEntity(self)
+					effectdata:SetScale(1)
+					util.Effect("MuzzleEffect", effectdata)
+				end
 			
+			elseif tonumber(LocalPlayer():GetInfo("gred_cl_altmuzzleeffect",0)) == 1 or (tonumber(LocalPlayer():GetInfo("gred_cl_altmuzzleeffect",0)) == 0 and self.EmplacementType != "MG") then
+				local ply = LocalPlayer()
+				if CL_CANCREATEMUZZLE then
+					ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
+				else
+					local effectdata=EffectData()
+					effectdata:SetOrigin(attPos)
+					effectdata:SetAngles(attAng)
+					effectdata:SetEntity(self)
+					effectdata:SetScale(1)
+					util.Effect("MuzzleEffect", effectdata)
+				end
+			end
 			if IsValid(self.shootPos) then
-				b=ents.Create(self.BulletType)
 				if self.EmplacementType == "MG" then
-					b = ents.Create("gred_base_bullet")
+					local b = ents.Create("gred_base_bullet")
 					
 					if self.BulletType == "wac_base_7mm" then
-						ang = self:GetAttachment(self.MuzzleAttachments[m]).Ang + Angle(math.Rand(-0.5,0.5), math.Rand(-0.5,0.5), math.Rand(-0.5,0.5))
+						ang = attAng + Angle(math.Rand(-0.5,0.5), math.Rand(-0.5,0.5), math.Rand(-0.5,0.5))
 					elseif self.BulletType == "wac_base_12mm" then
-						ang = self:GetAttachment(self.MuzzleAttachments[m]).Ang + Angle(math.Rand(-1,1), math.Rand(-1,1), math.Rand(-1,1))
+						ang = attAng + Angle(math.Rand(-1,1), math.Rand(-1,1), math.Rand(-1,1))
 					end
-					b:SetPos(self:GetAttachment(self.MuzzleAttachments[m]).Pos)
+					b:SetPos(attPos)
 					b:SetAngles(ang)
 					b.Speed=1000
 					b.Size=0
@@ -191,8 +214,9 @@ function ENT:DoShot()
 					end
 					
 				elseif self.EmplacementType == "AT" then
-					ang = self:GetAttachment(self.MuzzleAttachments[m]).Ang + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
-					local shootpos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
+					local b=ents.Create(self.BulletType)
+					ang = attAng + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
+					local shootpos = attPos
 					b:SetPos(shootpos)
 					b:SetAngles(ang)
 					if self.AmmoType == "HE" then
@@ -225,6 +249,7 @@ function ENT:DoShot()
 					b.Owner=self.Shooter
 					
 				elseif self.EmplacementType == "Mortar" then
+					local b=ents.Create(self.BulletType)
 					local shootPos=util.TraceLine(util.GetPlayerTrace(self.Shooter)).HitPos
 					timer.Simple(4,function()
 						if not IsValid(self) then return end
