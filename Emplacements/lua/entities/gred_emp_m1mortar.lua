@@ -12,7 +12,7 @@ ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "M1 Mortar"
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
-ENT.ShotInterval		= 3
+ENT.ShotInterval		= 3.33
 ENT.AmmoType			= "HE"
 ENT.EffectSmoke			= "m203_smokegrenade"
 ENT.BulletType			= "gb_rocket_81mm"

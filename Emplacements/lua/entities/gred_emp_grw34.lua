@@ -12,7 +12,7 @@ ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Granatfwerfer 34"
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
-ENT.ShotInterval		= 3
+ENT.ShotInterval		= 2.4
 ENT.AmmoType			= "HE"
 ENT.EffectSmoke			= "m203_smokegrenade"
 ENT.BulletType			= "gb_rocket_81mm"
@@ -34,10 +34,9 @@ ENT.MaxUseDistance		= 80
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
-	local SpawnPos = tr.HitPos + tr.HitNormal * 4
+	local SpawnPos = tr.HitPos + tr.HitNormal * 30
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
-	-- ent:SetAngles(Angle(0,0,-12))
 	ent:SetSkin(math.random(0,2))
 	ent:Spawn()
 	ent:Activate()

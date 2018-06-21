@@ -74,6 +74,9 @@ function ENT:GetShooter(plr)
 	end
 end
 
+function ENT:AddOnThink()
+end
+
 function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() and !IsValid(ply) then return end
 	if SERVER then
@@ -154,7 +157,7 @@ function ENT:DoShot()
 			local attPos = self:GetAttachment(self.MuzzleAttachmentsClient[m]).Pos
 			local attAng = self:GetAttachment(self.MuzzleAttachmentsClient[m]).Ang
 			if LAN == 1 then
-				if GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 1 or ((GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 0 and self.EmplacementType != "MG")) then
+				if GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
 					ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
 				else
 					local effectdata=EffectData()
@@ -165,9 +168,9 @@ function ENT:DoShot()
 					util.Effect("MuzzleEffect", effectdata)
 				end
 			
-			elseif tonumber(LocalPlayer():GetInfo("gred_cl_altmuzzleeffect",0)) == 1 or (tonumber(LocalPlayer():GetInfo("gred_cl_altmuzzleeffect",0)) == 0 and self.EmplacementType != "MG") then
+			elseif CLIENT then
 				local ply = LocalPlayer()
-				if CL_CANCREATEMUZZLE then
+				if tonumber(LocalPlayer():GetInfo("gred_cl_altmuzzleeffect",0)) == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
 					ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
 				else
 					local effectdata=EffectData()
@@ -186,6 +189,8 @@ function ENT:DoShot()
 						ang = attAng + Angle(math.Rand(-0.5,0.5), math.Rand(-0.5,0.5), math.Rand(-0.5,0.5))
 					elseif self.BulletType == "wac_base_12mm" then
 						ang = attAng + Angle(math.Rand(-1,1), math.Rand(-1,1), math.Rand(-1,1))
+					elseif self.BulletType == "wac_base_20mm" then
+						ang = attAng + Angle(math.Rand(-1.4,1.4), math.Rand(-1.4,1.4), math.Rand(-1.4,1.4))
 					end
 					b:SetPos(attPos)
 					b:SetAngles(ang)
@@ -203,7 +208,7 @@ function ENT:DoShot()
 					b.Owner=self.Shooter
 					
 					self.tracer = self.tracer + 1
-					if self.tracer >= GetConVarNumber("gred_tracers") then
+					if self.tracer >= GetConVarNumber("gred_sv_tracers") then
 						util.SpriteTrail(b, 0, bcolor, false, num1, num1, num2, num3, "trails/laser.vmt")
 						if self.Color == "Red" then
 							util.SpriteTrail(b, 0, red, false, num4, num5, num6, num7, "trails/smoke.vmt")
@@ -218,7 +223,7 @@ function ENT:DoShot()
 					ang = attAng + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
 					local shootpos = attPos
 					b:SetPos(shootpos)
-					b:SetAngles(ang)
+					b:SetAngles(attAng)
 					if self.AmmoType == "HE" then
 						if self.BulletType == "gb_rocket_75mm" then b.Model = "models/gredwitch/75mm_he.mdl" end
 						b.ExplosionRadius = self.HERadius
@@ -300,6 +305,7 @@ function ENT:Think()
 		SafeRemoveEntity(self)
 	else
 		if IsValid(self) then
+			self:AddOnThink()
 			if SERVER then
 				self.turretBase:SetSkin(self:GetSkin())
 				self.BasePos=self.turretBase:GetPos()
