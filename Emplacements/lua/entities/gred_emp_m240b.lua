@@ -15,8 +15,11 @@ ENT.BulletType			= "wac_base_7mm"
 ENT.ShotInterval		= 0.092
 ENT.Color				= "Red"
 
-ENT.ShootSound			= "gred_emp/m240b/gun.wav"
+ENT.ShootSound			= "gred_emp/m240b/shoot.wav"
+ENT.StopSound			= "gred_emp/m240b/stop.wav"
 ENT.SoundName			= "shootM240B"
+ENT.StopSoundName		= "stopM240B"
+ENT.HasStopSound		= true
 
 ENT.BaseModel			= "models/gredwitch/fnmag/fnmag_tripod.mdl"
 ENT.Model				= "models/gredwitch/fnmag/fnmag_gun.mdl"

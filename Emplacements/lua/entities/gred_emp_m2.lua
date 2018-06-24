@@ -16,6 +16,9 @@ ENT.ShotInterval		= 0.12
 ENT.Color				= "Red"
 
 ENT.ShootSound			= "gred_emp/m2/shoot.wav"
+ENT.StopSound			= "gred_emp/m2/stop.wav"
+ENT.StopSoundName		= "stopM2"
+ENT.HasStopSound		= true
 ENT.SoundName			= "shootM2"
 
 ENT.BaseModel			= "models/gredwitch/m2browning/m2_tripod.mdl"

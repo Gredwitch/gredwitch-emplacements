@@ -8,12 +8,17 @@ ENT.PrintName 			= "[EMP]M61 Vulcan"
 ENT.Author				= "Gredwitch"
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
+-- ENT.NameToPrint			= "M61 Vulcan"
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.MuzzleCount			= 1
 ENT.BulletType			= "wac_base_20mm"
 ENT.ShotInterval		= 0.01
 ENT.Color				= "Red"
+--[[ ENT.FuzeEnabled			= true
+ENT.FuzeTime			= 0.01
+ENT.AmmoType			= "Direct Hit"
+ENT.CanSwitchAmmoTypes	= true]]
 
 ENT.ShootSound			= "gred_emp/m61/gun.wav"
 ENT.SoundName			= "shootM61"
@@ -36,3 +41,18 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Activate()
 	return ent
 end
+--[[
+function ENT:SwitchAmmoType(plr)
+	if self.NextSwitch > CurTime() and !IsValid(ply) then return end
+	if SERVER then
+		if self.AmmoType == "Direct Hit" then
+			self.AmmoType = "Time-Fuze"
+		
+		elseif self.AmmoType == "Time-Fuze" then
+			self.AmmoType = "Direct Hit"
+		end
+		if LAN then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." rounds selected") end
+	end
+	self.NextSwitch = CurTime()+0.2
+end
+]]

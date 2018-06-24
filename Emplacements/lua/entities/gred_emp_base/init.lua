@@ -147,6 +147,16 @@ function ENT:Initialize()
 		pitch = {100},
 		sound = self.ShootSound
 	} )
+	if self.HasStopSound then
+		sound.Add( {
+			name = self.StopSoundName,
+			channel = CHAN_WEAPON,
+			volume = 1.0,
+			level = 100,
+			pitch = {100},
+			sound = self.StopSound
+		} )
+	end
 end
 
 function ENT:OnRemove()
@@ -159,6 +169,7 @@ function ENT:OnRemove()
 		self.Shooter=nil
 	end
 	self:StopSound(self.SoundName)
+	self:StopSound(self.StopSoundName)
 	SafeRemoveEntity(self.turretBase)
 	if self.Seatable then SafeRemoveEntity(self.shield) end
 end

@@ -22,9 +22,15 @@ ENT.HEDamage			= 0
 ENT.EffectHE			= ""
 ENT.EffectSmoke			= "doi_smoke_artillery"
 ENT.AmmoType			= "AP"
+ENT.FuzeTime			= 0
+ENT.CanSwitchAmmoTypes	= false
 
 ENT.SoundName			= "shootSound"
+ENT.StopSound			= ""
+ENT.HasStopSound		= false
+ENT.StopSoundName		= "stopSound"
 ENT.ShootSound			= ""
+ENT.NoStopSound			= false
 
 ENT.TurretHeight		= 1
 ENT.TurretFloatHeight	= 0
@@ -46,6 +52,7 @@ ENT.Shooter				= nil
 ENT.ShooterLast			= nil
 ENT.SeatShooting		= false
 ENT.BarrelHeight		= 0
+ENT.NextAmmoSwitch		= 0
 
 local ExploSnds = {}
 ExploSnds[1]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_01.wav"
@@ -53,9 +60,9 @@ ExploSnds[2]                         =  "gred_emp/nebelwerfer/artillery_strike_s
 ExploSnds[3]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_03.wav"
 ExploSnds[4]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_04.wav"
 
-local PLAYER = not game.IsDedicated() or CLIENT
 local noHitSky = false
 local reachSky = Vector(0,0,9999999999)
+local PLAYER = not game.IsDedicated() or CLIENT
 
 function ENT:SetupDataTables()
 	self:DTVar("Entity",0,"Shooter")
@@ -93,6 +100,14 @@ function ENT:SwitchAmmoType(plr)
 		if PLAYER then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	end
 	self.NextSwitch = CurTime()+0.2
+end
+
+function ENT:SetTimeFuze(plr)
+	if self.NextAmmoSwitch > CurTime() and !IsValid(ply) then return end
+	if self.FuzeTime >= 0.2 or self.FuzeTime <= 0 then self.FuzeTime = 0.01
+	else self.FuzeTime = self.FuzeTime + 0.01 end
+	if PLAYER then plr:ChatPrint("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds") end
+	self.NextAmmoSwitch = CurTime()+0.2
 end
 
 function ENT:Use(plr)
@@ -204,6 +219,7 @@ function ENT:DoShot()
 					b.Width=0
 					b.Damage=20
 					b.Radius=70
+					if self.AmmoType == "Time-Fuze" then b.FuzeTime=self.FuzeTime end
 					b.sequential=1
 					b.gunRPM=3600
 					b.Caliber=self.BulletType
@@ -299,7 +315,6 @@ function ENT:DoShot()
 			end
 		end
 	self.LastShot=CurTime()
-	self:EmitSound(self.SoundName)
 	end
 end
 
@@ -354,12 +369,18 @@ function ENT:Think()
 				end
 				local pressKey  = IN_BULLRUSH
 				local switchKey = IN_ATTACK2
+				local fuzekey   = IN_RELOAD
+				local fuzereset = IN_SPEED
 				if CLIENT and game.SinglePlayer() then
 					pressKey  = IN_ATTACK
 					switchKey = IN_ATTACK2
+					fuzekey	  = IN_RELOAD
+					fuzereset = IN_SPEED
 				end
-				self.Secondary = self:GetShooter():KeyDown(switchKey)
-				self.Firing		= self:GetShooter():KeyDown(pressKey)
+				self.Secondary			= self:GetShooter():KeyDown(switchKey)
+				self.Firing				= self:GetShooter():KeyDown(pressKey)
+				self.SwitchedFuzeKey	= self:GetShooter():KeyDown(fuzekey)
+				self.ResetFuzeKey		= self:GetShooter():KeyDown(fuzereset)
 			else
 				self.Firing=false
 				if SERVER then
@@ -371,6 +392,7 @@ function ENT:Think()
 			end
 			if self.Firing then
 				self:DoShot()
+				self:EmitSound(self.SoundName)
 				if self.HasRotatingBarrel then
 					local barrel = self:GetDTEntity(5)
 					local spin = barrel:LookupSequence("spin")
@@ -379,6 +401,7 @@ function ENT:Think()
 			end
 			if !self.Firing and self.EmplacementType == "MG" then
 				self:StopSound(self.SoundName)
+				if self.HasStopSound then self:EmitSound(self.StopSoundName) end
 				if self.HasRotatingBarrel then
 					local barrel = self:GetDTEntity(5)
 					local spin = barrel:LookupSequence("spin")
@@ -390,8 +413,18 @@ function ENT:Think()
 				end
 			end
 			if self.Secondary then
-				if self.EmplacementType != "MG" then 
+				if self.EmplacementType != "MG" or (self.CanSwitchAmmoTypes and self.EmplacementType == "MG") then 
 					self:SwitchAmmoType(self:GetShooter()) 
+				end
+			end
+			if self.SwitchedFuzeKey and self.CanSwitchAmmoTypes and self.EmplacementType == "MG" and self.AmmoType == "Time-Fuze" then
+				self:SetTimeFuze(self:GetShooter())
+			end
+			if self.ResetFuzeKey and self.CanSwitchAmmoTypes and self.EmplacementType == "MG" and self.AmmoType == "Time-Fuze" then
+				if self.NextAmmoSwitch < CurTime() then
+					self.FuzeTime = 0.01
+					if PLAYER then self:GetShooter():ChatPrint("["..self.NameToPrint.."] Time fuze reseted to "..self.FuzeTime.." seconds") end
+					self.NextAmmoSwitch = CurTime()+0.2
 				end
 			end
 			self:NextThink(CurTime())

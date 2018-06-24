@@ -31,6 +31,7 @@ ENT.Model				= "models/gredwitch/granatwerfer/granatwerfer_tube.mdl"
 ENT.EmplacementType     = "Mortar"
 ENT.MaxUseDistance		= 80
 
+local PLAYER = not game.IsDedicated() or CLIENT
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -52,7 +53,7 @@ function ENT:SwitchAmmoType(plr)
 		elseif self.AmmoType == "Smoke" then
 			self.AmmoType = "HE"
 		end
-		if CLIENT or not game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+		if PLAYER then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	end
 	self.NextSwitch = CurTime()+0.2
 end
