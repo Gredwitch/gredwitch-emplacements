@@ -37,7 +37,7 @@ ENT.Scatter				= 1
 ENT.MaxUseDistance		= 60
 ENT.Seatable			= false
 ENT.SecondModel			= ""
-
+ENT.HasRotatingBarrel	= false
 ENT.BasePos				= Vector(0,0,0)
 ENT.BaseAng				= Angle(0,0,0)
 ENT.OffsetPos			= Vector(0,0,0)
@@ -45,6 +45,7 @@ ENT.OffsetAng			= Angle(0,0,0)
 ENT.Shooter				= nil
 ENT.ShooterLast			= nil
 ENT.SeatShooting		= false
+ENT.BarrelHeight		= 0
 
 local ExploSnds = {}
 ExploSnds[1]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_01.wav"
@@ -146,16 +147,20 @@ function ENT:DoShot()
 			ParticleEffect("gred_mortar_explosion_smoke_ground", pos-Vector(0,0,30),Angle(90,0,0))
 		end
 		for m = 1,self.MuzzleCount do
-		
+			if self.HasRotatingBarrel then
+				newEnt = self:GetDTEntity(5)
+			else
+				newEnt = self
+			end
 			self.MuzzleAttachmentsClient = {}
-			self.MuzzleAttachmentsClient[1] = self:LookupAttachment("muzzle")
+			self.MuzzleAttachmentsClient[1] = newEnt:LookupAttachment("muzzle")
 			for v=1,self.MuzzleCount do
 				if v>1 then
-					self.MuzzleAttachmentsClient[v] = self:LookupAttachment("muzzle"..v.."")
+					self.MuzzleAttachmentsClient[v] = newEnt:LookupAttachment("muzzle"..v.."")
 				end
 			end
-			local attPos = self:GetAttachment(self.MuzzleAttachmentsClient[m]).Pos
-			local attAng = self:GetAttachment(self.MuzzleAttachmentsClient[m]).Ang
+			attPos = newEnt:GetAttachment(self.MuzzleAttachmentsClient[m]).Pos
+			attAng = newEnt:GetAttachment(self.MuzzleAttachmentsClient[m]).Ang
 			if LAN == 1 then
 				if GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
 					ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
@@ -277,7 +282,6 @@ function ENT:DoShot()
 							b.ExplosionSound				   = table.Random(ExploSnds)
 							b.WaterExplosionSound			   = table.Random(ExploSnds)
 							b.Smoke = true
-						elseif self.AmmoType == "WP" then
 						end
 						b.GBOWNER=self:GetShooter()
 						b:Spawn()
@@ -323,9 +327,13 @@ function ENT:Think()
 						self:FinishShooting()
 						if !self:ShooterStillValid() then return end
 					end
-					
-					local offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
-					local offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
+					if self.HasRotatingBarrel then
+						offsetAng=(self.barrel:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
+						offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
+					else
+						offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
+						offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
+					end
 					if self.TurretTurnMax > -1 or self.EmplacementType != "MG" or !self.Seatable then
 						if offsetDot>=self.TurretTurnMax then
 							local offsetAngNew=offsetAng:Angle()
@@ -363,9 +371,23 @@ function ENT:Think()
 			end
 			if self.Firing then
 				self:DoShot()
+				if self.HasRotatingBarrel then
+					local barrel = self:GetDTEntity(5)
+					local spin = barrel:LookupSequence("spin")
+					barrel:ResetSequence(spin)
+				end
 			end
 			if !self.Firing and self.EmplacementType == "MG" then
 				self:StopSound(self.SoundName)
+				if self.HasRotatingBarrel then
+					local barrel = self:GetDTEntity(5)
+					local spin = barrel:LookupSequence("spin")
+					timer.Simple(barrel:SequenceDuration(spin),function()
+						if IsValid(self.barrel) then
+							barrel:SetSequence(barrel:LookupSequence("idle"))
+						end
+					end)
+				end
 			end
 			if self.Secondary then
 				if self.EmplacementType != "MG" then 

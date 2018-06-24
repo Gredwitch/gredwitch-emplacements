@@ -13,7 +13,7 @@ elseif CLIENT then
 		end
 	end)
 	
-	hook.Add("CreateMove","RedirectTurretAttack",function(cmd)
+	hook.Add("CreateMove","gred_turretblock",function(cmd)
 		local lp = LocalPlayer()
 		if shouldBlockAttack and IsValid(lp) and bit.band(cmd:GetButtons(), IN_ATTACK) > 0 then
 			cmd:SetButtons(bit.bor(cmd:GetButtons() - IN_ATTACK, IN_BULLRUSH))

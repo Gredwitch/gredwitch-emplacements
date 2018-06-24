@@ -10,20 +10,45 @@ function ENT:CreateEmplacement()
 	turretBase:SetPos(self:GetPos()-Vector(0,0,0))
 	turretBase:Spawn()
 	self.turretBase=turretBase
+	if self.HasRotatingBarrel then
+		local barrel=ents.Create("prop_physics")
+		barrel:SetModel(self.SecondModel)
+		barrel:SetAngles(self:GetAngles()+Angle(0,0,0))
+		barrel:SetPos(self:GetPos()+Vector(0,0,self.BarrelHeight))
+		barrel:SetParent(self)
+		barrel:Spawn()
+		constraint.NoCollide(self.barrel,self,0,0) 
+		constraint.NoCollide(self.barrel,self.turretBase,0,0) 
+		self.barrel=barrel
+		self:SetDTEntity(5,barrel)
+		
+		local shootPos=ents.Create("prop_dynamic")
+		shootPos:SetModel("models/mm1/box.mdl")
+		shootPos:SetAngles(self.barrel:GetAttachment(self.barrel:LookupAttachment("muzzle")).Ang)
+		shootPos:SetPos(self.barrel:GetAttachment(self.barrel:LookupAttachment("muzzle")).Pos)
+		shootPos:Spawn()
+		shootPos:SetCollisionGroup(COLLISION_GROUP_WORLD)
+		shootPos:SetParent(self.barrel)
+		shootPos:SetNoDraw(true)
+		shootPos:DrawShadow(false)
+		shootPos:Fire("setparentattachment","muzzle")
+		self.shootPos=shootPos
+		self:SetDTEntity(1,self.shootPos)
+	else
+		local shootPos=ents.Create("prop_dynamic")
+		shootPos:SetModel("models/mm1/box.mdl")
+		shootPos:SetAngles(self:GetAttachment(self:LookupAttachment("muzzle")).Ang)
+		shootPos:SetPos(self:GetAttachment(self:LookupAttachment("muzzle")).Pos)
+		shootPos:Spawn()
+		shootPos:SetCollisionGroup(COLLISION_GROUP_WORLD)
+		self.shootPos=shootPos
+		shootPos:SetParent(self)
+		shootPos:SetNoDraw(true)
+		shootPos:DrawShadow(false)
+		shootPos:Fire("setparentattachment","muzzle")
+		self:SetDTEntity(1,shootPos)
+	end
 	if self.EmplacementType == "Mortar" then turretBase:SetMoveType(MOVETYPE_FLY) end
-	
-	local shootPos=ents.Create("prop_dynamic")
-	shootPos:SetModel("models/mm1/box.mdl")
-	shootPos:SetAngles(self:GetAttachment(self:LookupAttachment("muzzle")).Ang)
-	shootPos:SetPos(self:GetAttachment(self:LookupAttachment("muzzle")).Pos)
-	shootPos:Spawn()
-	shootPos:SetCollisionGroup(COLLISION_GROUP_WORLD)
-	self.shootPos=shootPos
-	shootPos:SetParent(self)
-	shootPos:SetNoDraw(true)
-	shootPos:DrawShadow(false)
-    shootPos:Fire("setparentattachment","muzzle")
-	self:SetDTEntity(1,shootPos)
 	
 	constraint.NoCollide(self.turretBase,self,0,0) 
 end
@@ -77,15 +102,25 @@ function ENT:Initialize()
 			end
 		end)
 	end
-	
-	self.HookupAttachment=self:LookupAttachment("hookup")
 	self.MuzzleAttachments = {}
-	for v=1,self.MuzzleCount do
-		if v>1 then
-			self.MuzzleAttachments[v] = self:LookupAttachment("muzzle"..v.."")
+	if self.HasRotatingBarrel then
+		self.MuzzleAttachments[1] = self.barrel:LookupAttachment("muzzle")
+		self.HookupAttachment=self.barrel:LookupAttachment("hookup")
+		for v=1,self.MuzzleCount do
+			if v>1 then
+				self.MuzzleAttachments[v] = self.barrel:LookupAttachment("muzzle"..v.."")
+			end
 		end
+	else
+		self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
+		self.HookupAttachment=self:LookupAttachment("hookup")
+		for v=1,self.MuzzleCount do
+			if v>1 then
+				self.MuzzleAttachments[v] = self:LookupAttachment("muzzle"..v.."")
+			end
+		end
+		self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
 	end
-	self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
 	
 	self:SetUseType(SIMPLE_USE)
 	self:DropToFloor()
@@ -189,8 +224,11 @@ function ENT:PhysicsSimulate( phys, deltatime )
 		
 		self.ShadowParams.secondstoarrive = 0.01 
 		
-		if not self.Seatable then self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight
-		else self.ShadowParams.pos = self.BasePos + self.shield:GetUp() + self.turretBase:GetUp()*self.TurretHeight end
+		if not self.Seatable then 
+			self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight
+		else
+			self.ShadowParams.pos = self.BasePos + self.shield:GetUp() + self.turretBase:GetUp()*self.TurretHeight 
+		end
 		self.ShadowParams.angle =self.BaseAng+self.OffsetAng+Angle(0,0,0)
 		self.ShadowParams.maxangular = 5000
 		self.ShadowParams.maxangulardamp = 10000
