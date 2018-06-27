@@ -73,7 +73,6 @@ function ENT:Initialize()
 	self.Entity:SetCollisionGroup	(COLLISION_GROUP_DEBRIS)
 	
 	local phys = self.Entity:GetPhysicsObject()
-	LAN = GetConVar("gred_sv_lan"):GetInt()
 	if IsValid(phys) then
 		phys:Wake()
 		phys:SetVelocity(Vector(0,0,0))
@@ -86,6 +85,7 @@ function ENT:Initialize()
 	end
 	if not IsValid(self.shield) and self.Seatable then
 		self:CreateShield()
+		
 	end
 	
 	if self.Seatable then
@@ -175,10 +175,6 @@ function ENT:OnRemove()
 end
 
 function ENT:StartShooting()
-	self.Shooter:DrawViewModel(false)
-	net.Start("TurretBlockAttackToggle")
-	net.WriteBit(true)
-	net.Send(self.Shooter)
 	if self.Seatable then 
 		local seat = ents.Create("prop_vehicle_prisoner_pod")
 		seat:SetAngles(self.shield:GetAttachment(self.shield:LookupAttachment("seat")).Ang-Angle(0,90,0))
@@ -196,8 +192,6 @@ function ENT:StartShooting()
 		self.Seat = seat
 		
 		self.Shooter:EnterVehicle(self.Seat)
-		self.Shooter:SetEyeAngles(self:GetAngles())
-		self:SetParent(self.Shooter)
 	end
 end
 
@@ -208,6 +202,7 @@ function ENT:FinishShooting()
 		net.Start("TurretBlockAttackToggle")
 		net.WriteBit(false)
 		net.Send(self.ShooterLast)
+		self.ShooterLast:DrawViewModel(true)
 		if self.Seatable and IsValid(self.Seat) then
 			self.ShooterLast:ExitVehicle(self.Seat)
 			self.Seat:Remove()

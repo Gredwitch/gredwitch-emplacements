@@ -1,6 +1,4 @@
-
 include("shared.lua")
-
 function ENT:Initialize()
 	self.MuzzleAttachment=self:LookupAttachment("muzzle")
 	self.shootPos=self:GetDTEntity(1)

@@ -6,8 +6,8 @@ ENT.Base 				= "gred_emp_base"
 ENT.Category			= "Gredwitch's Stuff"
 ENT.PrintName 			= "[EMP]KwK"
 ENT.Author				= "Gredwitch"
-ENT.Spawnable			= true
-ENT.AdminSpawnable		= true
+ENT.Spawnable			= false
+ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "KwK"
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
@@ -23,7 +23,7 @@ ENT.EffectSmoke			= "m203_smokegrenade"
 ENT.SoundName			= "shootPaK"
 ENT.ShootSound			= "gred_emp/pak40/shoot_reload.wav"
 
-ENT.TurretHeight		= 1
+ENT.TurretHeight		= 49.8
 ENT.TurretFloatHeight	= 0
 ENT.TurretModelOffset	= Vector(0,0,0)
 ENT.TurretTurnMax		= -1

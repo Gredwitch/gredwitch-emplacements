@@ -62,7 +62,8 @@ ExploSnds[4]                         =  "gred_emp/nebelwerfer/artillery_strike_s
 
 local noHitSky = false
 local reachSky = Vector(0,0,9999999999)
-local PLAYER = not game.IsDedicated() or CLIENT
+local PLAYER = CLIENT or not game.IsDedicated()
+local LAN = GetConVar("gred_sv_lan"):GetInt() == 1 or (CLIENT or not game.IsDedicated())
 
 function ENT:SetupDataTables()
 	self:DTVar("Entity",0,"Shooter")
@@ -176,7 +177,7 @@ function ENT:DoShot()
 			end
 			attPos = newEnt:GetAttachment(self.MuzzleAttachmentsClient[m]).Pos
 			attAng = newEnt:GetAttachment(self.MuzzleAttachmentsClient[m]).Ang
-			if LAN == 1 then
+			if LAN then
 				if GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
 					ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
 				else
@@ -315,6 +316,7 @@ function ENT:DoShot()
 			end
 		end
 	self.LastShot=CurTime()
+	self:EmitSound(self.SoundName)
 	end
 end
 
@@ -337,6 +339,10 @@ function ENT:Think()
 			end
 			if self:ShooterStillValid() then
 				if SERVER then
+				self:GetShooter():DrawViewModel(false)
+				net.Start("TurretBlockAttackToggle")
+				net.WriteBit(true)
+				net.Send(self:GetShooter())
 					if self.Seatable and !self:GetShooter():InVehicle() then
 						self:SetShooter(nil)
 						self:FinishShooting()
@@ -371,16 +377,20 @@ function ENT:Think()
 				local switchKey = IN_ATTACK2
 				local fuzekey   = IN_RELOAD
 				local fuzereset = IN_SPEED
+				local camera	= IN_DUCK
 				if CLIENT and game.SinglePlayer() then
 					pressKey  = IN_ATTACK
 					switchKey = IN_ATTACK2
 					fuzekey	  = IN_RELOAD
 					fuzereset = IN_SPEED
+					camera	  = IN_DUCK
 				end
 				self.Secondary			= self:GetShooter():KeyDown(switchKey)
 				self.Firing				= self:GetShooter():KeyDown(pressKey)
 				self.SwitchedFuzeKey	= self:GetShooter():KeyDown(fuzekey)
 				self.ResetFuzeKey		= self:GetShooter():KeyDown(fuzereset)
+				self.SwitchCamKey		= self:GetShooter():KeyDown(camera)
+				
 			else
 				self.Firing=false
 				if SERVER then
@@ -392,7 +402,6 @@ function ENT:Think()
 			end
 			if self.Firing then
 				self:DoShot()
-				self:EmitSound(self.SoundName)
 				if self.HasRotatingBarrel then
 					local barrel = self:GetDTEntity(5)
 					local spin = barrel:LookupSequence("spin")
@@ -431,4 +440,4 @@ function ENT:Think()
 			return true
 		end
 	end
-end	
+end
