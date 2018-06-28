@@ -24,6 +24,8 @@ ENT.EffectSmoke			= "doi_smoke_artillery"
 ENT.AmmoType			= "AP"
 ENT.FuzeTime			= 0
 ENT.CanSwitchAmmoTypes	= false
+ENT.AnimRestartTime		= 0
+ENT.NextAnim			= 0
 
 ENT.SoundName			= "shootSound"
 ENT.StopSound			= ""
@@ -402,24 +404,23 @@ function ENT:Think()
 			end
 			if self.Firing then
 				self:DoShot()
-				if self.HasRotatingBarrel then
-					local barrel = self:GetDTEntity(5)
-					local spin = barrel:LookupSequence("spin")
-					barrel:ResetSequence(spin)
+				if SERVER then
+					if self.HasRotatingBarrel then
+						if self.NextAnim < CurTime() then
+							self.spin = self.barrel:LookupSequence("spin")
+							self.barrel:ResetSequence(self.spin)
+							self.NextAnim = CurTime() + self.AnimRestartTime
+						end
+					end
+					if self.HasShootAnim then
+						shoot = self:LookupSequence("shoot")
+						self:ResetSequence(shoot)
+					end
 				end
 			end
 			if !self.Firing and self.EmplacementType == "MG" then
 				self:StopSound(self.SoundName)
 				if self.HasStopSound then self:EmitSound(self.StopSoundName) end
-				if self.HasRotatingBarrel then
-					local barrel = self:GetDTEntity(5)
-					local spin = barrel:LookupSequence("spin")
-					timer.Simple(barrel:SequenceDuration(spin),function()
-						if IsValid(self.barrel) then
-							barrel:SetSequence(barrel:LookupSequence("idle"))
-						end
-					end)
-				end
 			end
 			if self.Secondary then
 				if self.EmplacementType != "MG" or (self.CanSwitchAmmoTypes and self.EmplacementType == "MG") then 

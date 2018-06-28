@@ -10,6 +10,7 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 -- ENT.NameToPrint			= "M61 Vulcan"
 
+ENT.AnimRestartTime		= 0.05
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.MuzzleCount			= 1
 ENT.BulletType			= "wac_base_20mm"
