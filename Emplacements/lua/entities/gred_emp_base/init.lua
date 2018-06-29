@@ -85,7 +85,6 @@ function ENT:Initialize()
 	end
 	if not IsValid(self.shield) and self.Seatable then
 		self:CreateShield()
-		
 	end
 	
 	if self.Seatable then

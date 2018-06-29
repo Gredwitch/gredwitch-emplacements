@@ -10,7 +10,7 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= true
 ENT.NameToPrint			= "PaK 40"
 
-ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
+ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
 ENT.BulletType			= "gb_rocket_75mm"
 ENT.MuzzleCount			= 1
