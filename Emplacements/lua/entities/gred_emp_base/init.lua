@@ -207,7 +207,6 @@ function ENT:FinishShooting()
 			self.Seat:Remove()
 		end
 		self.ShooterLast=nil
-		self:StopSound(self.SoundName)
 	end
 end
 

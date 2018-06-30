@@ -14,6 +14,8 @@ ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
 ENT.BulletType			= "gb_rocket_50mm"
 ENT.MuzzleCount			= 1
+ENT.HasReloadAnim		= true
+ENT.AnimRestartTime		= 4.5
 
 ENT.HERadius			= 350
 ENT.HEDamage			= 100

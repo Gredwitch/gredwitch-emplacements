@@ -26,6 +26,7 @@ ENT.FuzeTime			= 0
 ENT.CanSwitchAmmoTypes	= false
 ENT.AnimRestartTime		= 0
 ENT.NextAnim			= 0
+ENT.HasReloadAnim		= false
 
 ENT.SoundName			= "shootSound"
 ENT.StopSound			= ""
@@ -252,14 +253,14 @@ function ENT:DoShot(plr)
 					local shootpos = attPos
 					b:SetPos(shootpos)
 					b:SetAngles(attAng)
+					b:SetBodygroup(0,1)
 					if self.AmmoType == "HE" then
-						if self.BulletType == "gb_rocket_75mm" then b.Model = "models/gredwitch/75mm_he.mdl" end
 						b.ExplosionRadius = self.HERadius
 						b.ExplosionDamage = self.HEDamage
 						b.Effect		  = self.EffectHE
 						b.EffectAir		  = self.EffectHE
+						b:SetBodygroup	  (1,1)
 					elseif self.AmmoType == "Smoke" then
-						if self.BulletType == "gb_rocket_75mm" then b.Model = "models/gredwitch/75mm_he.mdl" end
 						b.Effect 		  				   = self.EffectSmoke
 						b.EffectAir 	  				   = self.EffectSmoke
 						b.ExplosionRadius 				   = 0
@@ -272,15 +273,27 @@ function ENT:DoShot(plr)
 						b.DEFAULT_PHYSFORCE_PLYGROUND      = 0
 						b.ExplosionSound				   = table.Random(ExploSnds)
 						b.WaterExplosionSound			   = table.Random(ExploSnds)
+						b:SetBodygroup	  (1,1)
 						b.Smoke = true
 					end
 					b.GBOWNER=self:GetShooter()
 					b:Spawn()
 					b:Activate()
 					b:Launch()
-					b:GetPhysicsObject():AddVelocity(self:GetRight()*-999999999999999999)
+					b:GetPhysicsObject():ApplyForceCenter(self:GetRight()*-999999999999999999999999999999999999)
 					b.Owner=self.Shooter
-					
+					timer.Simple(0.7,function()
+						if !IsValid(self) then return end
+						shellEject = self:GetAttachment(self:LookupAttachment("shelleject"))
+						local shell = ents.Create("gred_prop_casing")
+						shell.Model = "models/gredwitch/bombs/75mm_shell.mdl"
+						shell:SetPos(shellEject.Pos)
+						shell:SetAngles(shellEject.Ang)
+						shell.BodyGroupA = 1
+						shell.BodyGroupB = 2
+						shell:Spawn()
+						shell:Activate()
+					end)
 				elseif self.EmplacementType == "Mortar" then
 					local b=ents.Create(self.BulletType)
 					local shootPos=util.TraceLine(util.GetPlayerTrace(self.Shooter)).HitPos
@@ -319,10 +332,34 @@ function ENT:DoShot(plr)
 				elseif self.EmplacementType == "AT" then
 					self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*9999999999999)
 				end
+				self:EmitSound(self.SoundName)
 			end
 		end
 	self.LastShot=CurTime()
-	self:EmitSound(self.SoundName)
+	end
+end
+function ENT:PlayAnim()
+	if SERVER then
+		if self.HasRotatingBarrel then
+			if self.NextAnim < CurTime() then
+				self.barrel:ResetSequence(self.barrel:LookupSequence("spin"))
+				self.NextAnim = CurTime() + self.AnimRestartTime
+			end
+		end
+		if self.HasShootAnim then
+			shoot = self:LookupSequence("shoot")
+			self:ResetSequence(shoot)
+		end
+		if self.HasReloadAnim then
+			timer.Simple(0.5,function()
+				if !IsValid(self) then return end
+				self:ResetSequence(self:LookupSequence("reload_finish"))
+			end)
+			timer.Simple(self.AnimRestartTime,function() 
+				if !IsValid(self) then return end
+				self:ResetSequence(self:LookupSequence("reload_start")) 
+			end)
+		end
 	end
 end
 
@@ -402,19 +439,7 @@ function ENT:Think()
 			end
 			if self.Firing then
 				self:DoShot(self:GetDTEntity(0))
-				if SERVER then
-					if self.HasRotatingBarrel then
-						if self.NextAnim < CurTime() then
-							self.spin = self.barrel:LookupSequence("spin")
-							self.barrel:ResetSequence(self.spin)
-							self.NextAnim = CurTime() + self.AnimRestartTime
-						end
-					end
-					if self.HasShootAnim then
-						shoot = self:LookupSequence("shoot")
-						self:ResetSequence(shoot)
-					end
-				end
+				self:PlayAnim()
 			end
 			if !self.Firing and self.EmplacementType == "MG" then
 				self:StopSound(self.SoundName)
