@@ -1,0 +1,11 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/gredwitch/pm41/ru_pm41_c"
+	"$bumpmap" "models/gredwitch/pm41/ru_pm41_b"
+	
+	"$normalmapalphaenvmapmask" "1"
+	"$phong" 					"1"
+	"$phongexponent" 			"69"
+	"$phongboost"   			"0.1"
+	"$phongfresnelranges"   	"[8 4 8]"
+}

@@ -16,17 +16,17 @@ ENT.MuzzleCount			= 1
 ENT.NextSwitch			= 0.5
 ENT.tracer 				= 0
 ENT.Color				= "Green"
+ENT.EmplacementType     = "MG"
 
-ENT.HERadius			= 0
-ENT.HEDamage			= 0
-ENT.EffectHE			= ""
-ENT.EffectSmoke			= "doi_smoke_artillery"
+ENT.AnimPlaying			= false
 ENT.AmmoType			= "AP"
 ENT.FuzeTime			= 0
 ENT.CanSwitchAmmoTypes	= false
 ENT.AnimRestartTime		= 0
 ENT.NextAnim			= 0
 ENT.HasReloadAnim		= false
+ENT.AnimPlayTime		= 0.5
+ENT.ShellEjectTime		= 0.2
 
 ENT.SoundName			= "shootSound"
 ENT.StopSound			= ""
@@ -41,7 +41,6 @@ ENT.TurretModelOffset	= Vector(0,0,0)
 ENT.TurretTurnMax		= 0
 ENT.BaseModel			= ""
 ENT.Model				= ""
-ENT.EmplacementType     = "MG"
 ENT.Scatter				= 1
 ENT.MaxUseDistance		= 60
 ENT.Seatable			= false
@@ -56,12 +55,6 @@ ENT.ShooterLast			= nil
 ENT.SeatShooting		= false
 ENT.BarrelHeight		= 0
 ENT.NextAmmoSwitch		= 0
-
-local ExploSnds = {}
-ExploSnds[1]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_01.wav"
-ExploSnds[2]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_02.wav"
-ExploSnds[3]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_03.wav"
-ExploSnds[4]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_04.wav"
 
 local noHitSky = false
 local reachSky = Vector(0,0,9999999999)
@@ -154,14 +147,16 @@ function ENT:DoShot(plr)
 			end
 			
 			if !canShoot then
-				if !noHitSky and CLIENT then plr:ChatPrint("["..self.NameToPrint.."] You can't shoot there!") end
+				-- if !noHitSky and CLIENT then plr:ChatPrint("["..self.NameToPrint.."] You can't shoot there!") end
 				self.LastShot=CurTime()-self.ShotInterval/1.2
-			return else
-			
-				local pos = self:GetPos()
-				util.ScreenShake(pos,5,5,0.5,200)
-				ParticleEffect("gred_mortar_explosion_smoke_ground", pos-Vector(0,0,30),Angle(90,0,0))
+				return 
 			end
+			
+		end
+		if self.EmplacementType == "Mortar" or self.EmplacementType == "AT" then
+			local pos = self:GetPos()
+			util.ScreenShake(pos,5,5,0.5,200)
+			ParticleEffect("gred_mortar_explosion_smoke_ground", pos-Vector(0,0,30),Angle(90,0,0))
 		end
 		for m = 1,self.MuzzleCount do
 			if self.HasRotatingBarrel then
@@ -214,12 +209,13 @@ function ENT:DoShot(plr)
 					local b = ents.Create("gred_base_bullet")
 					
 					if self.BulletType == "wac_base_7mm" then
-						ang = attAng + Angle(math.Rand(-0.5,0.5), math.Rand(-0.5,0.5), math.Rand(-0.5,0.5))
+						num = 0.3
 					elseif self.BulletType == "wac_base_12mm" then
-						ang = attAng + Angle(math.Rand(-1,1), math.Rand(-1,1), math.Rand(-1,1))
+						num = 0.5
 					elseif self.BulletType == "wac_base_20mm" then
-						ang = attAng + Angle(math.Rand(-1.4,1.4), math.Rand(-1.4,1.4), math.Rand(-1.4,1.4))
+						num = 1.4
 					end
+					ang = attAng + Angle(math.Rand(num,-num), math.Rand(num,-num), math.Rand(num,-num))
 					b:SetPos(attPos)
 					b:SetAngles(ang)
 					b.Speed=1000
@@ -253,36 +249,29 @@ function ENT:DoShot(plr)
 					local shootpos = attPos
 					b:SetPos(shootpos)
 					b:SetAngles(attAng)
-					b:SetBodygroup(0,1)
-					if self.AmmoType == "HE" then
-						b.ExplosionRadius = self.HERadius
-						b.ExplosionDamage = self.HEDamage
-						b.Effect		  = self.EffectHE
-						b.EffectAir		  = self.EffectHE
-						b:SetBodygroup	  (1,1)
-					elseif self.AmmoType == "Smoke" then
-						b.Effect 		  				   = self.EffectSmoke
-						b.EffectAir 	  				   = self.EffectSmoke
-						b.ExplosionRadius 				   = 0
-						b.ExplosionDamage 				   = 0
-						b.SpecialRadius   				   = 0
-						b.PhysForce						   = 0
-						b.RSound						   = 1
-						b.DEFAULT_PHYSFORCE                = 0
-						b.DEFAULT_PHYSFORCE_PLYAIR         = 0
-						b.DEFAULT_PHYSFORCE_PLYGROUND      = 0
-						b.ExplosionSound				   = table.Random(ExploSnds)
-						b.WaterExplosionSound			   = table.Random(ExploSnds)
-						b:SetBodygroup	  (1,1)
-						b.Smoke = true
-					end
 					b.GBOWNER=self:GetShooter()
 					b:Spawn()
 					b:Activate()
+					b:SetBodygroup(0,1)
+					b:SetBodygroup	  (1,1)
+					if self.AmmoType == "AP" then
+						b:SetBodygroup	  (1,0)
+						b.AP = true
+					elseif self.AmmoType == "Smoke" then
+						b.Smoke = true
+					end
 					b:Launch()
-					b:GetPhysicsObject():ApplyForceCenter(self:GetRight()*-999999999999999999999999999999999999)
+					local bphys = b:GetPhysicsObject()
+					if IsValid(bphys) then 
+						velocity = self:GetRight()*-9999999999999
+						if !game.IsDedicated() then
+							bphys:ApplyForceCenter(velocity) 
+						else
+							bphys:AddVelocity(velocity)
+						end
+					end
 					b.Owner=self.Shooter
-					timer.Simple(0.7,function()
+					timer.Simple(self.AnimPlayTime + self.ShellEjectTime,function()
 						if !IsValid(self) then return end
 						shellEject = self:GetAttachment(self:LookupAttachment("shelleject"))
 						local shell = ents.Create("gred_prop_casing")
@@ -330,12 +319,12 @@ function ENT:DoShot(plr)
 				if self.EmplacementType == "MG" then
 					self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*50000)
 				elseif self.EmplacementType == "AT" then
-					self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*9999999999999)
+					self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*-99999)
 				end
 				self:EmitSound(self.SoundName)
 			end
 		end
-	self.LastShot=CurTime()
+		self.LastShot=CurTime()
 	end
 end
 function ENT:PlayAnim()
@@ -351,13 +340,16 @@ function ENT:PlayAnim()
 			self:ResetSequence(shoot)
 		end
 		if self.HasReloadAnim then
-			timer.Simple(0.5,function()
+			if self.AnimPlaying then return end
+			timer.Simple(self.AnimPlayTime,function()
 				if !IsValid(self) then return end
 				self:ResetSequence(self:LookupSequence("reload_finish"))
+				self.AnimPlaying = true
 			end)
 			timer.Simple(self.AnimRestartTime,function() 
 				if !IsValid(self) then return end
 				self:ResetSequence(self:LookupSequence("reload_start")) 
+				self.AnimPlaying = false
 			end)
 		end
 	end

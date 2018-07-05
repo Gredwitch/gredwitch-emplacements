@@ -12,18 +12,14 @@ ENT.NameToPrint			= "PaK 38"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
-ENT.BulletType			= "gb_rocket_50mm"
+ENT.BulletType			= "gb_shell_50mm"
 ENT.MuzzleCount			= 1
 ENT.HasReloadAnim		= true
-ENT.AnimRestartTime		= 4.5
+ENT.AnimRestartTime		= 4.6
+ENT.AnimPlayTime		= 1.3
 
-ENT.HERadius			= 350
-ENT.HEDamage			= 100
-ENT.EffectHE			= "gred_50mm"
-ENT.EffectSmoke			= "m203_smokegrenade"
-
-ENT.SoundName			= "shootPaK"
-ENT.ShootSound			= "gred_emp/pak40/shoot_reload.wav"
+ENT.SoundName			= "shootPaK38"
+ENT.ShootSound			= "gred_emp/common/50mm.wav"
 
 ENT.TurretHeight		= 1
 ENT.TurretFloatHeight	= 0

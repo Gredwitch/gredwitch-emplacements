@@ -17,7 +17,7 @@ ENT.Category                        =	"Gredwitch's Stuff"
 ENT.Ammo							=	66
 ENT.TubesMdl                        =	"models/gredwitch/nebelwerfer/nebelwerfer_tubes.mdl"
 ENT.Mass							=	0.001
-ENT.ReloadTime						=	GetConVarNumber("gred_emp_nebel_reloadtime")
+ENT.ReloadTime						=	GetConVarNumber("gred_sv_nebel_reloadtime")
 ENT.Dump							=	false
 ENT.Smoke							=	false
 ENT.FireRate						=	1.67
@@ -69,10 +69,10 @@ if (SERVER) then
 			ent.WaterExplosionSound = table.Random(ExploSnds)
 			ent.Smoke = true
 		end
-		if GetConVarNumber("gred_emp_nebel_range_divider") <= 0 then
+		if GetConVarNumber("gred_sv_nebel_range_divider") <= 0 then
 			ent.FuelBurnoutTime = math.Rand(1.7,2)
 		else
-			ent.FuelBurnoutTime = math.Rand(1.7,2) / GetConVarNumber("gred_emp_nebel_range_divider")
+			ent.FuelBurnoutTime = math.Rand(1.7,2) / GetConVarNumber("gred_sv_nebel_range_divider")
 		end
 		ent:Activate()
 		ent:Spawn()

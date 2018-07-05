@@ -35,8 +35,32 @@ if (SERVER) then
 	function ENT:Think()
 		self:SetBodygroup(self.BodyGroupA,self.BodyGroupB)
 	end
+	--[[function ENT:PhysicsCollide( data, physobj )
+		timer.Simple(0,function()
+		if !IsValid(self) then return end
+			 if(GetConVar("gred_sv_fragility"):GetInt() >= 1) then
+				 if(!self.Fired and !self.Burnt and !self.Arming and !self.Armed ) and (data.Speed > self.ImpactSpeed * 5) then --and !self.Arming and !self.Armed
+					 if(math.random(0,9) == 1) then
+						 self:Launch()
+						 self:EmitSound(damagesound)
+					 else
+						 self:Arm()
+						 self:EmitSound(damagesound)
+					 end
+				 end
+			 end
+
+			 if(!self.Armed) then return end
+				
+			 if (data.Speed > self.ImpactSpeed )then
+				 self.Exploded = true
+				 self:Explode()
+			 end
+		end)
+	end--]]
 elseif (CLIENT) then
 	function ENT:Draw()
 		self:DrawModel()
 	end
 end
+

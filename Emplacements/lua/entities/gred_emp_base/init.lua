@@ -10,6 +10,9 @@ function ENT:CreateEmplacement()
 	turretBase:SetPos(self:GetPos()-Vector(0,0,0))
 	turretBase:Spawn()
 	self.turretBase=turretBase
+	if self.EmplacementType == "AT" and GetConVar("gred_sv_carriage_collision"):GetInt() == 0 then
+		self.turretBase:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
+	end
 	if self.HasRotatingBarrel then
 		local barrel=ents.Create("prop_physics")
 		barrel:SetModel(self.SecondModel)
