@@ -1,7 +1,7 @@
 AddCSLuaFile()
 DEFINE_BASECLASS( "base_anim" )
 
-local MetMat = {
+local materials = {
 	canister				=	1,
 	chain					=	1,
 	chainlink				=	1,
@@ -24,6 +24,15 @@ local MetMat = {
 	solidmetal				=	1,
 	strider					=	1,
 	weapon					=	1,
+	
+	wood					=	2,
+	wood_Box				=	2,
+	wood_Crate 				=	2,
+	wood_Furniture			=	2,
+	wood_LowDensity 		=	2,
+	wood_Plank				=	2,
+	wood_Panel				=	2,
+	wood_Solid				=	2,
 }
 
 sound.Add({
@@ -41,7 +50,17 @@ SmokeSnds[3]                         =  "gred_emp/nebelwerfer/artillery_strike_s
 SmokeSnds[4]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_04.wav"
 
 local APSounds = {}
-APSounds[1]							 =  "impactsounds/ap_impact.wav"
+APSounds[1]							 =  "impactsounds/ap_impact_01.wav"
+APSounds[2]							 =  "impactsounds/ap_impact_02.wav"
+APSounds[3]							 =  "impactsounds/ap_impact_03.wav"
+APSounds[4]							 =  "impactsounds/ap_impact_04.wav"
+
+local APWoodSounds = {}
+APWoodSounds[1]							 =  "impactsounds/ap_impact_wood_01.wav"
+APWoodSounds[2]							 =  "impactsounds/ap_impact_wood_02.wav"
+APWoodSounds[3]							 =  "impactsounds/ap_impact_wood_03.wav"
+APWoodSounds[4]							 =  "impactsounds/ap_impact_wood_04.wav"
+
 local APSoundsDist = {}
 APSoundsDist[1]							 =  "impactsounds/ap_impact_dist_01.wav"
 APSoundsDist[2]							 =  "impactsounds/ap_impact_dist_02.wav"
@@ -183,14 +202,6 @@ function ENT:Explode()
 		self.Effect = self.SmokeEffect
 		self.EffectAir = self.SmokeEffect
 	elseif self.AP then
-		if game.SinglePlayer() then
-			self.ExplosionSound = table.Random(APSoundsDist)
-			self.FarExplosionSound = table.Random(APSoundsDist)
-		else
-			self.ExplosionSound = table.Random(APSounds)
-			self.FarExplosionSound = table.Random(APSounds)
-		end
-		self.DistExplosionSound = table.Random(APSoundsDist)
 		self.Effect = "gred_ap_impact"
 		self.EffectAir = "gred_ap_impact"
 		self.ExplosionRadius = 100
@@ -281,19 +292,16 @@ function ENT:Explode()
 			trdt.filter = self.Entity
 			local tr = util.TraceLine(trdt)
 			local hitmat = util.GetSurfacePropName(tr.SurfaceProps)
-			if MetMat[hitmat] == 1 then
+			if materials[hitmat] == 1 then
 				self.Effect = "AP_impact_wall"
-				if game.SinglePlayer() then
-					self:EmitSound(table.Random(APMetalSounds),120,100,1,CHAN_AUTO)
-					self.ExplosionSound = table.Random(APSoundsDist)
-					self.FarExplosionSound = table.Random(APSoundsDist)
-				else
-					self.ExplosionSound = table.Random(APMetalSounds)
-					self.FarExplosionSound = table.Random(APMetalSounds)
-				end
-				self.DistExplosionSound = table.Random(APSoundsDist)
+				self.ExplosionSound = table.Random(APMetalSounds)
+				self.FarExplosionSound = table.Random(APMetalSounds)
+			elseif materials[hitmat] == 2 then
+				self.ExplosionSound = table.Random(APWoodSounds)
+				self.FarExplosionSound = table.Random(APWoodSounds)
 			else
-				self:EmitSound(table.Random(APSounds),120,100,1,CHAN_AUTO)
+				self.ExplosionSound = table.Random(APSounds)
+				self.FarExplosionSound = table.Random(APSounds)
 			end
 		end
 		if trace.HitWorld then

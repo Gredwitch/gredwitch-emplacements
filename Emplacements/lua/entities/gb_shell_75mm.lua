@@ -45,7 +45,7 @@ ENT.Mass                             =  10
 ENT.Effect                           =  "ins_rpg_explosion"
 ENT.EffectAir                        =  "ins_rpg_explosion"
 ENT.EffectWater                      =  "ins_water_explosion"
-ENT.SmokeEffect						 =  "doi_smoke_artillery"
+ENT.SmokeEffect						 =  "m203_smokegrenade"
 ENT.AngEffect						 =	true
      
 ENT.ExplosionSound                   =  table.Random(CloseExploSnds)

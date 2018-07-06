@@ -56,6 +56,13 @@ ENT.SeatShooting		= false
 ENT.BarrelHeight		= 0
 ENT.NextAmmoSwitch		= 0
 
+local SmokeSnds = {}
+SmokeSnds[1]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_01.wav"
+SmokeSnds[2]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_02.wav"
+SmokeSnds[3]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_03.wav"
+SmokeSnds[4]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_04.wav"
+
+
 local noHitSky = false
 local reachSky = Vector(0,0,9999999999)
 
@@ -230,7 +237,7 @@ function ENT:DoShot(plr)
 					b:Spawn()
 					b:Activate()
 					constraint.NoCollide(b,self,0,0,true)
-					b.Owner=self.Shooter
+					b.Owner=plr
 					
 					self.tracer = self.tracer + 1
 					if self.tracer >= GetConVarNumber("gred_sv_tracers") then
@@ -249,7 +256,7 @@ function ENT:DoShot(plr)
 					local shootpos = attPos
 					b:SetPos(shootpos)
 					b:SetAngles(attAng)
-					b.GBOWNER=self:GetShooter()
+					b.GBOWNER=plr
 					b:Spawn()
 					b:Activate()
 					b:SetBodygroup(0,1)
@@ -270,7 +277,7 @@ function ENT:DoShot(plr)
 							bphys:AddVelocity(velocity)
 						end
 					end
-					b.Owner=self.Shooter
+					b.Owner=plr
 					timer.Simple(self.AnimPlayTime + self.ShellEjectTime,function()
 						if !IsValid(self) then return end
 						shellEject = self:GetAttachment(self:LookupAttachment("shelleject"))
@@ -290,7 +297,9 @@ function ENT:DoShot(plr)
 						if not IsValid(self) then return end
 						
 						local b=ents.Create(self.BulletType)
-						b:SetPos(shootPos + Vector(math.random(-self.Scatter,self.Scatter),math.random(-self.Scatter,self.Scatter),1000))
+						local spawnAtt = GetConVar("gred_sv_mortar_shellspawnaltitude"):GetInt()
+						if spawnAtt == nil then spawnAtt = 1000 end
+						b:SetPos(shootPos + Vector(math.random(-self.Scatter,self.Scatter),math.random(-self.Scatter,self.Scatter),spawnAtt))
 						b:SetAngles(Angle(90,0,0))
 						b:SetOwner(self.Shooter)
 						if self.AmmoType == "Smoke" then
@@ -304,16 +313,16 @@ function ENT:DoShot(plr)
 							b.DEFAULT_PHYSFORCE                = 0
 							b.DEFAULT_PHYSFORCE_PLYAIR         = 0
 							b.DEFAULT_PHYSFORCE_PLYGROUND      = 0
-							b.ExplosionSound				   = table.Random(ExploSnds)
-							b.WaterExplosionSound			   = table.Random(ExploSnds)
+							b.ExplosionSound				   = table.Random(SmokeSnds)
+							b.WaterExplosionSound			   = table.Random(SmokeSnds)
 							b.Smoke = true
 						end
-						b.GBOWNER=self:GetShooter()
+						b.GBOWNER=plr
 						b:Spawn()
 						b:Activate()
 						b:EmitSound("artillery/flyby/artillery_strike_incoming_0"..(math.random(1,4))..".wav", 140, 100, 1)
 						b:Arm()
-						b.Owner=self.Shooter
+						b.Owner=plr
 					end)
 				end
 				if self.EmplacementType == "MG" then
@@ -321,9 +330,9 @@ function ENT:DoShot(plr)
 				elseif self.EmplacementType == "AT" then
 					self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*-99999)
 				end
-				self:EmitSound(self.SoundName)
 			end
 		end
+		self:EmitSound(self.SoundName)
 		self.LastShot=CurTime()
 	end
 end
