@@ -4,7 +4,7 @@ ENT.Type 				= "anim"
 ENT.Base 				= "gred_emp_base"
 
 ENT.Category			= "Gredwitch's Stuff"
-ENT.PrintName 			= "[EMP]Ordnance 3'' Mortar"
+ENT.PrintName 			= "[EMP]3'' Ordnance Mortar"
 ENT.Author				= "Gredwitch"
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= false

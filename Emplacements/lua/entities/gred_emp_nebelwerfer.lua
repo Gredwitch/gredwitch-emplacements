@@ -3,7 +3,7 @@ DEFINE_BASECLASS( "base_anim" )
 ENT.Spawnable		            	=	true
 ENT.AdminSpawnable		            =	true
 
-ENT.PrintName		                =	"[EMP]Nebelwerfer 41"
+ENT.PrintName		                =	"[EMP]150mm Nebelwerfer 41"
 ENT.Author			                =	"Gredwitch"
 ENT.Contact			                =	"qhamitouche@gmail.com"
 ENT.Category                        =	"Gredwitch's Stuff"

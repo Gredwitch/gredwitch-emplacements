@@ -12,7 +12,6 @@ ENT.HasBodyGroups					=	true
 ENT.BodyGroupA						=	0
 ENT.BodyGroupB						=	0
 ENT.Mass							=	70
-ENT.TimeToRemove					=	5--GetConVar("gred_sv_shell_remove_time"):GetInt()
 
 if (SERVER) then
 	function ENT:Initialize()
@@ -28,39 +27,28 @@ if (SERVER) then
 			phys:AddVelocity(self:GetUp()*math.random(150,200))
 			phys:Wake()
 		end
-		self:SetAngles(self:GetAngles()+Angle(math.random(5,-5),math.random(5,-5),math.random(5,-5))) 
+		self:SetAngles(self:GetAngles()+Angle(math.random(5,-5),math.random(5,-5),math.random(5,-5)))
+		self.TimeToRemove =	GetConVar("gred_sv_shell_remove_time"):GetInt()
 		if self.TimeToRemove == nil then self.TimeToRemove = 20 end
-		timer.Simple(self.TimeToRemove,function() if IsValid(self) then self:Remove() end end)
+		self.audioparams = 80,100,1,CHAN_AUTO
 	end
 	function ENT:Think()
 		self:SetBodygroup(self.BodyGroupA,self.BodyGroupB)
+		if self.TimeToRemove > 0 then
+			timer.Simple(self.TimeToRemove,function() if IsValid(self) then self:Remove() end end)
+		end
 	end
-	--[[function ENT:PhysicsCollide( data, physobj )
-		timer.Simple(0,function()
-		if !IsValid(self) then return end
-			 if(GetConVar("gred_sv_fragility"):GetInt() >= 1) then
-				 if(!self.Fired and !self.Burnt and !self.Arming and !self.Armed ) and (data.Speed > self.ImpactSpeed * 5) then --and !self.Arming and !self.Armed
-					 if(math.random(0,9) == 1) then
-						 self:Launch()
-						 self:EmitSound(damagesound)
-					 else
-						 self:Arm()
-						 self:EmitSound(damagesound)
-					 end
-				 end
-			 end
-
-			 if(!self.Armed) then return end
-				
-			 if (data.Speed > self.ImpactSpeed )then
-				 self.Exploded = true
-				 self:Explode()
-			 end
-		end)
-	end--]]
 elseif (CLIENT) then
 	function ENT:Draw()
 		self:DrawModel()
 	end
 end
 
+function ENT:PhysicsCollide( data, physobj )
+	timer.Simple(0,function()
+		if !IsValid(self) then return end
+		if data.Speed > 100 then
+			self:EmitSound("gred_emp/common/cannon_shell_drop_0"..math.random(1,7)..".wav",self.audioparams)
+		end
+	end)
+end

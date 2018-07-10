@@ -185,22 +185,8 @@ function ENT:DoShot(plr)
 				attPos = newEnt:GetAttachment(self.MuzzleAttachments[m]).Pos
 				attAng = newEnt:GetAttachment(self.MuzzleAttachments[m]).Ang
 			end
-			if SERVER and not game.SinglePlayer() then
-				for k, ply in pairs(player.GetAll()) do
-					if not ply:IsPlayer() then return end
-					if tonumber(ply:GetInfo("gred_cl_altmuzzleeffect")) == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
-						ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
-					else
-						local effectdata=EffectData()
-						effectdata:SetOrigin(attPos)
-						effectdata:SetAngles(attAng)
-						effectdata:SetEntity(self)
-						effectdata:SetScale(1)
-						util.Effect("MuzzleEffect", effectdata)
-					end
-				end
-			elseif game.SinglePlayer() then
-				if GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
+			if SERVER then
+				if GetConVar("gred_sv_altmuzzleeffect"):GetInt() == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
 					ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
 				else
 					local effectdata=EffectData()
@@ -328,11 +314,12 @@ function ENT:DoShot(plr)
 				if self.EmplacementType == "MG" then
 					self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*50000)
 				elseif self.EmplacementType == "AT" then
-					self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*-99999)
+					self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*500000000)
 				end
 			end
 		end
 		self:EmitSound(self.SoundName)
+		if self.EmplacementType == "AT" then self:PlayAnim() end
 		self.LastShot=CurTime()
 	end
 end
@@ -440,7 +427,7 @@ function ENT:Think()
 			end
 			if self.Firing then
 				self:DoShot(self:GetDTEntity(0))
-				self:PlayAnim()
+				if self.EmplacementType == "MG" then self:PlayAnim() end
 			end
 			if !self.Firing and self.EmplacementType == "MG" then
 				self:StopSound(self.SoundName)
