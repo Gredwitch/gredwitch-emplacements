@@ -16,8 +16,7 @@ ENT.ShotInterval		= 0.12
 ENT.Color				= "Red"
 
 ENT.ShootSound			= "gred_emp/m2/shoot.wav"
-ENT.StopSound			= "gred_emp/m2/stop.wav"
-ENT.StopSoundName		= "stopM2"
+ENT.StopSoundName		= "gred_emp/m2/stop.wav"
 ENT.HasStopSound		= true
 ENT.SoundName			= "shootM2"
 

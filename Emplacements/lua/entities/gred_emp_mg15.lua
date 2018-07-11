@@ -16,6 +16,8 @@ ENT.ShotInterval		= 0.057
 ENT.Color				= "Green"
 
 ENT.ShootSound			= "gred_emp/mg15/shoot.wav"
+ENT.HasStopSound		= true
+ENT.StopSoundName		= "gred_emp/mg15/stop.wav"
 ENT.SoundName			= "shootMG15"
 
 ENT.BaseModel			= "models/gredwitch/mg81z/mg81z_tripod.mdl"

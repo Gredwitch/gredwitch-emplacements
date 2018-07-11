@@ -6,13 +6,13 @@ ENT.Base 				= "gred_emp_base"
 ENT.Category			= "Gredwitch's Stuff"
 ENT.PrintName 			= "[EMP]50mm KwK"
 ENT.Author				= "Gredwitch"
-ENT.Spawnable			= false
+ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "KwK"
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.ShotInterval		= 4.8
-ENT.BulletType			= "gb_rocket_50mm"
+ENT.BulletType			= "gb_shell_50mm"
 ENT.MuzzleCount			= 1
 
 ENT.HERadius			= 300
@@ -21,7 +21,7 @@ ENT.EffectHE			= "gred_50mm"
 ENT.EffectSmoke			= "m203_smokegrenade"
 
 ENT.SoundName			= "shootPaK"
-ENT.ShootSound			= "gred_emp/pak40/shoot_reload.wav"
+ENT.ShootSound			= "gred_emp/common/50mm.wav"
 
 ENT.TurretHeight		= 49.8
 ENT.TurretFloatHeight	= 0

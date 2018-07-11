@@ -56,12 +56,13 @@ ENT.SeatShooting		= false
 ENT.BarrelHeight		= 0
 ENT.NextAmmoSwitch		= 0
 
+local CanPlayStopSnd = false
+
 local SmokeSnds = {}
 SmokeSnds[1]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_01.wav"
 SmokeSnds[2]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_02.wav"
 SmokeSnds[3]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_03.wav"
 SmokeSnds[4]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_04.wav"
-
 
 local noHitSky = false
 local reachSky = Vector(0,0,9999999999)
@@ -323,6 +324,7 @@ function ENT:DoShot(plr)
 		self.LastShot=CurTime()
 	end
 end
+
 function ENT:PlayAnim()
 	if SERVER then
 		if self.HasRotatingBarrel then
@@ -351,71 +353,102 @@ function ENT:PlayAnim()
 	end
 end
 
+function ENT:SetShootAngles()
+	if SERVER then
+		self:GetShooter():DrawViewModel(false)
+		net.Start("TurretBlockAttackToggle")
+		net.WriteBit(true)
+		net.Send(self:GetShooter())
+		if self.Seatable and !self:GetShooter():InVehicle() then
+			self:SetShooter(nil)
+			self:FinishShooting()
+			if !self:ShooterStillValid() then return end
+		end
+		if self.HasRotatingBarrel then
+			offsetAng=(self.barrel:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
+			offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
+		else
+			offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
+			offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
+		end
+		if self.TurretTurnMax > -1 or self.EmplacementType != "MG" or !self.Seatable then
+			if offsetDot>=self.TurretTurnMax then
+				local offsetAngNew=offsetAng:Angle()
+				offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
+				
+				self.OffsetAng=offsetAngNew
+				if self.EmplacementType == "Mortar" then canShoot = true end
+			else
+				if self.EmplacementType == "Mortar" then canShoot = false end
+			end
+		end
+	end
+end
+
+function ENT:SetPlayerKeys(ply)
+	local pressKey  = IN_BULLRUSH
+	local switchKey = IN_ATTACK2
+	local fuzekey   = IN_RELOAD
+	local fuzereset = IN_SPEED
+	local camera	= IN_DUCK
+	if CLIENT and game.SinglePlayer() then
+		pressKey  = IN_ATTACK
+		switchKey = IN_ATTACK2
+		fuzekey	  = IN_RELOAD
+		fuzereset = IN_SPEED
+		camera	  = IN_DUCK
+	end
+	self.Secondary			= ply:KeyDown(switchKey)
+	self.Firing				= ply:KeyDown(pressKey)
+	self.SwitchedFuzeKey	= ply:KeyDown(fuzekey)
+	self.ResetFuzeKey		= ply:KeyDown(fuzereset)
+	self.SwitchCamKey		= ply:KeyDown(camera)
+end
+
+function ENT:PlayerSetSecondary(ply)
+	if self.Secondary then
+		if self.EmplacementType != "MG" or (self.CanSwitchAmmoTypes and self.EmplacementType == "MG") then 
+			self:SwitchAmmoType(ply) 
+		end
+	end
+	if self.SwitchedFuzeKey and self.CanSwitchAmmoTypes and self.EmplacementType == "MG" and self.AmmoType == "Time-Fuze" then
+		self:SetTimeFuze(ply)
+	end
+	if self.ResetFuzeKey and self.CanSwitchAmmoTypes and self.EmplacementType == "MG" and self.AmmoType == "Time-Fuze" then
+		if self.NextAmmoSwitch < CurTime() then
+			self.FuzeTime = 0.01
+			ply:ChatPrint("["..self.NameToPrint.."] Time fuze reseted to "..self.FuzeTime.." seconds")
+			self.NextAmmoSwitch = CurTime()+0.2
+		end
+	end
+end
+
+function ENT:ShieldThink()
+	if SERVER then
+		self.shield:SetSkin(self:GetSkin())
+		self.shield:SetPos(self.BasePos)
+		self.shield:SetAngles(Angle(self.turretBase:GetAngles().p,self:GetAngles().y,self.turretBase:GetAngles().r))
+	end
+end
+
 function ENT:Think()
-	
 	if SERVER and (!IsValid(self.turretBase) or (self.Seatable and !IsValid(self.shield))) then
 		SafeRemoveEntity(self)
 	else
 		if IsValid(self) then
 			self:AddOnThink()
+			local player = self:GetShooter()
 			if SERVER then
 				self.turretBase:SetSkin(self:GetSkin())
 				self.BasePos=self.turretBase:GetPos()
 				self.OffsetPos=self.turretBase:GetAngles():Up()*1
-				if self.Seatable then
-					self.shield:SetSkin(self:GetSkin())
-					self.shield:SetPos(self.turretBase:GetPos())
-					self.shield:SetAngles(Angle(self.turretBase:GetAngles().p,self:GetAngles().y,self.turretBase:GetAngles().r))
-				end
+			end
+			if self.Seatable then
+				self:ShieldThink()
 			end
 			if self:ShooterStillValid() then
-				if SERVER then
-					self:GetShooter():DrawViewModel(false)
-					net.Start("TurretBlockAttackToggle")
-					net.WriteBit(true)
-					net.Send(self:GetShooter())
-					if self.Seatable and !self:GetShooter():InVehicle() then
-						self:SetShooter(nil)
-						self:FinishShooting()
-						if !self:ShooterStillValid() then return end
-					end
-					if self.HasRotatingBarrel then
-						offsetAng=(self.barrel:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
-						offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
-					else
-						offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
-						offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
-					end
-					if self.TurretTurnMax > -1 or self.EmplacementType != "MG" or !self.Seatable then
-						if offsetDot>=self.TurretTurnMax then
-							local offsetAngNew=offsetAng:Angle()
-							offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
-							
-							self.OffsetAng=offsetAngNew
-							if self.EmplacementType == "Mortar" then canShoot = true end
-						else
-							if self.EmplacementType == "Mortar" then canShoot = false end
-						end
-					end
-				end
-				local pressKey  = IN_BULLRUSH
-				local switchKey = IN_ATTACK2
-				local fuzekey   = IN_RELOAD
-				local fuzereset = IN_SPEED
-				local camera	= IN_DUCK
-				if CLIENT and game.SinglePlayer() then
-					pressKey  = IN_ATTACK
-					switchKey = IN_ATTACK2
-					fuzekey	  = IN_RELOAD
-					fuzereset = IN_SPEED
-					camera	  = IN_DUCK
-				end
-				self.Secondary			= self:GetShooter():KeyDown(switchKey)
-				self.Firing				= self:GetShooter():KeyDown(pressKey)
-				self.SwitchedFuzeKey	= self:GetShooter():KeyDown(fuzekey)
-				self.ResetFuzeKey		= self:GetShooter():KeyDown(fuzereset)
-				self.SwitchCamKey		= self:GetShooter():KeyDown(camera)
-				
+				self:SetShootAngles()
+				self:SetPlayerKeys(player)
 			else
 				self.Firing=false
 				if SERVER then
@@ -426,28 +459,18 @@ function ENT:Think()
 				end
 			end
 			if self.Firing then
-				self:DoShot(self:GetDTEntity(0))
+				self:DoShot(player)
+				CanPlayStopSnd = true
 				if self.EmplacementType == "MG" then self:PlayAnim() end
 			end
-			if !self.Firing and self.EmplacementType == "MG" then
+			if !self.Firing and self.EmplacementType == "MG" and CanPlayStopSnd then
 				self:StopSound(self.SoundName)
-				if self.HasStopSound then self:EmitSound(self.StopSoundName) end
-			end
-			if self.Secondary then
-				if self.EmplacementType != "MG" or (self.CanSwitchAmmoTypes and self.EmplacementType == "MG") then 
-					self:SwitchAmmoType(self:GetShooter()) 
+				if self.HasStopSound then 
+					self:EmitSound(self.StopSoundName)
+					CanPlayStopSnd = false
 				end
 			end
-			if self.SwitchedFuzeKey and self.CanSwitchAmmoTypes and self.EmplacementType == "MG" and self.AmmoType == "Time-Fuze" then
-				self:SetTimeFuze(self:GetShooter())
-			end
-			if self.ResetFuzeKey and self.CanSwitchAmmoTypes and self.EmplacementType == "MG" and self.AmmoType == "Time-Fuze" then
-				if self.NextAmmoSwitch < CurTime() then
-					self.FuzeTime = 0.01
-					self:GetShooter():ChatPrint("["..self.NameToPrint.."] Time fuze reseted to "..self.FuzeTime.." seconds")
-					self.NextAmmoSwitch = CurTime()+0.2
-				end
-			end
+			self:PlayerSetSecondary(player)
 			self:NextThink(CurTime())
 			return true
 		end

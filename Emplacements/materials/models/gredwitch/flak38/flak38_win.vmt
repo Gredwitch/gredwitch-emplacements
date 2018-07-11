@@ -1,0 +1,11 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/gredwitch/flak38/flak38_win_c"
+	"$bumpmap" "models/gredwitch/flak38/flak38_b"
+	
+	"$normalmapalphaenvmapmask" "1"
+	"$phong" 					"1"
+	"$phongexponent" 			"69"
+	"$phongboost"   			"0.1"
+	"$phongfresnelranges"   	"[8 4 8]"
+}

@@ -15,7 +15,9 @@ ENT.BulletType			= "wac_base_7mm"
 ENT.ShotInterval		= 0.12
 ENT.Color				= "Red"
 
-ENT.ShootSound			= "gred_emp/vickers/shoot.wav"
+ENT.ShootSound			= "gred_emp/vickers/shoot.wav"--[[
+ENT.HasStopSound		= true
+ENT.StopSoundName		= "gred_emp/vickers/stop.wav"]]
 ENT.SoundName			= "shootVICKERS"
 
 ENT.BaseModel			= "models/gredwitch/vickers/vickers_tripod.mdl"

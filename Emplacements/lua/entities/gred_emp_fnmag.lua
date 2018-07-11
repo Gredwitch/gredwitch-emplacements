@@ -18,7 +18,6 @@ ENT.Color				= "Red"
 ENT.ShootSound			= "gred_emp/fnmag/fnamg_shoot.wav"
 ENT.StopSound			= "gred_emp/fnmag/fnamg_stop.wav"
 ENT.SoundName			= "shootFNMAG"
-ENT.StopSoundName		= "stopFNMAG"
 ENT.HasStopSound		= true
 
 ENT.BaseModel			= "models/gredwitch/fnmag/fnmag_tripod.mdl"
