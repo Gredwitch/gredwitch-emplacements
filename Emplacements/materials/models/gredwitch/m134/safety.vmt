@@ -1,0 +1,13 @@
+"VertexLitGeneric"
+{
+	"$basetexture" 				"models/gredwitch/m134/m134_01_c"
+	"$bumpmap" 					"models/gredwitch/m134/m134_01_b"
+	"$color2"					"{137 24 24}"
+	
+	"$normalmapalphaenvmapmask" "1"
+	"$phong" 					"1"
+	"$phongexponent" 			"69"
+	"$phongboost"   			"0.1"
+	"$phongfresnelranges"   	"[8 4 8]"
+	
+}

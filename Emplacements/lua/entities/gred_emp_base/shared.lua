@@ -17,6 +17,7 @@ ENT.NextSwitch			= 0.5
 ENT.tracer 				= 0
 ENT.Color				= "Green"
 ENT.EmplacementType     = "MG"
+ENT.NoRecoil			= false
 
 ENT.AnimPlaying			= false
 ENT.AmmoType			= "AP"
@@ -53,10 +54,8 @@ ENT.OffsetAng			= Angle(0,0,0)
 ENT.Shooter				= nil
 ENT.ShooterLast			= nil
 ENT.SeatShooting		= false
-ENT.BarrelHeight		= 0
 ENT.NextAmmoSwitch		= 0
-
-local CanPlayStopSnd = false
+ENT.CanPlayStopSnd		= false
 
 local SmokeSnds = {}
 SmokeSnds[1]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_01.wav"
@@ -167,24 +166,19 @@ function ENT:DoShot(plr)
 			ParticleEffect("gred_mortar_explosion_smoke_ground", pos-Vector(0,0,30),Angle(90,0,0))
 		end
 		for m = 1,self.MuzzleCount do
-			if self.HasRotatingBarrel then
-				newEnt = self:GetDTEntity(5)
-			else
-				newEnt = self
-			end
 			if !game.IsDedicated() then
 				self.MuzzleAttachmentsClient = {}
-				self.MuzzleAttachmentsClient[1] = newEnt:LookupAttachment("muzzle")
+				self.MuzzleAttachmentsClient[1] = self:LookupAttachment("muzzle")
 				for v=1,self.MuzzleCount do
 					if v>1 then
-						self.MuzzleAttachmentsClient[v] = newEnt:LookupAttachment("muzzle"..v.."")
+						self.MuzzleAttachmentsClient[v] = self:LookupAttachment("muzzle"..v.."")
 					end
 				end
-				attPos = newEnt:GetAttachment(self.MuzzleAttachmentsClient[m]).Pos
-				attAng = newEnt:GetAttachment(self.MuzzleAttachmentsClient[m]).Ang
+				attPos = self:GetAttachment(self.MuzzleAttachmentsClient[m]).Pos
+				attAng = self:GetAttachment(self.MuzzleAttachmentsClient[m]).Ang
 			elseif SERVER then
-				attPos = newEnt:GetAttachment(self.MuzzleAttachments[m]).Pos
-				attAng = newEnt:GetAttachment(self.MuzzleAttachments[m]).Ang
+				attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
+				attAng = self:GetAttachment(self.MuzzleAttachments[m]).Ang
 			end
 			if SERVER then
 				if GetConVar("gred_sv_altmuzzleeffect"):GetInt() == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
@@ -312,13 +306,16 @@ function ENT:DoShot(plr)
 						b.Owner=plr
 					end)
 				end
-				if self.EmplacementType == "MG" then
-					self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*50000)
-				elseif self.EmplacementType == "AT" then
-					self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*500000000)
+				if !self.NoRecoil then
+					if self.EmplacementType == "MG" then
+						self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*50000)
+					elseif self.EmplacementType == "AT" then
+						self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*500000000)
+					end
 				end
 			end
 		end
+		self.CanPlayStopSnd = true
 		self:EmitSound(self.SoundName)
 		if self.EmplacementType == "AT" then self:PlayAnim() end
 		self.LastShot=CurTime()
@@ -329,7 +326,7 @@ function ENT:PlayAnim()
 	if SERVER then
 		if self.HasRotatingBarrel then
 			if self.NextAnim < CurTime() then
-				self.barrel:ResetSequence(self.barrel:LookupSequence("spin"))
+				self:ResetSequence(self:LookupSequence("spin"))
 				self.NextAnim = CurTime() + self.AnimRestartTime
 			end
 		end
@@ -364,13 +361,8 @@ function ENT:SetShootAngles()
 			self:FinishShooting()
 			if !self:ShooterStillValid() then return end
 		end
-		if self.HasRotatingBarrel then
-			offsetAng=(self.barrel:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
-			offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
-		else
-			offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
-			offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
-		end
+		offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
+		offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
 		if self.TurretTurnMax > -1 or self.EmplacementType != "MG" or !self.Seatable then
 			if offsetDot>=self.TurretTurnMax then
 				local offsetAngNew=offsetAng:Angle()
@@ -460,14 +452,14 @@ function ENT:Think()
 			end
 			if self.Firing then
 				self:DoShot(player)
-				CanPlayStopSnd = true
+				if self.HasStopSound then self:StopSound(self.StopSoundName) end
 				if self.EmplacementType == "MG" then self:PlayAnim() end
 			end
-			if !self.Firing and self.EmplacementType == "MG" and CanPlayStopSnd then
+			if !self.Firing and self.EmplacementType == "MG" and self.CanPlayStopSnd then
 				self:StopSound(self.SoundName)
 				if self.HasStopSound then 
 					self:EmitSound(self.StopSoundName)
-					CanPlayStopSnd = false
+					self.CanPlayStopSnd = false
 				end
 			end
 			self:PlayerSetSecondary(player)

@@ -13,44 +13,20 @@ function ENT:CreateEmplacement()
 	if self.EmplacementType == "AT" and GetConVar("gred_sv_carriage_collision"):GetInt() == 0 then
 		self.turretBase:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 	end
-	if self.HasRotatingBarrel then
-		local barrel=ents.Create("prop_physics")
-		barrel:SetModel(self.SecondModel)
-		barrel:SetAngles(self:GetAngles()+Angle(0,0,0))
-		barrel:SetPos(self:GetPos()+Vector(0,0,self.BarrelHeight))
-		barrel:SetParent(self)
-		barrel:Spawn()
-		constraint.NoCollide(self.barrel,self,0,0) 
-		constraint.NoCollide(self.barrel,self.turretBase,0,0) 
-		self.barrel=barrel
-		self:SetDTEntity(5,barrel)
-		
-		local shootPos=ents.Create("prop_dynamic")
-		shootPos:SetModel("models/mm1/box.mdl")
-		shootPos:SetAngles(self.barrel:GetAttachment(self.barrel:LookupAttachment("muzzle")).Ang)
-		shootPos:SetPos(self.barrel:GetAttachment(self.barrel:LookupAttachment("muzzle")).Pos)
-		shootPos:Spawn()
-		shootPos:SetCollisionGroup(COLLISION_GROUP_WORLD)
-		shootPos:SetParent(self.barrel)
-		shootPos:SetNoDraw(true)
-		shootPos:DrawShadow(false)
-		shootPos:Fire("setparentattachment","muzzle")
-		self.shootPos=shootPos
-		self:SetDTEntity(1,self.shootPos)
-	else
-		local shootPos=ents.Create("prop_dynamic")
-		shootPos:SetModel("models/mm1/box.mdl")
-		shootPos:SetAngles(self:GetAttachment(self:LookupAttachment("muzzle")).Ang)
-		shootPos:SetPos(self:GetAttachment(self:LookupAttachment("muzzle")).Pos)
-		shootPos:Spawn()
-		shootPos:SetCollisionGroup(COLLISION_GROUP_WORLD)
-		self.shootPos=shootPos
-		shootPos:SetParent(self)
-		shootPos:SetNoDraw(true)
-		shootPos:DrawShadow(false)
-		shootPos:Fire("setparentattachment","muzzle")
-		self:SetDTEntity(1,shootPos)
-	end
+	
+	local shootPos=ents.Create("prop_dynamic")
+	shootPos:SetModel("models/mm1/box.mdl")
+	shootPos:SetAngles(self:GetAttachment(self:LookupAttachment("muzzle")).Ang)
+	shootPos:SetPos(self:GetAttachment(self:LookupAttachment("muzzle")).Pos)
+	shootPos:Spawn()
+	shootPos:SetCollisionGroup(COLLISION_GROUP_WORLD)
+	self.shootPos=shootPos
+	shootPos:SetParent(self)
+	shootPos:SetNoDraw(true)
+	shootPos:DrawShadow(false)
+	shootPos:Fire("setparentattachment","muzzle")
+	self:SetDTEntity(1,shootPos)
+	
 	if self.EmplacementType == "Mortar" then turretBase:SetMoveType(MOVETYPE_FLY) end
 	
 	constraint.NoCollide(self.turretBase,self,0,0) 
@@ -89,7 +65,10 @@ function ENT:Initialize()
 	if not IsValid(self.shield) and self.Seatable then
 		self:CreateShield()
 	end
-	
+	hook.Add( "DrawPhysgunBeam", "gred_prevent_physgunbeam", function( ply, wep, enabled, target, bone, deltaPos )
+		if self:ShooterStillValid() then return false
+		else return true end
+	end)
 	if self.Seatable then
 		hook.Add("PlayerFootstep",self,function(ply,pos,foot,sound,volume)
 			if !self:ShooterStillValid() then
@@ -105,23 +84,12 @@ function ENT:Initialize()
 		end)
 	end
 	self.MuzzleAttachments = {}
-	if self.HasRotatingBarrel then
-		self.MuzzleAttachments[1] = self.barrel:LookupAttachment("muzzle")
-		self.HookupAttachment=self.barrel:LookupAttachment("hookup")
-		for v=1,self.MuzzleCount do
-			if v>1 then
-				self.MuzzleAttachments[v] = self.barrel:LookupAttachment("muzzle"..v.."")
-			end
+	self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
+	self.HookupAttachment=self:LookupAttachment("hookup")
+	for v=1,self.MuzzleCount do
+		if v>1 then
+			self.MuzzleAttachments[v] = self:LookupAttachment("muzzle"..v.."")
 		end
-	else
-		self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
-		self.HookupAttachment=self:LookupAttachment("hookup")
-		for v=1,self.MuzzleCount do
-			if v>1 then
-				self.MuzzleAttachments[v] = self:LookupAttachment("muzzle"..v.."")
-			end
-		end
-		self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
 	end
 	
 	self:SetUseType(SIMPLE_USE)
@@ -129,6 +97,7 @@ function ENT:Initialize()
 	
 	self.shootPos:SetRenderMode(RENDERMODE_TRANSCOLOR)
 	self.shootPos:SetColor(Color(255,255,255,1))
+	
 	if (SERVER) and self.EmplacementType == "MG" then
 		red = Color(255,0,0)
 		green = Color(0,255,0)
