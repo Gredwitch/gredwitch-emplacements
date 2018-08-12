@@ -25,6 +25,9 @@ ENT.Model				= "models/gredwitch/vickers/vickers_gun.mdl"
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 40
 
+ENT.Ammo				= 250
+ENT.CurAmmo				= ENT.Ammo
+
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 7

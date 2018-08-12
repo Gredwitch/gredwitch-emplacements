@@ -14,6 +14,8 @@ ENT.MuzzleCount			= 1
 ENT.BulletType			= "wac_base_7mm"
 ENT.ShotInterval		= 0.057
 ENT.Color				= "Green"
+ENT.Ammo        		= 75
+ENT.CurAmmo      		= ENT.Ammo
 
 ENT.ShootSound			= "gred_emp/mg15/shoot.wav"
 ENT.HasStopSound		= true
@@ -24,6 +26,7 @@ ENT.BaseModel			= "models/gredwitch/mg81z/mg81z_tripod.mdl"
 ENT.Model				= "models/gredwitch/mg15/mg15_gun.mdl"
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 40
+ENT.MaxUseDistance		= 40
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -33,4 +36,52 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn()
 	ent:Activate()
 	return ent
+end
+
+local created = false
+local a = Angle(0,90,0)
+
+sound.Add( {
+	name = "MG15Reload",
+	channel = CHAN_WEAPON,
+	volume = 1.0,
+	level = 60,
+	pitch = {100},
+	sound = "gred_emp/mg15/mg15_reload.wav"
+} )
+
+function ENT:ReloadMG(ply)
+	if self.IsReloading then return end
+	self.IsReloading = true
+	self:ResetSequence(self:LookupSequence("reload"))
+	self:EmitSound("MG15Reload")
+	timer.Simple(0.6, function() 
+		if !IsValid(self) then return end
+		if created then return end
+		local att = self:GetAttachment(self:LookupAttachment("mageject"))
+		local prop = ents.Create("prop_physics")
+		prop:SetModel("models/gredwitch/mg15/mg15_mag.mdl")
+		prop:SetPos(att.Pos)
+		prop:SetAngles(att.Ang + a)
+		prop:Spawn()
+		prop:Activate()
+		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
+		if t > 0 then
+			timer.Simple(t,function()
+				if IsValid(prop) then prop:Remove() end 
+			end)
+		end
+		created = true
+		self:SetBodygroup(2,1)
+	end)
+	created = false
+	timer.Simple(1.3,function() 
+		if !IsValid(self) then return end
+		self:SetBodygroup(2,0)
+	end)
+	timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
+		self.CurAmmo = self.Ammo
+		self.IsReloading = false
+		self.tracer = 0
+	end)
 end

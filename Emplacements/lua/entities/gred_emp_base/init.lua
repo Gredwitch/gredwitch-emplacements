@@ -83,51 +83,22 @@ function ENT:Initialize()
 			end
 		end)
 	end
-	self.MuzzleAttachments = {}
-	self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
-	self.HookupAttachment=self:LookupAttachment("hookup")
-	for v=1,self.MuzzleCount do
-		if v>1 then
-			self.MuzzleAttachments[v] = self:LookupAttachment("muzzle"..v.."")
+	if SERVER then
+		self.MuzzleAttachments = {}
+		self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
+		self.HookupAttachment=self:LookupAttachment("hookup")
+		for v=1,self.MuzzleCount do
+			if v>1 then
+				self.MuzzleAttachments[v] = self:LookupAttachment("muzzle"..v.."")
+			end
 		end
 	end
-	
 	self:SetUseType(SIMPLE_USE)
 	self:DropToFloor()
 	
 	self.shootPos:SetRenderMode(RENDERMODE_TRANSCOLOR)
 	self.shootPos:SetColor(Color(255,255,255,1))
-	
-	if (SERVER) and self.EmplacementType == "MG" then
-		red = Color(255,0,0)
-		green = Color(0,255,0)
-		bcolor = Color(255,255,0)
-		num1   = 5
-		num2   = 0.05
-		num3   = 1 / (15 + 1)
-		num4   = 13 / 2
-		num5   = 13 / 8
-		num6   = 13 / 350
-		num7   = 1 / 13 / 2 * 0.5
-	end
-	sound.Add( {
-		name = self.SoundName,
-		channel = CHAN_WEAPON,
-		volume = 1.0,
-		level = 100,
-		pitch = {100},
-		sound = self.ShootSound
-	} )
-	if self.HasStopSound then
-		sound.Add( {
-			name = self.StopSoundName,
-			channel = CHAN_WEAPON,
-			volume = 1.0,
-			level = 100,
-			pitch = {100},
-			sound = self.StopSound
-		} )
-	end
+	self:AddSounds()
 end
 
 function ENT:OnRemove()
@@ -139,8 +110,14 @@ function ENT:OnRemove()
 		self:FinishShooting()
 		self.Shooter=nil
 	end
-	self:StopSound(self.SoundName)
-	self:StopSound(self.StopSoundName)
+	if self.EmplacementType != "MG" then
+		self:StopSound(self.SoundName)
+	else
+		self.sounds.shoot:Stop()
+		self.sounds.empty:Stop()
+		self.sounds.stop:Stop()
+	end
+	if self.HasStopSound then self:StopSound(self.StopSoundName) end
 	SafeRemoveEntity(self.turretBase)
 	if self.Seatable then SafeRemoveEntity(self.shield) end
 end

@@ -1,0 +1,36 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models\rs2\m60_D"
+	"$bumpmap" "models\rs2\m60_N"
+	"$ambientocclusion" "models\rs2\m60_H"
+	$color2 0.0.0
+	"$blendTintByBaseAlpha"	"1"
+
+	$normalmapalphaenvmapmask 1
+	
+	"$envmap" "env_cubemap"					
+	"$envmaptint" "[ 0.005 0.005 0.005]"				
+ 	"$envmapFresnel" "0.01 0.01 0.01"
+
+
+	"$phong" "1"						
+	"$phongboost"	"0.10"
+	"$phongexponent" 6
+	"$phongwarptexture"		"models\rs2\phongwarp_metal2"
+	$lightwarptexture "models\rs2\lightwarp_metallic"
+	//$phongexponenttexture "models\rs2\m60_S"
+
+
+	"$phongfresnelranges"	"[5 7 8]"
+	"$phongtint" 			"[1.2 1.2 1.31]"
+	"$PhongAlbedoTint" "1"
+
+	//$rimlight 1
+
+
+	"$detail" "models\rs2\detail_metal"
+	$detailscale 5
+	$detailblendfactor 1
+	$detailblendmode 0
+	$nocull 0
+}

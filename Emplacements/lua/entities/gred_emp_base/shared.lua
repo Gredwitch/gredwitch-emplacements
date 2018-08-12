@@ -28,6 +28,9 @@ ENT.NextAnim			= 0
 ENT.HasReloadAnim		= false
 ENT.AnimPlayTime		= 0.5
 ENT.ShellEjectTime		= 0.2
+ENT.Ammo        		= 10000
+ENT.CurAmmo      		= ENT.Ammo
+ENT.IsReloading			= false
 
 ENT.SoundName			= "shootSound"
 ENT.StopSound			= ""
@@ -56,15 +59,22 @@ ENT.ShooterLast			= nil
 ENT.SeatShooting		= false
 ENT.NextAmmoSwitch		= 0
 ENT.CanPlayStopSnd		= false
+ENT.MagProp				= ""
+ENT.empty				= "EmptySound"
+ENT.EmptySND			= "gred_emp/common/empty.wav"
+
+ENT.Recoil				= 50000
+
+ENT.AutomaticFrameAdvance = true -- FUCKING ANIMS NOT WORKING CUZ THIS IS NOT SET TO TRUE
 
 local SmokeSnds = {}
-SmokeSnds[1]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_01.wav"
-SmokeSnds[2]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_02.wav"
-SmokeSnds[3]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_03.wav"
-SmokeSnds[4]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_04.wav"
+for i=1,4 do
+SmokeSnds[i]                         =  "gred_emp/nebelwerfer/artillery_strike_smoke_close_0".. i..".wav"
+end
 
 local noHitSky = false
 local reachSky = Vector(0,0,9999999999)
+local nextplay = 0.5
 
 function ENT:SetupDataTables()
 	self:DTVar("Entity",0,"Shooter")
@@ -91,14 +101,16 @@ function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
 	if self.AmmoType == "AP" then
 		self.AmmoType = "HE"
+		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] HE shells selected") end
 	
 	elseif self.AmmoType == "HE" then
 		self.AmmoType = "Smoke"
+		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Smoke shells selected") end
 	
 	elseif self.AmmoType == "Smoke" then
 		self.AmmoType = "AP"
+		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] AP shells selected") end
 	end
-	if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end
 
@@ -138,8 +150,49 @@ function ENT:ShooterStillValid()
 	end
 end
 
+function ENT:AddSounds()
+	self.sounds = {}
+	sound.Add( {
+		name = self.empty,
+		channel = CHAN_AUTO,
+		volume = 1.0,
+		level = 60,
+		pitch = {100},
+		sound = self.EmptySND
+	} )
+	sound.Add( {
+		name = self.SoundName,
+		channel = CHAN_AUTO,
+		volume = 1.0,
+		level = 100,
+		pitch = {100},
+		sound = self.ShootSound
+	} )
+	if self.HasStopSound then
+		
+		sound.Add( {
+			name = self.StopSoundName,
+			channel = CHAN_AUTO,
+			volume = 1.0,
+			level = 100,
+			pitch = {100},
+			sound = self.StopSound
+		} )
+		
+		self.sounds["stop"] = CreateSound(self,self.StopSoundName)
+		self.sounds["stop"]:SetSoundLevel(100)
+	end
+	if self.EmplacementType == "MG" then
+		self.sounds["shoot"] = CreateSound(self,self.SoundName)
+		self.sounds["empty"] = CreateSound(self,self.empty)
+		self.sounds["shoot"] = CreateSound(self,self.ShootSound)
+		self.sounds["empty"] = CreateSound(self,self.EmptySND)
+		self.sounds["shoot"]:SetSoundLevel(100)
+		self.sounds["empty"]:SetSoundLevel(60)
+	end
+end
+
 function ENT:DoShot(plr)
-	if self.LastShot+self.ShotInterval<CurTime() then
 		if self.EmplacementType == "Mortar" then
 			
 			local aimpos = self:GetAttachment(self:LookupAttachment("muzzle"))
@@ -166,21 +219,9 @@ function ENT:DoShot(plr)
 			ParticleEffect("gred_mortar_explosion_smoke_ground", pos-Vector(0,0,30),Angle(90,0,0))
 		end
 		for m = 1,self.MuzzleCount do
-			if !game.IsDedicated() then
-				self.MuzzleAttachmentsClient = {}
-				self.MuzzleAttachmentsClient[1] = self:LookupAttachment("muzzle")
-				for v=1,self.MuzzleCount do
-					if v>1 then
-						self.MuzzleAttachmentsClient[v] = self:LookupAttachment("muzzle"..v.."")
-					end
-				end
-				attPos = self:GetAttachment(self.MuzzleAttachmentsClient[m]).Pos
-				attAng = self:GetAttachment(self.MuzzleAttachmentsClient[m]).Ang
-			elseif SERVER then
-				attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
-				attAng = self:GetAttachment(self.MuzzleAttachments[m]).Ang
-			end
 			if SERVER then
+			    attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
+				attAng = self:GetAttachment(self.MuzzleAttachments[m]).Ang
 				if GetConVar("gred_sv_altmuzzleeffect"):GetInt() == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
 					ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
 				else
@@ -190,9 +231,7 @@ function ENT:DoShot(plr)
 					effectdata:SetEntity(self)
 					effectdata:SetScale(1)
 					util.Effect("MuzzleEffect", effectdata)
-				end
-			end
-			if SERVER then
+			    end
 				if self.EmplacementType == "MG" then
 					local b = ents.Create("gred_base_bullet")
 					
@@ -221,14 +260,20 @@ function ENT:DoShot(plr)
 					b.Owner=plr
 					
 					self.tracer = self.tracer + 1
-					if self.tracer >= GetConVarNumber("gred_sv_tracers") then
-						util.SpriteTrail(b, 0, bcolor, false, num1, num1, num2, num3, "trails/laser.vmt")
+					if self.tracer >= GetConVar("gred_sv_tracers"):GetInt() then
 						if self.Color == "Red" then
-							util.SpriteTrail(b, 0, red, false, num4, num5, num6, num7, "trails/smoke.vmt")
+							b:SetSkin(1)
 						elseif self.Color == "Green" then
-							util.SpriteTrail(b, 0, green, false, num4, num5, num6, num7, "trails/smoke.vmt")
+							b:SetSkin(3)
 						end
-						self.tracer = 0
+						b:SetModelScale(7)
+						if self.CurAmmo <= 20 then 
+							self.tracer = GetConVar("gred_sv_tracers"):GetInt() - 2
+						else
+							self.tracer = 0
+						end
+					else 
+						b.noTracer = true
 					end
 					
 				elseif self.EmplacementType == "AT" then
@@ -308,18 +353,19 @@ function ENT:DoShot(plr)
 				end
 				if !self.NoRecoil then
 					if self.EmplacementType == "MG" then
-						self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*50000)
+						self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*self.Recoil)
 					elseif self.EmplacementType == "AT" then
 						self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*500000000)
 					end
 				end
+				if GetConVar("gred_sv_limitedammo"):GetInt() == 1 then self.CurAmmo = self.CurAmmo - 1 end
 			end
 		end
-		self.CanPlayStopSnd = true
-		self:EmitSound(self.SoundName)
-		if self.EmplacementType == "AT" then self:PlayAnim() end
-		self.LastShot=CurTime()
-	end
+		
+		if self.EmplacementType != "MG" and SERVER then self:EmitSound(self.SoundName) end
+		if self.EmplacementType == "AT" then 
+			self:PlayAnim() 
+		end
 end
 
 function ENT:PlayAnim()
@@ -338,12 +384,12 @@ function ENT:PlayAnim()
 			if self.AnimPlaying then return end
 			timer.Simple(self.AnimPlayTime,function()
 				if !IsValid(self) then return end
-				self:ResetSequence(self:LookupSequence("reload_finish"))
+				self:ResetSequence(self:LookupSequence("reload_start"))
 				self.AnimPlaying = true
 			end)
 			timer.Simple(self.AnimRestartTime,function() 
 				if !IsValid(self) then return end
-				self:ResetSequence(self:LookupSequence("reload_start")) 
+				self:ResetSequence(self:LookupSequence("reload_finish")) 
 				self.AnimPlaying = false
 			end)
 		end
@@ -377,24 +423,30 @@ function ENT:SetShootAngles()
 	end
 end
 
+function ENT:ReloadMG(ply)
+end
+
 function ENT:SetPlayerKeys(ply)
 	local pressKey  = IN_BULLRUSH
 	local switchKey = IN_ATTACK2
-	local fuzekey   = IN_RELOAD
+	local fuzekey   = IN_BULLRUSH --IN_RELOAD
+	local reload    = IN_RELOAD
 	local fuzereset = IN_SPEED
 	local camera	= IN_DUCK
 	if CLIENT and game.SinglePlayer() then
 		pressKey  = IN_ATTACK
 		switchKey = IN_ATTACK2
-		fuzekey	  = IN_RELOAD
+		fuzekey	  = IN_BULLRUSH --IN_RELOAD
 		fuzereset = IN_SPEED
 		camera	  = IN_DUCK
+	    reload    = IN_RELOAD
 	end
 	self.Secondary			= ply:KeyDown(switchKey)
 	self.Firing				= ply:KeyDown(pressKey)
 	self.SwitchedFuzeKey	= ply:KeyDown(fuzekey)
 	self.ResetFuzeKey		= ply:KeyDown(fuzereset)
 	self.SwitchCamKey		= ply:KeyDown(camera)
+	self.ReloadKey          = ply:KeyDown(reload)
 end
 
 function ENT:PlayerSetSecondary(ply)
@@ -406,6 +458,10 @@ function ENT:PlayerSetSecondary(ply)
 	if self.SwitchedFuzeKey and self.CanSwitchAmmoTypes and self.EmplacementType == "MG" and self.AmmoType == "Time-Fuze" then
 		self:SetTimeFuze(ply)
 	end
+	if self.ReloadKey then
+	    if self.CurAmmo >= self.Ammo or self.IsReloading then return end
+		self:ReloadMG(ply)
+	end
 	if self.ResetFuzeKey and self.CanSwitchAmmoTypes and self.EmplacementType == "MG" and self.AmmoType == "Time-Fuze" then
 		if self.NextAmmoSwitch < CurTime() then
 			self.FuzeTime = 0.01
@@ -413,7 +469,7 @@ function ENT:PlayerSetSecondary(ply)
 			self.NextAmmoSwitch = CurTime()+0.2
 		end
 	end
-end
+end  
 
 function ENT:ShieldThink()
 	if SERVER then
@@ -423,12 +479,49 @@ function ENT:ShieldThink()
 	end
 end
 
+function ENT:FindNPCs()
+    for _,n in pairs (ents.FindInSphere(self:GetPos(),self.MaxUseDistance)) do
+        if n:IsNPC() then
+            self:Use(n,n,3,1)
+        end
+    end
+end
+
+function ENT:fire(player)
+	self:DoShot(player)
+	if self.EmplacementType == "MG" then 
+		self.CanPlayStopSnd = true
+		if SERVER then
+			self.sounds.shoot:Play()
+			if self.HasStopSound then
+				self.sounds.stop:Stop()
+			end
+			self.sounds.empty:Stop()
+		end
+		self:PlayAnim() 
+	end
+end
+
+function ENT:stop()
+	if SERVER then
+		self.sounds.shoot:Stop()
+		if self.HasStopSound then
+			self.sounds.stop:Play()
+		end
+		if self.CurAmmo <= 0 then
+			self.sounds.empty:Play()
+		end
+	end
+	self.CanPlayStopSnd = false
+end
+
 function ENT:Think()
 	if SERVER and (!IsValid(self.turretBase) or (self.Seatable and !IsValid(self.shield))) then
 		SafeRemoveEntity(self)
 	else
 		if IsValid(self) then
 			self:AddOnThink()
+			-- self:FindNPCs()
 			local player = self:GetShooter()
 			if SERVER then
 				self.turretBase:SetSkin(self:GetSkin())
@@ -441,7 +534,19 @@ function ENT:Think()
 			if self:ShooterStillValid() then
 				self:SetShootAngles()
 				self:SetPlayerKeys(player)
+				self:PlayerSetSecondary(player)
+				
+				if self.Firing and not self.IsReloading and self.LastShot+self.ShotInterval<=CurTime() and self.CurAmmo >= 1 then
+					self:fire(player)
+					self.LastShot=CurTime()
+				end
+				if self.LastShot+self.ShotInterval<=CurTime() and self.CanPlayStopSnd and self.EmplacementType == "MG" then
+					self:stop()
+				end
 			else
+				if self.Firing and self.EmplacementType == "MG" then
+					self:stop()
+				end
 				self.Firing=false
 				if SERVER then
 					self.OffsetAng=self.turretBase:GetAngles()
@@ -450,19 +555,7 @@ function ENT:Think()
 					self:FinishShooting()
 				end
 			end
-			if self.Firing then
-				self:DoShot(player)
-				if self.HasStopSound then self:StopSound(self.StopSoundName) end
-				if self.EmplacementType == "MG" then self:PlayAnim() end
-			end
-			if !self.Firing and self.EmplacementType == "MG" and self.CanPlayStopSnd then
-				self:StopSound(self.SoundName)
-				if self.HasStopSound then 
-					self:EmitSound(self.StopSoundName)
-					self.CanPlayStopSnd = false
-				end
-			end
-			self:PlayerSetSecondary(player)
+			
 			self:NextThink(CurTime())
 			return true
 		end

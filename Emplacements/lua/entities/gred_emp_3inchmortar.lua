@@ -46,15 +46,17 @@ function ENT:SwitchAmmoType(plr)
 	if self.AmmoType == "HE" then
 		self.AmmoType = "Smoke"
 		self.BulletType = "gb_rocket_81mm"
+		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Smoke shells selected") end
 	
 	elseif self.AmmoType == "Smoke" then
 		self.AmmoType = "WP"
 		self.BulletType = "gb_rocket_81mmWP"
+		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] WP shells selected") end
 	
 	elseif self.AmmoType == "WP" then
 		self.AmmoType = "HE"
+		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] HE shells selected") end
 		self.BulletType = "gb_rocket_81mm"
 	end
-	if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end
