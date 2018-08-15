@@ -6,7 +6,7 @@ ENT.Base 				= "gred_emp_base"
 ENT.Category			= "Gredwitch's Stuff"
 ENT.PrintName 			= "[EMP]50mm KwK"
 ENT.Author				= "Gredwitch"
-ENT.Spawnable			= false
+ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "KwK"
 
@@ -32,7 +32,9 @@ ENT.SecondModel			= "models/gredwitch/kwk/kwk_shield.mdl"
 ENT.Model				= "models/gredwitch/kwk/kwk_gun.mdl"
 ENT.EmplacementType     = "AT"
 ENT.MaxUseDistance		= 130
-ENT.Seatable			= true
+ENT.HasShellEject		= false
+ENT.CanLookArround		= true
+-- ENT.Seatable			= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

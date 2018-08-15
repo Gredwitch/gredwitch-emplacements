@@ -28,6 +28,7 @@ ENT.HasRotatingBarrel	= true
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 0
 ENT.MaxUseDistance		= 100
+ENT.CanLookArround		= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

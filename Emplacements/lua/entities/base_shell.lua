@@ -286,16 +286,14 @@ function ENT:Explode()
 	     
 		if self.AP then
 			self.EffectAir = "AP_impact_wall"
-			local trdt  = {}
-			trdt.start  = pos
-			trdt.endpos = pos + pos-self:GetAngles():Forward()*1000
-			trdt.filter = self.Entity
-			local tr = util.TraceLine(trdt)
+			local fwd = self:GetForward()
+			local tr = util.QuickTrace(pos - fwd*2,pos + pos-self:GetAngles():Forward()*1000,self.Entity)
 			local hitmat = util.GetSurfacePropName(tr.SurfaceProps)
 			if materials[hitmat] == 1 then
 				self.Effect = "AP_impact_wall"
 				self.ExplosionSound = table.Random(APMetalSounds)
 				self.FarExplosionSound = table.Random(APMetalSounds)
+				pos = tr.HitPos+(fwd*2)
 			elseif materials[hitmat] == 2 then
 				self.ExplosionSound = table.Random(APWoodSounds)
 				self.FarExplosionSound = table.Random(APWoodSounds)

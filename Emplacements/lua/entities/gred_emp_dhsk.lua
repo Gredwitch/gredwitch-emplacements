@@ -25,6 +25,10 @@ ENT.Model				= "models/gredwitch/dhsk/dhsk_gun.mdl"
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 42
 
+ENT.Ammo				= 50
+ENT.CurAmmo				= ENT.Ammo
+ENT.CanLookArround		= true
+
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 7
@@ -32,5 +36,69 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:SetPos(SpawnPos)
 	ent:Spawn()
 	ent:Activate()
+	ent:SetBodygroup(1,math.random(0,1))
 	return ent
+end
+
+local created = false
+
+sound.Add( {
+	name = "DHsKReload",
+	channel = CHAN_WEAPON,
+	volume = 1.0,
+	level = 60,
+	pitch = {100},
+	sound = "gred_emp/dhsk/dhsk_reload.wav"
+} )
+
+function ENT:ReloadMG(ply)
+	if self.IsReloading then return end
+	self.IsReloading = true
+	self:ResetSequence(self:LookupSequence("reload"))
+	self:EmitSound("DHsKReload")
+	timer.Simple(0.7, function()
+		if !IsValid(self) then return end
+		if created then return end
+		local att = self:GetAttachment(self:LookupAttachment("mageject"))
+		local prop = ents.Create("prop_physics")
+		prop:SetModel("models/gredwitch/dhsk/dhsk_mag.mdl")
+		prop:SetPos(att.Pos)
+		prop:SetAngles(att.Ang - Angle(0,90,0))
+		prop:Spawn()
+		prop:Activate()
+		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
+		if t > 0 then
+			timer.Simple(t,function()
+					if IsValid(prop) then prop:Remove() end 
+			end)
+		end
+		created = true
+		if self.CurAmmo <= 0 then prop:SetBodygroup(1,1) end
+		self:SetBodygroup(2,1)
+		self:SetBodygroup(3,1)
+	end)
+	created = false
+	timer.Simple(1.2,function() 
+		if !IsValid(self) then return end
+		self:SetBodygroup(2,0)
+		self:SetBodygroup(3,0)
+	end)
+	timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
+		self.CurAmmo = self.Ammo
+		self.IsReloading = false
+		self.tracer = 0
+	end)
+end
+
+function ENT:AddOnThink()
+	if SERVER then
+		if not self.IsReloading then
+			self:SetBodygroup(2,0)
+			if self.CurAmmo <= 0 then 
+				self:SetBodygroup(3,1)
+			elseif self.CurAmmo > 0 then
+				self:SetBodygroup(3,0)
+			end
+		end
+	end
 end

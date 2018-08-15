@@ -1,7 +1,7 @@
 "VertexLitGeneric"
 {
 	"$basetexture" "models/gredwitch/flak38/flak38_1p_c"
-	// "$bumpmap" "models/gredwitch/flak38/flak38_1p_b"
+	"$bumpmap" "models/gredwitch/flak38/flak38_1p_b"
 	
 	"$normalmapalphaenvmapmask" "1"
 	"$phong" 					"1"

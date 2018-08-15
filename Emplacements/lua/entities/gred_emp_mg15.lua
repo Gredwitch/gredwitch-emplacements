@@ -14,8 +14,6 @@ ENT.MuzzleCount			= 1
 ENT.BulletType			= "wac_base_7mm"
 ENT.ShotInterval		= 0.057
 ENT.Color				= "Green"
-ENT.Ammo        		= 75
-ENT.CurAmmo      		= ENT.Ammo
 
 ENT.ShootSound			= "gred_emp/mg15/shoot.wav"
 ENT.HasStopSound		= true
@@ -27,6 +25,11 @@ ENT.Model				= "models/gredwitch/mg15/mg15_gun.mdl"
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 40
 ENT.MaxUseDistance		= 40
+ENT.CanLookArround		= true
+
+
+ENT.Ammo        		= 75
+ENT.CurAmmo      		= ENT.Ammo
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -84,4 +87,8 @@ function ENT:ReloadMG(ply)
 		self.IsReloading = false
 		self.tracer = 0
 	end)
+end
+
+function ENT:AddOnThink()
+	if SERVER and not self.IsReloading then self:SetBodygroup(2,0) end
 end

@@ -24,6 +24,7 @@ ENT.BaseModel			= "models/gredwitch/fnmag/fnmag_tripod.mdl"
 ENT.Model				= "models/gredwitch/fnmag/fnmag_gun.mdl"
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 7
+ENT.CanLookArround		= true
 
 ENT.Ammo				= 50
 ENT.CurAmmo				= ENT.Ammo

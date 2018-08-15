@@ -4,7 +4,11 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 
 function ENT:CreateEmplacement()
-	local turretBase=ents.Create("prop_physics")
+	-- if self.EmplacementType == "MG" and GetConVar("gred_sv_cantakemgbase"):GetInt() == 1 then
+		local turretBase=ents.Create("prop_physics")
+	-- else
+		-- local turretBase=ents.Create("prop_dynamic")
+	-- end
 	turretBase:SetModel(self.BaseModel)
 	turretBase:SetAngles(self:GetAngles()+Angle(0,90,0))
 	turretBase:SetPos(self:GetPos()-Vector(0,0,0))
@@ -38,6 +42,7 @@ function ENT:CreateShield()
 	shield:SetAngles(self:GetAngles()+Angle(0,90,0))
 	shield:SetPos(self:GetPos()-Vector(0,0,0))
 	shield:Spawn()
+	shield:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 	self.shield=shield
 	constraint.NoCollide(self.shield,self,0,0,true)
 	constraint.NoCollide(self.shield,self.turretBase,0,0,true)
@@ -59,12 +64,6 @@ function ENT:Initialize()
 	self.ShadowParams = {}
 	self:StartMotionController()
 	
-	if not IsValid(self.turretBase) then
-		self:CreateEmplacement()
-	end
-	if not IsValid(self.shield) and self.Seatable then
-		self:CreateShield()
-	end
 	hook.Add( "DrawPhysgunBeam", "gred_prevent_physgunbeam", function( ply, wep, enabled, target, bone, deltaPos )
 		if self:ShooterStillValid() then return false
 		else return true end
@@ -84,6 +83,13 @@ function ENT:Initialize()
 		end)
 	end
 	if SERVER then
+	
+		if not IsValid(self.turretBase) then
+			self:CreateEmplacement()
+		end
+		if not IsValid(self.shield) and self.SecondModel != "" then
+			self:CreateShield()
+		end
 		self.MuzzleAttachments = {}
 		self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
 		self.HookupAttachment=self:LookupAttachment("hookup")
@@ -115,11 +121,13 @@ function ENT:OnRemove()
 	else
 		self.sounds.shoot:Stop()
 		self.sounds.empty:Stop()
-		self.sounds.stop:Stop()
+		if self.HasStopSound then
+			self.sounds.stop:Stop()
+		end
 	end
 	if self.HasStopSound then self:StopSound(self.StopSoundName) end
 	SafeRemoveEntity(self.turretBase)
-	if self.Seatable then SafeRemoveEntity(self.shield) end
+	if self.SecondModel != "" then SafeRemoveEntity(self.shield) end
 end
 
 function ENT:StartShooting()
@@ -178,7 +186,7 @@ function ENT:PhysicsSimulate( phys, deltatime )
 		self.ShadowParams.secondstoarrive = 0.01 
 		
 		if not self.Seatable then 
-			self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight
+			self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight + self:GetRight()*-self.TurretForward
 		else
 			self.ShadowParams.pos = self.BasePos + self.shield:GetUp() + self.turretBase:GetUp()*self.TurretHeight 
 		end

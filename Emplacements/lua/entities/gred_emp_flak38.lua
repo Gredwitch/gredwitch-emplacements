@@ -6,11 +6,11 @@ ENT.Base 				= "gred_emp_base"
 ENT.Category			= "Gredwitch's Stuff"
 ENT.PrintName 			= "[EMP]20mm Flak 38"
 ENT.Author				= "Gredwitch"
-ENT.Spawnable			= false
+ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Flak 38"
 
-ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
+ENT.MuzzleEffect		= "muzzleflash_bar_3p"
 ENT.ShotInterval		= 0.214
 ENT.BulletType			= "wac_base_20mm"
 ENT.MuzzleCount			= 1
@@ -32,8 +32,12 @@ ENT.BaseModel			= "models/gredwitch/flak38/flak38_base.mdl"
 ENT.SecondModel			= "models/gredwitch/flak38/flak38_shield.mdl"
 ENT.Model				= "models/gredwitch/flak38/flak38_gun.mdl"
 ENT.EmplacementType     = "MG"
-ENT.MaxUseDistance		= 200
-ENT.Seatable			= true
+ENT.MaxUseDistance		= 100
+ENT.CanLookArround		= true
+ENT.TurretForward		= 12
+ENT.Color				= "Yellow"
+ENT.num					= 0.5
+-- ENT.Seatable			= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -47,15 +51,13 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 end
 
 function ENT:SwitchAmmoType(plr)
-	if self.NextSwitch > CurTime() and !IsValid(ply) then return end
-	if SERVER then
-		if self.AmmoType == "Direct Hit" then
-			self.AmmoType = "Time-Fuze"
-		
-		elseif self.AmmoType == "Time-Fuze" then
-			self.AmmoType = "Direct Hit"
-		end
-		if LAN then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." rounds selected") end
+	if self.NextSwitch > CurTime() then return end
+	if self.AmmoType == "Direct Hit" then
+		self.AmmoType = "Time-Fuze"
+		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Time-Fuze rounds selected") end
+	elseif self.AmmoType == "Time-Fuze" then
+		self.AmmoType = "Direct Hit"
+		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Direct hit rounds selected") end
 	end
 	self.NextSwitch = CurTime()+0.2
 end

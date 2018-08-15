@@ -32,6 +32,8 @@ ENT.Ammo        		= 10000
 ENT.CurAmmo      		= ENT.Ammo
 ENT.IsReloading			= false
 
+ENT.num					= 0
+
 ENT.SoundName			= "shootSound"
 ENT.StopSound			= ""
 ENT.HasStopSound		= false
@@ -64,6 +66,9 @@ ENT.empty				= "EmptySound"
 ENT.EmptySND			= "gred_emp/common/empty.wav"
 
 ENT.Recoil				= 50000
+ENT.HasShellEject		= true
+ENT.CanLookArround		= false
+ENT.TurretForward		= 0
 
 ENT.AutomaticFrameAdvance = true -- FUCKING ANIMS NOT WORKING CUZ THIS IS NOT SET TO TRUE
 
@@ -114,12 +119,48 @@ function ENT:SwitchAmmoType(plr)
 	self.NextSwitch = CurTime()+0.2
 end
 
-function ENT:SetTimeFuze(plr)
-	if self.NextAmmoSwitch > CurTime() and !IsValid(ply) then return end
-	if self.FuzeTime >= 0.2 or self.FuzeTime <= 0 then self.FuzeTime = 0.01
-	else self.FuzeTime = self.FuzeTime + 0.01 end
-	plr:ChatPrint("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds")
-	self.NextAmmoSwitch = CurTime()+0.2
+function ENT:PlayerSetSecondary(ply)
+	if self.Secondary then
+		if self.EmplacementType != "MG" or (self.CanSwitchAmmoTypes and self.EmplacementType == "MG") then 
+			self:SwitchAmmoType(ply) 
+		end
+	end
+	if self.CanSwitchAmmoTypes and self.AmmoType == "Time-Fuze" and self.NextAmmoSwitch < CurTime() then
+		if self.SwitchedFuzeKey then
+			self:SetTimeFuze()
+		end
+		if self.ResetFuzeKey then
+			self:LowerTimeFuze()
+		end
+	end
+	if self.ReloadKey then
+	    if self.CurAmmo >= self.Ammo or self.IsReloading then return end
+		self:ReloadMG(ply)
+	end
+end  
+
+function ENT:LowerTimeFuze()
+	if self.FuzeTime <= 0.01 then
+		self.FuzeTime = 0.5
+	else
+		self.FuzeTime = self.FuzeTime - 0.01 
+	end
+	if CLIENT then
+		ply:ChatPrint("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds")
+	end
+	self.NextAmmoSwitch = CurTime()+0.1
+end
+
+function ENT:SetTimeFuze()
+	if self.FuzeTime >= 0.5 then 
+		self.FuzeTime = 0.01
+	else 
+		self.FuzeTime = self.FuzeTime + 0.01 
+	end
+	if CLIENT then
+		ply:ChatPrint("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds")
+	end
+	self.NextAmmoSwitch = CurTime()+0.1
 end
 
 function ENT:Use(plr)
@@ -204,13 +245,13 @@ function ENT:DoShot(plr)
 				if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Nothing must block the mortar's muzzle!") end
 			else
 				noHitSky = false
+				if not canShoot then
+					-- if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] You can't shoot there!") end
+					self.LastShot=CurTime()-self.ShotInterval/1.2
+					return 
+				end
 			end
 			
-			if !canShoot then
-				-- if !noHitSky and CLIENT then plr:ChatPrint("["..self.NameToPrint.."] You can't shoot there!") end
-				self.LastShot=CurTime()-self.ShotInterval/1.2
-				return 
-			end
 			
 		end
 		if self.EmplacementType == "Mortar" or self.EmplacementType == "AT" then
@@ -235,12 +276,20 @@ function ENT:DoShot(plr)
 				if self.EmplacementType == "MG" then
 					local b = ents.Create("gred_base_bullet")
 					
-					if self.BulletType == "wac_base_7mm" then
-						num = 0.3
-					elseif self.BulletType == "wac_base_12mm" then
-						num = 0.5
-					elseif self.BulletType == "wac_base_20mm" then
-						num = 1.4
+					if self.num > 0 then
+						num = self.num
+					else
+						if self.BulletType == "wac_base_7mm" then
+							num = 0.3
+						elseif self.BulletType == "wac_base_12mm" then
+							num = 0.5
+						elseif self.BulletType == "wac_base_20mm" then
+							num = 1.4
+						elseif self.BulletType == "wac_base_30mm" then
+							num = 1.6
+						elseif self.BulletType == "wac_base_40mm" then
+							num = 2
+						end
 					end
 					ang = attAng + Angle(math.Rand(num,-num), math.Rand(num,-num), math.Rand(num,-num))
 					b:SetPos(attPos)
@@ -265,6 +314,8 @@ function ENT:DoShot(plr)
 							b:SetSkin(1)
 						elseif self.Color == "Green" then
 							b:SetSkin(3)
+						elseif self.Color == "Yellow" then
+							b:SetSkin(0)
 						end
 						b:SetModelScale(7)
 						if self.CurAmmo <= 20 then 
@@ -304,18 +355,20 @@ function ENT:DoShot(plr)
 						end
 					end
 					b.Owner=plr
-					timer.Simple(self.AnimPlayTime + self.ShellEjectTime,function()
-						if !IsValid(self) then return end
-						shellEject = self:GetAttachment(self:LookupAttachment("shelleject"))
-						local shell = ents.Create("gred_prop_casing")
-						shell.Model = "models/gredwitch/bombs/75mm_shell.mdl"
-						shell:SetPos(shellEject.Pos)
-						shell:SetAngles(shellEject.Ang)
-						shell.BodyGroupA = 1
-						shell.BodyGroupB = 2
-						shell:Spawn()
-						shell:Activate()
-					end)
+					if self.HasShellEject then
+						timer.Simple(self.AnimPlayTime + self.ShellEjectTime,function()
+							if !IsValid(self) then return end
+							shellEject = self:GetAttachment(self:LookupAttachment("shelleject"))
+							local shell = ents.Create("gred_prop_casing")
+							shell.Model = "models/gredwitch/bombs/75mm_shell.mdl"
+							shell:SetPos(shellEject.Pos)
+							shell:SetAngles(shellEject.Ang)
+							shell.BodyGroupA = 1
+							shell.BodyGroupB = 2
+							shell:Spawn()
+							shell:Activate()
+						end)
+					end
 				elseif self.EmplacementType == "Mortar" then
 					local b=ents.Create(self.BulletType)
 					local shootPos=util.TraceLine(util.GetPlayerTrace(self.Shooter)).HitPos
@@ -361,8 +414,10 @@ function ENT:DoShot(plr)
 				if GetConVar("gred_sv_limitedammo"):GetInt() == 1 then self.CurAmmo = self.CurAmmo - 1 end
 			end
 		end
-		
-		if self.EmplacementType != "MG" and SERVER then self:EmitSound(self.SoundName) end
+		if SERVER then
+			if self.EmplacementType != "MG" then self:EmitSound(self.SoundName) end
+			if self.HasShootAnim then self:ResetSequence(self:LookupSequence("shoot")) end
+		end
 		if self.EmplacementType == "AT" then 
 			self:PlayAnim() 
 		end
@@ -396,29 +451,27 @@ function ENT:PlayAnim()
 	end
 end
 
-function ENT:SetShootAngles()
+function ENT:SetShootAngles(ply)
 	if SERVER then
-		self:GetShooter():DrawViewModel(false)
+		ply:DrawViewModel(false)
 		net.Start("TurretBlockAttackToggle")
 		net.WriteBit(true)
-		net.Send(self:GetShooter())
-		if self.Seatable and !self:GetShooter():InVehicle() then
+		net.Send(ply)
+		if self.Seatable and !ply:InVehicle() then
 			self:SetShooter(nil)
 			self:FinishShooting()
-			if !self:ShooterStillValid() then return end
 		end
+		if !self:ShooterStillValid() then return end
 		offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
 		offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
-		if self.TurretTurnMax > -1 or self.EmplacementType != "MG" or !self.Seatable then
-			if offsetDot>=self.TurretTurnMax then
-				local offsetAngNew=offsetAng:Angle()
-				offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
-				
-				self.OffsetAng=offsetAngNew
-				if self.EmplacementType == "Mortar" then canShoot = true end
-			else
-				if self.EmplacementType == "Mortar" then canShoot = false end
-			end
+		if offsetDot>=self.TurretTurnMax or self.CanLookArround then
+			local offsetAngNew=offsetAng:Angle()
+			offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
+			
+			self.OffsetAng=offsetAngNew
+			if self.EmplacementType == "Mortar" then canShoot = true end
+		else
+			if self.EmplacementType == "Mortar" then canShoot = false end
 		end
 	end
 end
@@ -429,14 +482,14 @@ end
 function ENT:SetPlayerKeys(ply)
 	local pressKey  = IN_BULLRUSH
 	local switchKey = IN_ATTACK2
-	local fuzekey   = IN_BULLRUSH --IN_RELOAD
+	local fuzekey   = IN_WALK
 	local reload    = IN_RELOAD
 	local fuzereset = IN_SPEED
 	local camera	= IN_DUCK
 	if CLIENT and game.SinglePlayer() then
 		pressKey  = IN_ATTACK
 		switchKey = IN_ATTACK2
-		fuzekey	  = IN_BULLRUSH --IN_RELOAD
+		fuzekey	  = IN_WALK
 		fuzereset = IN_SPEED
 		camera	  = IN_DUCK
 	    reload    = IN_RELOAD
@@ -448,28 +501,6 @@ function ENT:SetPlayerKeys(ply)
 	self.SwitchCamKey		= ply:KeyDown(camera)
 	self.ReloadKey          = ply:KeyDown(reload)
 end
-
-function ENT:PlayerSetSecondary(ply)
-	if self.Secondary then
-		if self.EmplacementType != "MG" or (self.CanSwitchAmmoTypes and self.EmplacementType == "MG") then 
-			self:SwitchAmmoType(ply) 
-		end
-	end
-	if self.SwitchedFuzeKey and self.CanSwitchAmmoTypes and self.EmplacementType == "MG" and self.AmmoType == "Time-Fuze" then
-		self:SetTimeFuze(ply)
-	end
-	if self.ReloadKey then
-	    if self.CurAmmo >= self.Ammo or self.IsReloading then return end
-		self:ReloadMG(ply)
-	end
-	if self.ResetFuzeKey and self.CanSwitchAmmoTypes and self.EmplacementType == "MG" and self.AmmoType == "Time-Fuze" then
-		if self.NextAmmoSwitch < CurTime() then
-			self.FuzeTime = 0.01
-			ply:ChatPrint("["..self.NameToPrint.."] Time fuze reseted to "..self.FuzeTime.." seconds")
-			self.NextAmmoSwitch = CurTime()+0.2
-		end
-	end
-end  
 
 function ENT:ShieldThink()
 	if SERVER then
@@ -528,11 +559,11 @@ function ENT:Think()
 				self.BasePos=self.turretBase:GetPos()
 				self.OffsetPos=self.turretBase:GetAngles():Up()*1
 			end
-			if self.Seatable then
+			if self.SecondModel != "" then
 				self:ShieldThink()
 			end
 			if self:ShooterStillValid() then
-				self:SetShootAngles()
+				self:SetShootAngles(player)
 				self:SetPlayerKeys(player)
 				self:PlayerSetSecondary(player)
 				
@@ -554,6 +585,9 @@ function ENT:Think()
 					self:SetShooter(nil)
 					self:FinishShooting()
 				end
+			end
+			if not self.Firing and self.EmplacementType == "MG" then
+				self:stop()
 			end
 			
 			self:NextThink(CurTime())

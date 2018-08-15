@@ -24,6 +24,7 @@ ENT.BaseModel			= "models/gredwitch/m2browning/m2_tripod.mdl"
 ENT.Model				= "models/gredwitch/m2browning/m2_gun.mdl"
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 35
+ENT.CanLookArround		= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

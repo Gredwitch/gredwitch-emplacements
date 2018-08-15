@@ -19,7 +19,7 @@ ENT.AnimRestartTime		= 4.5
 ENT.AnimPlayTime		= 1
 ENT.MaxUseDistance		= 100
 
-ENT.SoundName			= "shootPaK"
+ENT.SoundName			= "shootZiS2"
 ENT.ShootSound			= "gred_emp/common/50mm.wav"
 
 ENT.TurretHeight		= 1

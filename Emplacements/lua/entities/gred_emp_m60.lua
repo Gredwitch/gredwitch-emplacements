@@ -24,6 +24,7 @@ ENT.BaseModel			= "models/gredwitch/m60/m60_bipod.mdl"
 ENT.Model				= "models/gredwitch/m60/m60_gun.mdl"
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 7
+ENT.TurretTurnMax		= 0.7
 
 ENT.Recoil				= 2000
 ENT.Ammo				= 300
