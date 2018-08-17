@@ -1,0 +1,21 @@
+"VertexlitGeneric"
+{
+
+	"$basetexture" "models\(Flaczek)\glass"
+	"$bumpmap" "models\(Flaczek)\glass_n"
+	"$halflambert" "1"				
+	"$nocull" 1
+                "$alphatest" 0		
+
+"$envmap" "env_cubemap"
+"$envmapfresnel" "7"					
+
+	"$phong" "1"						
+	"$phongexponenttexture" "models\(Flaczek)\glass_n"
+	"$phongboost" "5"						
+	"$phongfresnelranges"	"[2 2 2]"	
+
+	"$PhongAlbedoTint" "1"		
+
+
+}

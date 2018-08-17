@@ -29,6 +29,7 @@ ENT.TurretTurnMax		= 0.7
 ENT.Recoil				= 2000
 ENT.Ammo				= 300
 ENT.CurAmmo				= ENT.Ammo
+ENT.HasNoAmmo			= false
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

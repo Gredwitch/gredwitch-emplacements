@@ -6,7 +6,9 @@ ENT.Base 				= "gred_emp_base"
 ENT.Category			= "Gredwitch's Stuff"
 ENT.PrintName 			= "[EMP]20mm Flak 38"
 ENT.Author				= "Gredwitch"
+
 ENT.Spawnable			= true
+ENT.IsInDev				= true
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Flak 38"
 

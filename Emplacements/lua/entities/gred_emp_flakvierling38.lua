@@ -6,7 +6,9 @@ ENT.Base 				= "gred_emp_base"
 ENT.Category			= "Gredwitch's Stuff"
 ENT.PrintName 			= "[EMP]20mm Flakvierling 38"
 ENT.Author				= "Gredwitch"
+
 ENT.Spawnable			= true
+ENT.IsInDev				= true
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Flakvierling 38"
 
@@ -15,6 +17,7 @@ ENT.ShotInterval		= 0.0535
 ENT.BulletType			= "wac_base_20mm"
 ENT.MuzzleCount			= 4
 
+ENT.Sequential			= true
 ENT.SoundName			= "shootFlakvierling"
 ENT.ShootSound			= "gred_emp/flakvierling38/20mm_shoot.wav"
 ENT.HasStopSound		= true
@@ -49,6 +52,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	else
 		ent.shield:SetBodygroup(1,1)
 	end
+	
 	return ent
 end
 
@@ -65,55 +69,49 @@ function ENT:SwitchAmmoType(plr)
 end
 
 function ENT:DoShot(plr)
-	if SERVER then
-		if m == nil or m > self.MuzzleCount then m = 1 end
-	    attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
-		attAng = self:GetAttachment(self.MuzzleAttachments[m]).Ang
-		
-		if GetConVar("gred_sv_altmuzzleeffect"):GetInt() == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
-			ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
-		else
-			local effectdata=EffectData()
-			effectdata:SetOrigin(attPos)
-			effectdata:SetAngles(attAng)
-			effectdata:SetEntity(self)
-			effectdata:SetScale(1)
-			util.Effect("MuzzleEffect", effectdata)
-	    end
-		local b = ents.Create("gred_base_bullet")
-		
-		if self.num > 0 then
-			num = self.num
-		else
-			num = 1.4
-		end
-		ang = attAng + Angle(math.Rand(num,-num), math.Rand(num,-num), math.Rand(num,-num))
-		b:SetPos(attPos)
-		b:SetAngles(ang)
-		b.Speed=1000
-		b.Size=0
-		b.Width=0
-		b.Damage=20
-		b.Radius=70
-		if self.AmmoType == "Time-Fuze" then b.FuzeTime=self.FuzeTime end
-		b.sequential=1
-		b.gunRPM=3600
-		b.Caliber=self.BulletType
-		b:Spawn()
-		b:Activate()
-		constraint.NoCollide(b,self,0,0,true)
-		b.Owner=plr
-		
-		self.tracer = self.tracer + 1
-		if self.tracer >= GetConVar("gred_sv_tracers"):GetInt() then
-			b:SetSkin(0)
-			b:SetModelScale(7)
-			self.tracer = 0
-		else
-			b.noTracer = true
-		end
-		self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*700000)
-		if GetConVar("gred_sv_limitedammo"):GetInt() == 1 then self.CurAmmo = self.CurAmmo - 1 end
-		m = m + 1
+	if m == nil or m > self.MuzzleCount or m == 0 then m = 1 end
+	
+	attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
+	attAng = self:GetAttachment(self.MuzzleAttachments[m]).Ang
+	
+	local b = ents.Create("gred_base_bullet")
+				
+	if self.num > 0 then
+		num = self.num
+	else
+		num = 1.4
 	end
+	ang = attAng + Angle(math.Rand(num,-num), math.Rand(num,-num), math.Rand(num,-num))
+	b:SetPos(attPos)
+	b:SetAngles(ang)
+	b.Speed=1000
+	b.Size=0
+	b.Width=0
+	b.Damage=20
+	b.Radius=70
+	if self.AmmoType == "Time-Fuze" then b.FuzeTime=self.FuzeTime end
+	b.sequential=1
+	b.gunRPM=3600
+	b.Caliber=self.BulletType
+	b:Spawn()
+	b:Activate()
+	constraint.NoCollide(b,self,0,0,true)
+	b.Owner=plr
+	
+	self.tracer = self.tracer + 1
+	if self.tracer >= GetConVar("gred_sv_tracers"):GetInt() then
+		b:SetSkin(0)
+		b:SetModelScale(7)
+		if self.CurAmmo <= 20 then 
+			self.tracer = GetConVar("gred_sv_tracers"):GetInt() - 2
+		else
+			self.tracer = 0
+		end
+	else 
+		b.noTracer = true
+	end
+	-- if GetConVar("gred_sv_limitedammo"):GetInt() == 1 then self:SetCurAmmo(self:GetCurAmmo() - 1) end
+	
+	self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*700000)
+	m = m + 1
 end

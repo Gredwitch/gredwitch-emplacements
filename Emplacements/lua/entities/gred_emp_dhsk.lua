@@ -28,6 +28,7 @@ ENT.TurretHeight		= 42
 ENT.Ammo				= 50
 ENT.CurAmmo				= ENT.Ammo
 ENT.CanLookArround		= true
+ENT.HasNoAmmo			= false
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

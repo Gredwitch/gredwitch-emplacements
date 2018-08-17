@@ -8,3 +8,5 @@ CreateConVar("gred_sv_mortar_shellspawnaltitude"	,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_shell_remove_time"			,  "10" , GRED_SVAR)
 CreateConVar("gred_sv_limitedammo"					,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_cantakemgbase"				,  "1"  , GRED_SVAR)
+
+CreateClientConVar("gred_cl_devemp_warnings","1", true,false)

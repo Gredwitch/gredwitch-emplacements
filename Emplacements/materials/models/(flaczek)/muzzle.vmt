@@ -1,0 +1,9 @@
+"UnlitGeneric"
+{
+
+$basetexture "models/(Flaczek)/muzzle.vtf"
+	"$translucent" 1
+$selfillum "1"
+$selfillummask" "models/(Flaczek)/muzzle_A.vtf"
+
+}

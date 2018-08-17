@@ -55,7 +55,7 @@ function ENT:Initialize()
 	self.Entity:SetMoveType			(MOVETYPE_VPHYSICS)
 	self.Entity:SetSolid			(SOLID_VPHYSICS)
 	self.Entity:SetCollisionGroup	(COLLISION_GROUP_DEBRIS)
-	
+	self.m_initialized = true
 	local phys = self.Entity:GetPhysicsObject()
 	if IsValid(phys) then
 		phys:Wake()

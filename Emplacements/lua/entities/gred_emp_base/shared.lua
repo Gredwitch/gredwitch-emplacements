@@ -8,7 +8,6 @@ ENT.Spawnable			= false
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Base"
 
-ENT.LastShot			= 0
 ENT.MuzzleEffect		= ""
 ENT.ShotInterval		= 0
 ENT.BulletType			= ""
@@ -19,6 +18,8 @@ ENT.Color				= "Green"
 ENT.EmplacementType     = "MG"
 ENT.NoRecoil			= false
 
+ENT.LastShot			= 0
+
 ENT.AnimPlaying			= false
 ENT.AmmoType			= "AP"
 ENT.FuzeTime			= 0
@@ -28,8 +29,7 @@ ENT.NextAnim			= 0
 ENT.HasReloadAnim		= false
 ENT.AnimPlayTime		= 0.5
 ENT.ShellEjectTime		= 0.2
-ENT.Ammo        		= 10000
-ENT.CurAmmo      		= ENT.Ammo
+ENT.Ammo        		= 1
 ENT.IsReloading			= false
 
 ENT.num					= 0
@@ -64,12 +64,16 @@ ENT.CanPlayStopSnd		= false
 ENT.MagProp				= ""
 ENT.empty				= "EmptySound"
 ENT.EmptySND			= "gred_emp/common/empty.wav"
+ENT.Sequential			= false
 
 ENT.Recoil				= 50000
 ENT.HasShellEject		= true
 ENT.CanLookArround		= false
 ENT.TurretForward		= 0
 
+ENT.HasNoAmmo			= true
+ENT.CurAmmo				= ENT.Ammo
+	
 ENT.AutomaticFrameAdvance = true -- FUCKING ANIMS NOT WORKING CUZ THIS IS NOT SET TO TRUE
 
 local SmokeSnds = {}
@@ -80,7 +84,7 @@ end
 local noHitSky = false
 local reachSky = Vector(0,0,9999999999)
 local nextplay = 0.5
-
+if SERVER then util.AddNetworkString("gred_net_emp_muzzle_fx")  end
 function ENT:SetupDataTables()
 	self:DTVar("Entity",0,"Shooter")
 	self:DTVar("Entity",1,"ShootPos")
@@ -103,20 +107,22 @@ function ENT:AddOnThink()
 end
 
 function ENT:SwitchAmmoType(plr)
-	if self.NextSwitch > CurTime() then return end
-	if self.AmmoType == "AP" then
-		self.AmmoType = "HE"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] HE shells selected") end
-	
-	elseif self.AmmoType == "HE" then
-		self.AmmoType = "Smoke"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Smoke shells selected") end
-	
-	elseif self.AmmoType == "Smoke" then
-		self.AmmoType = "AP"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] AP shells selected") end
-	end
-	self.NextSwitch = CurTime()+0.2
+	-- if SERVER then
+		if self.NextSwitch > CurTime() then return end
+		if self.AmmoType == "AP" then
+			self.AmmoType = "HE"
+			if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] HE shells selected") end
+		
+		elseif self.AmmoType == "HE" then
+			self.AmmoType = "Smoke"
+			if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Smoke shells selected") end
+		
+		elseif self.AmmoType == "Smoke" then
+			self.AmmoType = "AP"
+			if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] AP shells selected") end
+		end
+		self.NextSwitch = CurTime()+0.2
+	-- end
 end
 
 function ENT:PlayerSetSecondary(ply)
@@ -127,10 +133,10 @@ function ENT:PlayerSetSecondary(ply)
 	end
 	if self.CanSwitchAmmoTypes and self.AmmoType == "Time-Fuze" and self.NextAmmoSwitch < CurTime() then
 		if self.SwitchedFuzeKey then
-			self:SetTimeFuze()
+			self:SetTimeFuze(ply)
 		end
 		if self.ResetFuzeKey then
-			self:LowerTimeFuze()
+			self:LowerTimeFuze(ply)
 		end
 	end
 	if self.ReloadKey then
@@ -139,7 +145,7 @@ function ENT:PlayerSetSecondary(ply)
 	end
 end  
 
-function ENT:LowerTimeFuze()
+function ENT:LowerTimeFuze(ply)
 	if self.FuzeTime <= 0.01 then
 		self.FuzeTime = 0.5
 	else
@@ -151,7 +157,7 @@ function ENT:LowerTimeFuze()
 	self.NextAmmoSwitch = CurTime()+0.1
 end
 
-function ENT:SetTimeFuze()
+function ENT:SetTimeFuze(ply)
 	if self.FuzeTime >= 0.5 then 
 		self.FuzeTime = 0.01
 	else 
@@ -234,45 +240,15 @@ function ENT:AddSounds()
 end
 
 function ENT:DoShot(plr)
-		if self.EmplacementType == "Mortar" then
-			
-			local aimpos = self:GetAttachment(self:LookupAttachment("muzzle"))
-			local tr = util.QuickTrace(aimpos.Pos,aimpos.Pos + reachSky,{self,self,self.turretBase,self.shootpos} )
-			
-			if !tr.HitSky or (!tr.HitWorld and !tr.HitSky and !tr.Hit) then
-				canShoot = false
-				noHitSky = true
-				if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Nothing must block the mortar's muzzle!") end
-			else
-				noHitSky = false
-				if not canShoot then
-					-- if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] You can't shoot there!") end
-					self.LastShot=CurTime()-self.ShotInterval/1.2
-					return 
-				end
-			end
-			
-			
-		end
 		if self.EmplacementType == "Mortar" or self.EmplacementType == "AT" then
 			local pos = self:GetPos()
 			util.ScreenShake(pos,5,5,0.5,200)
 			ParticleEffect("gred_mortar_explosion_smoke_ground", pos-Vector(0,0,30),Angle(90,0,0))
 		end
 		for m = 1,self.MuzzleCount do
-			if SERVER then
 			    attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
 				attAng = self:GetAttachment(self.MuzzleAttachments[m]).Ang
-				if GetConVar("gred_sv_altmuzzleeffect"):GetInt() == 1 or (self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
-					ParticleEffect(self.MuzzleEffect,attPos,attAng,nil)
-				else
-					local effectdata=EffectData()
-					effectdata:SetOrigin(attPos)
-					effectdata:SetAngles(attAng)
-					effectdata:SetEntity(self)
-					effectdata:SetScale(1)
-					util.Effect("MuzzleEffect", effectdata)
-			    end
+				
 				if self.EmplacementType == "MG" then
 					local b = ents.Create("gred_base_bullet")
 					
@@ -411,16 +387,11 @@ function ENT:DoShot(plr)
 						self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*500000000)
 					end
 				end
-				if GetConVar("gred_sv_limitedammo"):GetInt() == 1 then self.CurAmmo = self.CurAmmo - 1 end
-			end
+				if GetConVar("gred_sv_limitedammo"):GetInt() == 1 and !self.HasNoAmmo then self.CurAmmo = self.CurAmmo - 1 end
 		end
-		if SERVER then
-			if self.EmplacementType != "MG" then self:EmitSound(self.SoundName) end
-			if self.HasShootAnim then self:ResetSequence(self:LookupSequence("shoot")) end
-		end
-		if self.EmplacementType == "AT" then 
-			self:PlayAnim() 
-		end
+		if self.EmplacementType != "MG" then self:EmitSound(self.SoundName) end
+		if self.HasShootAnim then self:ResetSequence(self:LookupSequence("shoot")) end
+		if self.EmplacementType == "AT" then self:PlayAnim() end
 end
 
 function ENT:PlayAnim()
@@ -519,7 +490,30 @@ function ENT:FindNPCs()
 end
 
 function ENT:fire(player)
-	self:DoShot(player)
+	if SERVER then
+		if self.EmplacementType == "Mortar" then
+			local aimpos = self:GetAttachment(self:LookupAttachment("muzzle"))
+			local tr = util.QuickTrace(aimpos.Pos,aimpos.Pos + reachSky,{self,self,self.turretBase,self.shootpos} )
+			
+			if !tr.HitSky or (!tr.HitWorld and !tr.HitSky and !tr.Hit) then
+				canShoot = false
+				noHitSky = true
+				player:ChatPrint("["..self.NameToPrint.."] Nothing must block the mortar's muzzle!")
+			else
+				noHitSky = false
+				if not canShoot then
+					player:ChatPrint("["..self.NameToPrint.."] You can't shoot there!")
+					self.LastShot = CurTime()-self.ShotInterval/1.2
+				return end
+			end
+		end
+	end
+	if canShoot or self.EmplacementType != "Mortar" and SERVER then
+		self:DoShot(player)
+		net.Start("gred_net_emp_muzzle_fx")
+			net.WriteEntity(self)
+		net.Broadcast()
+	end
 	if self.EmplacementType == "MG" then 
 		self.CanPlayStopSnd = true
 		if SERVER then
@@ -547,6 +541,8 @@ function ENT:stop()
 end
 
 function ENT:Think()
+	if not self.m_initialized then self:Initialize() end
+	-- if not self.Initialized then self:Initialize() end
 	if SERVER and (!IsValid(self.turretBase) or (self.Seatable and !IsValid(self.shield))) then
 		SafeRemoveEntity(self)
 	else
@@ -566,10 +562,10 @@ function ENT:Think()
 				self:SetShootAngles(player)
 				self:SetPlayerKeys(player)
 				self:PlayerSetSecondary(player)
-				
 				if self.Firing and not self.IsReloading and self.LastShot+self.ShotInterval<=CurTime() and self.CurAmmo >= 1 then
 					self:fire(player)
-					self.LastShot=CurTime()
+					self.LastShot = CurTime()
+				else
 				end
 				if self.LastShot+self.ShotInterval<=CurTime() and self.CanPlayStopSnd and self.EmplacementType == "MG" then
 					self:stop()
@@ -588,8 +584,9 @@ function ENT:Think()
 			end
 			if not self.Firing and self.EmplacementType == "MG" then
 				self:stop()
+				if SERVER then  end
+				if CLIENT then  end
 			end
-			
 			self:NextThink(CurTime())
 			return true
 		end
