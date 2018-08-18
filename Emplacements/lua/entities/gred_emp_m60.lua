@@ -16,9 +16,9 @@ ENT.ShotInterval		= 0.092
 ENT.Color				= "Red"
 
 ENT.ShootSound			= "gred_emp/m60/shoot.wav"
-ENT.StopSoundName		= "gred_emp/m60/stop.wav"
-ENT.SoundName			= "shootM60"
 ENT.HasStopSound		= true
+ENT.SoundName			= "shootM60"
+ENT.StopSoundName		= "gred_emp/m60/stop.wav"
 
 ENT.BaseModel			= "models/gredwitch/m60/m60_bipod.mdl"
 ENT.Model				= "models/gredwitch/m60/m60_gun.mdl"
@@ -26,10 +26,11 @@ ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 7
 ENT.TurretTurnMax		= 0.7
 
-ENT.Recoil				= 2000
 ENT.Ammo				= 300
 ENT.CurAmmo				= ENT.Ammo
 ENT.HasNoAmmo			= false
+
+ENT.Recoil				= 2000
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

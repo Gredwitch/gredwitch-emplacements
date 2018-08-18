@@ -73,6 +73,7 @@ ENT.TurretForward		= 0
 
 ENT.HasNoAmmo			= true
 ENT.CurAmmo				= ENT.Ammo
+ENT.CanUseShield		= true
 	
 ENT.AutomaticFrameAdvance = true -- FUCKING ANIMS NOT WORKING CUZ THIS IS NOT SET TO TRUE
 
@@ -107,22 +108,21 @@ function ENT:AddOnThink()
 end
 
 function ENT:SwitchAmmoType(plr)
-	-- if SERVER then
-		if self.NextSwitch > CurTime() then return end
-		if self.AmmoType == "AP" then
-			self.AmmoType = "HE"
-			if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] HE shells selected") end
-		
-		elseif self.AmmoType == "HE" then
-			self.AmmoType = "Smoke"
-			if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Smoke shells selected") end
-		
-		elseif self.AmmoType == "Smoke" then
-			self.AmmoType = "AP"
-			if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] AP shells selected") end
-		end
-		self.NextSwitch = CurTime()+0.2
-	-- end
+	if self.NextSwitch > CurTime() then return end
+	if self.AmmoType == "AP" then
+		if CLIENT then self.AmmoType = "HE" end
+		if SERVER then self.AmmoType = "HE" end
+	
+	elseif self.AmmoType == "HE" then
+		if CLIENT then self.AmmoType = "Smoke" end
+		if SERVER then self.AmmoType = "Smoke" end
+			
+	elseif self.AmmoType == "Smoke" then
+		if CLIENT then self.AmmoType = "AP" end
+		if SERVER then self.AmmoType = "AP" end
+	end
+	if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	self.NextSwitch = CurTime()+0.2
 end
 
 function ENT:PlayerSetSecondary(ply)
@@ -147,7 +147,8 @@ end
 
 function ENT:LowerTimeFuze(ply)
 	if self.FuzeTime <= 0.01 then
-		self.FuzeTime = 0.5
+		if CLIENT then self.FuzeTime = 0.5 end
+		if SERVER then self.FuzeTime = 0.5 end
 	else
 		self.FuzeTime = self.FuzeTime - 0.01 
 	end
@@ -159,9 +160,11 @@ end
 
 function ENT:SetTimeFuze(ply)
 	if self.FuzeTime >= 0.5 then 
-		self.FuzeTime = 0.01
+		if SERVER then self.FuzeTime = 0.01 end
+		if CLIENT then self.FuzeTime = 0.01 end
 	else 
-		self.FuzeTime = self.FuzeTime + 0.01 
+		if CLIENT then self.FuzeTime = self.FuzeTime + 0.01 end
+		if SERVER then self.FuzeTime = self.FuzeTime + 0.01 end
 	end
 	if CLIENT then
 		ply:ChatPrint("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds")
@@ -310,6 +313,7 @@ function ENT:DoShot(plr)
 					b:SetPos(shootpos)
 					b:SetAngles(attAng)
 					b.GBOWNER=plr
+					b.IsOnPlane = true
 					b:Spawn()
 					b:Activate()
 					b:SetBodygroup(0,1)
@@ -346,18 +350,19 @@ function ENT:DoShot(plr)
 						end)
 					end
 				elseif self.EmplacementType == "Mortar" then
-					local b=ents.Create(self.BulletType)
 					local shootPos=util.TraceLine(util.GetPlayerTrace(self.Shooter)).HitPos
+					local bul = self.BulletType
+					local ammo = self.AmmoType
 					timer.Simple(4,function()
 						if not IsValid(self) then return end
-						
-						local b=ents.Create(self.BulletType)
+						local b=ents.Create(bul)
 						local spawnAtt = GetConVar("gred_sv_mortar_shellspawnaltitude"):GetInt()
 						if spawnAtt == nil then spawnAtt = 1000 end
 						b:SetPos(shootPos + Vector(math.random(-self.Scatter,self.Scatter),math.random(-self.Scatter,self.Scatter),spawnAtt))
 						b:SetAngles(Angle(90,0,0))
 						b:SetOwner(self.Shooter)
-						if self.AmmoType == "Smoke" then
+						b.IsOnPlane = true
+						if ammo == "Smoke" then
 							b.Effect 		  				   = self.EffectSmoke
 							b.EffectAir 	  				   = self.EffectSmoke
 							b.ExplosionRadius 				   = 0
@@ -478,6 +483,11 @@ function ENT:ShieldThink()
 		self.shield:SetSkin(self:GetSkin())
 		self.shield:SetPos(self.BasePos)
 		self.shield:SetAngles(Angle(self.turretBase:GetAngles().p,self:GetAngles().y,self.turretBase:GetAngles().r))
+		if self.CanUseShield then
+			hook.Add("PlayerUse","gred_emp_use_shield",function(ply,ent)
+				self:Use(ply,ent,3,1)
+			end)
+		end
 	end
 end
 
@@ -503,7 +513,6 @@ function ENT:fire(player)
 				noHitSky = false
 				if not canShoot then
 					player:ChatPrint("["..self.NameToPrint.."] You can't shoot there!")
-					self.LastShot = CurTime()-self.ShotInterval/1.2
 				return end
 			end
 		end
@@ -541,8 +550,8 @@ function ENT:stop()
 end
 
 function ENT:Think()
-	if not self.m_initialized then self:Initialize() end
-	-- if not self.Initialized then self:Initialize() end
+	if CLIENT then if not self.m_initialized then self:Initialize() end end
+	if SERVER then if not self.m_initialized then self:Initialize() end end
 	if SERVER and (!IsValid(self.turretBase) or (self.Seatable and !IsValid(self.shield))) then
 		SafeRemoveEntity(self)
 	else

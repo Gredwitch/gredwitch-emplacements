@@ -4,16 +4,18 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 
 function ENT:CreateEmplacement()
-	-- if self.EmplacementType == "MG" and GetConVar("gred_sv_cantakemgbase"):GetInt() == 1 then
-		local turretBase=ents.Create("prop_physics")
-	-- else
-		-- local turretBase=ents.Create("prop_dynamic")
-	-- end
+	local turretBase=ents.Create("prop_physics")
 	turretBase:SetModel(self.BaseModel)
 	turretBase:SetAngles(self:GetAngles()+Angle(0,90,0))
 	turretBase:SetPos(self:GetPos()-Vector(0,0,0))
 	turretBase:Spawn()
 	self.turretBase=turretBase
+	if self.EmplacementType == "MG" and GetConVar("gred_sv_cantakemgbase"):GetInt() == 1 and self.SecondModel == "" then
+		local p = turretBase:GetPhysicsObject()
+		if IsValid(p) then
+			p:SetMass(35)
+		end
+	end
 	if self.EmplacementType == "AT" and GetConVar("gred_sv_carriage_collision"):GetInt() == 0 then
 		self.turretBase:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 	end
@@ -55,7 +57,8 @@ function ENT:Initialize()
 	self.Entity:SetMoveType			(MOVETYPE_VPHYSICS)
 	self.Entity:SetSolid			(SOLID_VPHYSICS)
 	self.Entity:SetCollisionGroup	(COLLISION_GROUP_DEBRIS)
-	self.m_initialized = true
+	if CLIENT then self.m_initialized = true end
+	if SERVER then self.m_initialized = true end
 	local phys = self.Entity:GetPhysicsObject()
 	if IsValid(phys) then
 		phys:Wake()
@@ -127,7 +130,10 @@ function ENT:OnRemove()
 	end
 	if self.HasStopSound then self:StopSound(self.StopSoundName) end
 	SafeRemoveEntity(self.turretBase)
-	if self.SecondModel != "" then SafeRemoveEntity(self.shield) end
+	if self.SecondModel != "" then 
+		if self.CanUseShield then hook.Remove("PlayerUse","gred_emp_use_shield") end
+		SafeRemoveEntity(self.shield) 
+	end
 end
 
 function ENT:StartShooting()

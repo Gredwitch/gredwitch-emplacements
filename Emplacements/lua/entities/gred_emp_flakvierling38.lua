@@ -39,6 +39,7 @@ ENT.TurretForward		= 15
 ENT.Color				= "Yellow"
 -- ENT.Seatable			= true
 
+-- hook.Remove("PlayerUse","gred_emp_use_shield_flakvierling38")
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 16

@@ -21,8 +21,9 @@ ENT.SoundName			= "shootMG81Z"
 ENT.BaseModel			= "models/gredwitch/mg81z/mg81z_tripod.mdl"
 ENT.Model				= "models/gredwitch/mg81z/mg81z_gun.mdl"
 ENT.TurretTurnMax		= 0
-ENT.TurretHeight		= 40
+ENT.TurretHeight		= 42
 ENT.CanLookArround		= true
+ENT.TurretForward		= -3
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -31,5 +32,6 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:SetPos(SpawnPos)
 	ent:Spawn()
 	ent:Activate()
+	ent:SetBodygroup(2,math.random(0,1))
 	return ent
 end

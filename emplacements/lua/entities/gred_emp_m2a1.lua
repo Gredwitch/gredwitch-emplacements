@@ -45,21 +45,36 @@ end
 
 function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
-	
 	if self.AmmoType == "HE" then
-		self.AmmoType = "WP"
-		self.BulletType = "gb_rocket_81mmWP"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] WP shells selected") end
-	
-	elseif self.AmmoType == "WP" then
-		self.AmmoType = "Smoke"
-		self.BulletType = "gb_shell_105mm"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Smoke shells selected") end
+		if CLIENT then 
+			self.AmmoType = "Smoke"
+			self.BulletType = "gb_rocket_105mm"
+		end
+		if SERVER then 
+			self.AmmoType = "Smoke"
+			self.BulletType = "gb_rocket_105mm"
+		end
 	
 	elseif self.AmmoType == "Smoke" then
-		self.AmmoType = "HE"
-		self.BulletType = "gb_shell_105mm"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] HE shells selected") end
+		if CLIENT then 
+			self.AmmoType = "WP"
+			self.BulletType = "gb_rocket_81mmWP"
+		end
+		if SERVER then 
+			self.AmmoType = "WP"
+			self.BulletType = "gb_rocket_81mmWP"
+		end
+	
+	elseif self.AmmoType == "WP" then
+		if CLIENT then 
+			self.AmmoType = "HE"
+			self.BulletType = "gb_rocket_105mm"
+		end
+		if SERVER then 
+			self.AmmoType = "HE"
+			self.BulletType = "gb_rocket_105mm"
+		end
 	end
+	if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end

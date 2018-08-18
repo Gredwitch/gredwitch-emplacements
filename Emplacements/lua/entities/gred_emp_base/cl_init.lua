@@ -12,7 +12,6 @@ function ENT:Initialize()
 	
 	if self.IsInDev then
 		if GetConVar("gred_cl_devemp_warnings"):GetInt() == 1 then
-			-- local o = self:GetOwner()
 			chat.AddText(Color(255,0,0),"This emplacement is currently in development, so some features are missing on it.")
 			chat.AddText(Color(255,0,0),"CURRENT FEATURES NEEDED : ")
 			chat.AddText(Color(255,0,0)," - The ability to seat on the emplacement")

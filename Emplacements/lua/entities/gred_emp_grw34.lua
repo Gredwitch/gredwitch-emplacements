@@ -45,11 +45,12 @@ end
 function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
 	if self.AmmoType == "HE" then
-		self.AmmoType = "Smoke"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Smoke shells selected") end
+		if CLIENT then self.AmmoType = "Smoke" end
+		if SERVER then self.AmmoType = "Smoke" end
 	elseif self.AmmoType == "Smoke" then
-		self.AmmoType = "HE"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] HE shells selected") end
+		if CLIENT then self.AmmoType = "HE" end
+		if SERVER then self.AmmoType = "HE" end
 	end
+	if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end

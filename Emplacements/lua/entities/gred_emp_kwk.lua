@@ -16,6 +16,8 @@ ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.ShotInterval		= 4.8
 ENT.BulletType			= "gb_shell_50mm"
 ENT.MuzzleCount			= 1
+ENT.HasReloadAnim		= true
+ENT.AnimPlayTime		= 1.3
 
 ENT.HERadius			= 300
 ENT.HEDamage			= 75
@@ -34,8 +36,8 @@ ENT.SecondModel			= "models/gredwitch/kwk/kwk_shield.mdl"
 ENT.Model				= "models/gredwitch/kwk/kwk_gun.mdl"
 ENT.EmplacementType     = "AT"
 ENT.MaxUseDistance		= 130
-ENT.HasShellEject		= false
 ENT.CanLookArround		= true
+ENT.CanUseShield		= false
 -- ENT.Seatable			= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -48,4 +50,19 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Activate()
 	ent:SetSkin(math.random(0,1))
 	return ent
+end
+
+function ENT:PlayAnim()
+	if SERVER then
+		-- if self.AnimPlaying then return end
+		timer.Simple(self.AnimPlayTime,function()
+			if !IsValid(self) then return end
+			self:ResetSequence(self:LookupSequence("reload"))
+			self.AnimPlaying = true
+		end)
+		timer.Simple(self:SequenceDuration(),function() 
+			if !IsValid(self) then return end
+			self.AnimPlaying = false
+		end)
+	end
 end
