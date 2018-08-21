@@ -74,7 +74,8 @@ ENT.TurretForward		= 0
 ENT.HasNoAmmo			= true
 ENT.CurAmmo				= ENT.Ammo
 ENT.CanUseShield		= true
-	
+ENT.CustomRecoil		= false
+
 ENT.AutomaticFrameAdvance = true -- FUCKING ANIMS NOT WORKING CUZ THIS IS NOT SET TO TRUE
 
 local SmokeSnds = {}
@@ -325,15 +326,6 @@ function ENT:DoShot(plr)
 						b.Smoke = true
 					end
 					b:Launch()
-					local bphys = b:GetPhysicsObject()
-					if IsValid(bphys) then 
-						velocity = self:GetRight()*-9999999999999
-						if !game.IsDedicated() then
-							bphys:ApplyForceCenter(velocity) 
-						else
-							bphys:AddVelocity(velocity)
-						end
-					end
 					b.Owner=plr
 					if self.HasShellEject then
 						timer.Simple(self.AnimPlayTime + self.ShellEjectTime,function()
@@ -389,7 +381,11 @@ function ENT:DoShot(plr)
 					if self.EmplacementType == "MG" then
 						self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*self.Recoil)
 					elseif self.EmplacementType == "AT" then
-						self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*500000000)
+						if self.CustomRecoil then
+							self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*self.Recoil)
+						else
+							self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*7000000)
+						end
 					end
 				end
 				if GetConVar("gred_sv_limitedammo"):GetInt() == 1 and !self.HasNoAmmo then self.CurAmmo = self.CurAmmo - 1 end

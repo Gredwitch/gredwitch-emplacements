@@ -30,6 +30,8 @@ ENT.BaseModel			= "models/gredwitch/zis3/zis3_carriage.mdl"
 ENT.Model				= "models/gredwitch/zis3/zis3_gun.mdl"
 ENT.EmplacementType     = "AT"
 ENT.Scatter				= 0.1
+ENT.CustomRecoil		= true
+ENT.Recoil				= 1000000
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

@@ -64,6 +64,7 @@ ENT.Timed                            =  false
 ENT.APDamage						 =  1005
 ENT.ExplosionDamage                  =  200
 ENT.ExplosionRadius                  =  500
+ENT.EnginePower                      =  275
 
 function ENT:SpawnFunction( ply, tr )
     if ( !tr.Hit ) then return end

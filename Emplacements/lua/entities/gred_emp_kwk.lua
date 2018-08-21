@@ -38,6 +38,8 @@ ENT.EmplacementType     = "AT"
 ENT.MaxUseDistance		= 130
 ENT.CanLookArround		= true
 ENT.CanUseShield		= false
+ENT.CustomRecoil		= true
+ENT.Recoil				= 700000
 -- ENT.Seatable			= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )

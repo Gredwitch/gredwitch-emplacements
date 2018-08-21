@@ -1,0 +1,12 @@
+"UnlitGeneric"
+{
+
+$basetexture "models/(Flaczek)/beam.vtf"
+$nocull "1"
+$translucent "1"
+
+$selfillum "1"
+$selfillummaskscale "5"
+$selfIllumFresnelMinMaxExp [5 5 5]
+
+}
