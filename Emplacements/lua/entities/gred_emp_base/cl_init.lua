@@ -10,16 +10,6 @@ function ENT:Initialize()
 	end
 	self.shootPos=self:GetDTEntity(1)
 	
-	if self.IsInDev then
-		if GetConVar("gred_cl_devemp_warnings"):GetInt() == 1 then
-			chat.AddText(Color(255,0,0),"This emplacement is currently in development, so some features are missing on it.")
-			chat.AddText(Color(255,0,0),"CURRENT FEATURES NEEDED : ")
-			chat.AddText(Color(255,0,0)," - The ability to seat on the emplacement")
-			chat.AddText(Color(255,0,0)," - A third person aiming system")
-			chat.AddText(Color(255,0,0),"To remove this warning message, simply set gred_cl_devemp_warnings to 0 in the developer console.")
-		end
-		self.IsInDev = false
-	end
 end
 
 function ENT:Draw()
@@ -28,12 +18,17 @@ end
 
 net.Receive("gred_net_emp_muzzle_fx",function()
 	local self = net.ReadEntity()
+	canEjectShell = self.EmplacementType == "MG" and GetConVar("gred_cl_shelleject"):GetInt() == 1 and self.HasShellEject
+	if canEjectShell then
+		self.ShellEject = {}
+		self.ShellEject[1] = self:LookupAttachment("shelleject")
+	end
 	self.MuzzleAttachments = {}
 	self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
-	self.HookupAttachment=self:LookupAttachment("hookup")
 	for v=1,self.MuzzleCount do
 		if v>1 then
 			self.MuzzleAttachments[v] = self:LookupAttachment("muzzle"..v.."")
+			if canEjectShell and self.MultpipleShellEject then self.ShellEject[v] = self:LookupAttachment("shelleject"..v.."") end
 		end
 	end
 	if self.Sequential then
@@ -52,6 +47,17 @@ net.Receive("gred_net_emp_muzzle_fx",function()
 			effectdata:SetScale(1)
 			util.Effect("MuzzleEffect", effectdata)
 	    end
+		if canEjectShell then
+			local effectdata = EffectData()
+			local eject = self:GetAttachment(self.ShellEject[m])
+			effectdata:SetOrigin(eject.Pos)
+			effectdata:SetAngles(eject.Ang + self.EjectAngle)
+			if self.BulletType == "wac_base_7mm" then
+				util.Effect("ShellEject",effectdata)
+			else
+				util.Effect("RifleShellEject",effectdata)
+			end
+		end
 		m = m + 1
 	else
 		for m = 1,self.MuzzleCount do
@@ -69,6 +75,24 @@ net.Receive("gred_net_emp_muzzle_fx",function()
 				effectdata:SetScale(1)
 				util.Effect("MuzzleEffect", effectdata)
 			end
+			if canEjectShell then
+				local effectdata = EffectData()
+				local eject = nil
+				if self.MultpipleShellEject then
+					eject = self:GetAttachment(self.ShellEject[m])
+				else
+					eject = self:GetAttachment(self.ShellEject[1])
+				end
+				effectdata:SetOrigin(eject.Pos)
+				effectdata:SetAngles(eject.Ang + self.EjectAngle)
+				effectdata:SetEntity(self)
+				if self.BulletType == "wac_base_7mm" then
+					util.Effect("ShellEject",effectdata)
+				else
+					util.Effect("RifleShellEject",effectdata)
+				end
+			end
+
 		end
 	end
 end)

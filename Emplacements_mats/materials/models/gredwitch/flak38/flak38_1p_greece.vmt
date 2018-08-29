@@ -1,11 +1,20 @@
 "VertexLitGeneric"
 {
-	"$basetexture" "models/gredwitch/flak38/flak38_1p_greece_c"
-	"$bumpmap" "models/gredwitch/flak38/flak38_1p_b"
-	
-	"$normalmapalphaenvmapmask" "1"
-	"$phong" 					"1"
-	"$phongexponent" 			"69"
-	"$phongboost"   			"0.1"
-	"$phongfresnelranges"   	"[8 4 8]"
+	$basetexture			"models/gredwitch/flak38/flak38_1p_greece_c"
+	$bumpmap				"models/gredwitch/flak38/flak38_1p_b"
+	$halflambert			1
+	$nocull 				1
+	$alphatest 				0
+
+	$phongexponenttexture 	"models/gredwitch/flak38/flak38_1p_b"
+	$phong 					1
+	$phongboost 			0.2
+	$phongfresnelranges		"[2 2 2]"
+
+	$PhongAlbedoTint 		1
+
+	$rimlight     			0
+	$rimlightexponent   	1
+	$rimlightboost   		0.3
+	$rimmask      			1
 }

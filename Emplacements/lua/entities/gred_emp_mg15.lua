@@ -14,6 +14,7 @@ ENT.MuzzleCount			= 1
 ENT.BulletType			= "wac_base_7mm"
 ENT.ShotInterval		= 0.057
 ENT.Color				= "Green"
+ENT.EjectAngle			= Angle(85,0,0)
 
 ENT.ShootSound			= "gred_emp/mg15/shoot.wav"
 ENT.HasStopSound		= true

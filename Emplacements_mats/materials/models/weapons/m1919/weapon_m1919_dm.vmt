@@ -1,0 +1,17 @@
+"VertexLitGeneric"
+{
+	"$basetexture"			"models\weapons\m1919\weapon_m1919_dm"
+	"$bumpmap"	 			"models\weapons\m1919\weapon_m1919_nm"
+
+	"$phong"  				"1"
+	"$phongexponent" 		"40"
+	"$phongboost" 			"3.2"
+	"$phongfresnelranges"	"[1 2 3]"
+	"$phongtint" 			"[0.6 0.8 1]"
+	"$phongalbedotint" 		"1"	
+
+	"$envmapfresnel"	"0.75"
+	"$envmap"			"env_cubemap"
+	"$envmaptint"		"[0.1 0.1 0.1]"
+	"$normalmapalphaenvmapmask"	"1"
+}

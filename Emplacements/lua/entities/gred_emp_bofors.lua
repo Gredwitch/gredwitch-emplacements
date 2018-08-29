@@ -38,6 +38,7 @@ ENT.CanLookArround		= true
 -- ENT.Seatable			= true
 ENT.created				= false
 ENT.Recoil				= 5000000
+ENT.HasShellEject		= false
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -45,6 +46,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
 	ent:SetSkin(math.random(0,1))
+	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()
 	m = math.random(0,2)
@@ -62,10 +64,10 @@ function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
 	if self.AmmoType == "Direct Hit" then
 		self.AmmoType = "Time-Fuze"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Time-Fuze rounds selected") end
+		if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] Time-Fuze rounds selected") end
 	elseif self.AmmoType == "Time-Fuze" then
 		self.AmmoType = "Direct Hit"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Direct hit rounds selected") end
+		if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] Direct hit rounds selected") end
 	end
 	self.NextSwitch = CurTime()+0.2
 end

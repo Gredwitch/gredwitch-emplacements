@@ -58,11 +58,11 @@ function ENT:SwitchAmmoType(plr)
 	elseif self.AmmoType == "Smoke" then
 		if CLIENT then 
 			self.AmmoType = "WP"
-			self.BulletType = "gb_rocket_81mmWP"
+			self.BulletType = "gb_shell_81mmWP"
 		end
 		if SERVER then 
 			self.AmmoType = "WP"
-			self.BulletType = "gb_rocket_81mmWP"
+			self.BulletType = "gb_shell_81mmWP"
 		end
 	
 	elseif self.AmmoType == "WP" then
@@ -75,6 +75,6 @@ function ENT:SwitchAmmoType(plr)
 			self.BulletType = "gb_shell_105mm"
 		end
 	end
-	if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end

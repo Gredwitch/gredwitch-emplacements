@@ -38,6 +38,7 @@ ENT.CanLookArround		= true
 ENT.TurretForward		= 15
 ENT.Color				= "Yellow"
 -- ENT.Seatable			= true
+ENT.HasShellEject		= false
 
 -- hook.Remove("PlayerUse","gred_emp_use_shield_flakvierling38")
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -45,6 +46,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 16
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()
 	ent:SetSkin(math.random(0,3))
@@ -61,10 +63,10 @@ function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
 	if self.AmmoType == "Direct Hit" then
 		self.AmmoType = "Time-Fuze"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Time-Fuze rounds selected") end
+		if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] Time-Fuze rounds selected") end
 	elseif self.AmmoType == "Time-Fuze" then
 		self.AmmoType = "Direct Hit"
-		if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] Direct hit rounds selected") end
+		if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] Direct hit rounds selected") end
 	end
 	self.NextSwitch = CurTime()+0.2
 end

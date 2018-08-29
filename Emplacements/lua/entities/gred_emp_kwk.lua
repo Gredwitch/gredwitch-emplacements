@@ -48,6 +48,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
 	ent:SetAngles(ent:GetAngles()+Angle(0,90,0))
+	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()
 	ent:SetSkin(math.random(0,1))

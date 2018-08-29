@@ -14,6 +14,7 @@ ENT.MuzzleCount			= 2
 ENT.BulletType			= "wac_base_7mm"
 ENT.ShotInterval		= 0.0375
 ENT.Color				= "Green"
+ENT.EjectAngle			= Angle(110,0,0)
 
 ENT.ShootSound			= "gred_emp/mg81z/shoot.wav"
 ENT.SoundName			= "shootMG81Z"
@@ -24,6 +25,7 @@ ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 42
 ENT.CanLookArround		= true
 ENT.TurretForward		= -3
+ENT.MultpipleShellEject = false
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -32,6 +34,5 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:SetPos(SpawnPos)
 	ent:Spawn()
 	ent:Activate()
-	ent:SetBodygroup(2,math.random(0,1))
 	return ent
 end

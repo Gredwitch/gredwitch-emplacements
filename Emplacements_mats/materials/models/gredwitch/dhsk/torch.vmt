@@ -8,7 +8,7 @@
 
 	$phong 					1
 	$phongexponenttexture 	"models/gredwitch/dhsk/torch_s"
-	$phongboost 			0.2
+	$phongboost 			0.5
 	$phongfresnelranges		"[2 2 2]"
 
 	$PhongAlbedoTint 		1

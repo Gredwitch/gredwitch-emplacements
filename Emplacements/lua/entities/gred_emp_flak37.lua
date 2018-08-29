@@ -24,10 +24,10 @@ ENT.AnimPlayTime		= 1
 ENT.SoundName			= "shootFlak37"
 ENT.ShootSound			= "gred_emp/common/88mm.wav"
 
-ENT.TurretHeight		= 1
-ENT.TurretFloatHeight	= 0
+ENT.TurretHeight		= 0
+ENT.TurretForward		= -40
+
 ENT.MaxUseDistance		= 100
-ENT.TurretModelOffset	= Vector(0,0,0)
 ENT.TurretTurnMax		= 0.9
 ENT.BaseModel			= "models/gredwitch/flak37/flak37_base.mdl"
 ENT.SecondModel			= "models/gredwitch/flak37/flak37_shield.mdl"
@@ -42,9 +42,10 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 100
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
-	ent:SetBodygroup(1,math.random(0,1))
+	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()
+	ent:SetBodygroup(1,math.random(0,1))
 	ent.turretBase:SetBodygroup(1,math.random(0,1))
 	ent.shield:SetBodygroup(1,math.random(0,3))
 	ent.shield:SetBodygroup(2,math.random(0,1))

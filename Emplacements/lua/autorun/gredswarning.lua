@@ -1,23 +1,7 @@
 if SERVER then AddCSLuaFile() end
 
-local found=false
-local f=file.Find('autorun/client/*.lua', "LUA")
-for k,v in pairs(f) do
-	if v == "gredwitch_addon_verify.lua" then
-		include('autorun/client/gredwitch_addon_verify.lua')
-		found=true
-	end
-end
-
-local foundE=false
-local fE=file.Find('autorun/*.lua', "LUA")
-for k,v in pairs(fE) do
-	if v=="gred_emplacements_verify.lua" then
-		include('autorun/gred_emplacements_verify.lua')
-		foundE=true
-	end
-end
-
+local found = file.Find("gredwitch_addon_verify","autorun/client")
+local foundE = file.Exists("gred_emplacements_verify.lua","autorun")
 timer.Simple(5,function()
 	if not found and not GredFrame then
 		if CLIENT then
@@ -53,5 +37,7 @@ timer.Simple(5,function()
 			h:OpenURL('https://steamcommunity.com/sharedfiles/filedetails/?id=1484100983.html')
 		end
 	end
+	print(found)
+	print(foundE)
 end)
 if not found or not foundE then return end

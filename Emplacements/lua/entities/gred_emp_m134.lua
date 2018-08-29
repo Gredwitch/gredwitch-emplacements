@@ -27,7 +27,7 @@ ENT.Model				= "models/gredwitch/M134/M134_gun.mdl"
 ENT.HasRotatingBarrel	= true
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 0
-ENT.MaxUseDistance		= 100
+ENT.MaxUseDistance		= 50
 ENT.CanLookArround		= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )

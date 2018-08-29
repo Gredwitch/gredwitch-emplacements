@@ -43,16 +43,21 @@ function ENT:CreateShield()
 	shield:SetModel(self.SecondModel)
 	shield:SetAngles(self:GetAngles()+Angle(0,90,0))
 	shield:SetPos(self:GetPos()-Vector(0,0,0))
+	shield:SetDTEntity(0,self)
+	shield.Use = function(ply,s)
+		shield:GetDTEntity(0):Use(pl,s,3,1)
+	end
 	shield:Spawn()
 	shield:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+	
 	self.shield=shield
 	constraint.NoCollide(self.shield,self,0,0,true)
 	constraint.NoCollide(self.shield,self.turretBase,0,0,true)
+	
 end
 
 function ENT:Initialize()
 	self:SetModel(self.Model)
-	
 	self.Entity:PhysicsInit			(SOLID_VPHYSICS)
 	self.Entity:SetMoveType			(MOVETYPE_VPHYSICS)
 	self.Entity:SetSolid			(SOLID_VPHYSICS)
@@ -108,6 +113,18 @@ function ENT:Initialize()
 	self.shootPos:SetRenderMode(RENDERMODE_TRANSCOLOR)
 	self.shootPos:SetColor(Color(255,255,255,1))
 	self:AddSounds()
+	if self.IsInDev then
+		if CLIENT or game.IsDedicated() or !game.IsDedicated() then
+			if GetConVar("gred_cl_devemp_warnings") == nil then return end
+			if GetConVar("gred_cl_devemp_warnings"):GetInt() == 1 then
+				self.Spawner:ChatPrint("This emplacement is currently in development, so some features are missing on it.")
+				self.Spawner:ChatPrint("CURRENT FEATURES NEEDED : ")
+				self.Spawner:ChatPrint(" - The ability to seat on the emplacement")
+				self.Spawner:ChatPrint(" - A third person aiming system")
+				self.Spawner:ChatPrint("To remove this warning message, simply set gred_cl_devemp_warnings to 0 in the developer console.")
+			end
+		end
+	end
 end
 
 function ENT:OnRemove()

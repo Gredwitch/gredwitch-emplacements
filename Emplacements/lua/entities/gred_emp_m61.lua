@@ -26,9 +26,11 @@ ENT.BaseModel			= "models/gredwitch/m61/m61_tripod.mdl"
 ENT.Model				= "models/gredwitch/m61/m61_gun.mdl"
 ENT.HasRotatingBarrel	= true
 ENT.TurretTurnMax		= 0
-ENT.TurretHeight		= 17
-ENT.MaxUseDistance		= 100
+ENT.TurretHeight		= 18.5
+ENT.MaxUseDistance		= 55
 ENT.CanLookArround		= true
+ENT.HasShellEject		= false
+ENT.TurretForward		= 4.4
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

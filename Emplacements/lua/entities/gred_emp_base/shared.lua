@@ -17,7 +17,7 @@ ENT.tracer 				= 0
 ENT.Color				= "Green"
 ENT.EmplacementType     = "MG"
 ENT.NoRecoil			= false
-
+ENT.EjectAngle			= Angle(0,-90,0)
 ENT.LastShot			= 0
 
 ENT.AnimPlaying			= false
@@ -33,6 +33,7 @@ ENT.Ammo        		= 1
 ENT.IsReloading			= false
 
 ENT.num					= 0
+ENT.Spawner				= nil
 
 ENT.SoundName			= "shootSound"
 ENT.StopSound			= ""
@@ -72,6 +73,7 @@ ENT.CanLookArround		= false
 ENT.TurretForward		= 0
 
 ENT.HasNoAmmo			= true
+ENT.MultpipleShellEject	= true
 ENT.CurAmmo				= ENT.Ammo
 ENT.CanUseShield		= true
 ENT.CustomRecoil		= false
@@ -122,7 +124,7 @@ function ENT:SwitchAmmoType(plr)
 		if CLIENT then self.AmmoType = "AP" end
 		if SERVER then self.AmmoType = "AP" end
 	end
-	if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end
 
@@ -153,7 +155,7 @@ function ENT:LowerTimeFuze(ply)
 	else
 		self.FuzeTime = self.FuzeTime - 0.01 
 	end
-	if CLIENT then
+	if CLIENT or game.IsDedicated() or !game.IsDedicated() then 
 		ply:ChatPrint("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds")
 	end
 	self.NextAmmoSwitch = CurTime()+0.1
@@ -167,7 +169,7 @@ function ENT:SetTimeFuze(ply)
 		if CLIENT then self.FuzeTime = self.FuzeTime + 0.01 end
 		if SERVER then self.FuzeTime = self.FuzeTime + 0.01 end
 	end
-	if CLIENT then
+	if CLIENT or game.IsDedicated() or !game.IsDedicated() then 
 		ply:ChatPrint("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds")
 	end
 	self.NextAmmoSwitch = CurTime()+0.1
@@ -316,7 +318,6 @@ function ENT:DoShot(plr)
 					b.GBOWNER=plr
 					b.IsOnPlane = true
 					b:Spawn()
-					b:Activate()
 					b:SetBodygroup(0,1)
 					b:SetBodygroup	  (1,1)
 					if self.AmmoType == "AP" then
@@ -325,6 +326,7 @@ function ENT:DoShot(plr)
 					elseif self.AmmoType == "Smoke" then
 						b.Smoke = true
 					end
+					b:Activate()
 					b:Launch()
 					b.Owner=plr
 					if self.HasShellEject then
@@ -433,7 +435,6 @@ function ENT:SetShootAngles(ply)
 			self:SetShooter(nil)
 			self:FinishShooting()
 		end
-		if !self:ShooterStillValid() then return end
 		offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
 		offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
 		if offsetDot>=self.TurretTurnMax or self.CanLookArround then
@@ -479,11 +480,6 @@ function ENT:ShieldThink()
 		self.shield:SetSkin(self:GetSkin())
 		self.shield:SetPos(self.BasePos)
 		self.shield:SetAngles(Angle(self.turretBase:GetAngles().p,self:GetAngles().y,self.turretBase:GetAngles().r))
-		if self.CanUseShield then
-			hook.Add("PlayerUse","gred_emp_use_shield",function(ply,ent)
-				self:Use(ply,ent,3,1)
-			end)
-		end
 	end
 end
 
@@ -504,11 +500,15 @@ function ENT:fire(player)
 			if !tr.HitSky or (!tr.HitWorld and !tr.HitSky and !tr.Hit) then
 				canShoot = false
 				noHitSky = true
-				player:ChatPrint("["..self.NameToPrint.."] Nothing must block the mortar's muzzle!")
+				if CLIENT or game.IsDedicated() or !game.IsDedicated() then
+					player:ChatPrint("["..self.NameToPrint.."] Nothing must block the mortar's muzzle!")
+				end
 			else
 				noHitSky = false
 				if not canShoot then
-					player:ChatPrint("["..self.NameToPrint.."] You can't shoot there!")
+					if CLIENT or game.IsDedicated() or !game.IsDedicated() then
+						player:ChatPrint("["..self.NameToPrint.."] You can't shoot there!")
+					end
 				return end
 			end
 		end
@@ -546,8 +546,9 @@ function ENT:stop()
 end
 
 function ENT:Think()
-	if CLIENT then if not self.m_initialized then self:Initialize() end end
-	if SERVER then if not self.m_initialized then self:Initialize() end end
+	if CLIENT and not self.m_initialized then self:Initialize() return end 
+	if SERVER and not self.m_initialized then self:Initialize() return end
+	
 	if SERVER and (!IsValid(self.turretBase) or (self.Seatable and !IsValid(self.shield))) then
 		SafeRemoveEntity(self)
 	else

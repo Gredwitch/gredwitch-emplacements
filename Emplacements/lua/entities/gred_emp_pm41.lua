@@ -50,6 +50,6 @@ function ENT:SwitchAmmoType(plr)
 		if CLIENT then self.AmmoType = "HE" end
 		if SERVER then self.AmmoType = "HE" end
 	end
-	if CLIENT then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end
