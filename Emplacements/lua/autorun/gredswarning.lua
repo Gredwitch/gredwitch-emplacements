@@ -1,9 +1,18 @@
 if SERVER then AddCSLuaFile() end
+local found=false
+local foundE=false
+local f=file.Find('autorun/*.lua', "LUA")
+for k,v in pairs(f) do
+	if v=="gred_autorun_shared.lua" then
+		found=true
+	end
+	if v=="gred_emplacements_verify.lua" then
+		foundE=true
+	end
+end
 
-local found = file.Find("gredwitch_addon_verify","autorun/client")
-local foundE = file.Exists("gred_emplacements_verify.lua","autorun")
 timer.Simple(5,function()
-	if not found and not GredFrame then
+	if !found and not GredFrame then
 		if CLIENT then
 			GredFrame=vgui.Create('DFrame')
 			GredFrame:SetTitle("Grediwtch's Base is not installed")
@@ -20,7 +29,7 @@ timer.Simple(5,function()
 			h:OpenURL('https://steamcommunity.com/sharedfiles/filedetails/?id=1131455085.html')
 		end
 	end
-	if not foundE and not GredEMPFrame then
+	if !foundE and not GredEMPFrame then
 		if CLIENT then
 			GredEMPFrame=vgui.Create('DFrame')
 			GredEMPFrame:SetTitle("Grediwtch's Emplacement Pack materials addon is not installed")
@@ -37,7 +46,5 @@ timer.Simple(5,function()
 			h:OpenURL('https://steamcommunity.com/sharedfiles/filedetails/?id=1484100983.html')
 		end
 	end
-	print(found)
-	print(foundE)
 end)
 if not found or not foundE then return end
