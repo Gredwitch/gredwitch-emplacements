@@ -14,6 +14,7 @@ end
 
 local function MouseSensitivity(s)
 	local ply = LocalPlayer()
+	if not ply.Gred_Emp_Class then return end
 	if string.StartWith(ply.Gred_Emp_Class,"gred_emp") then
 		local ent = ply.Gred_Emp_Ent
 		if IsValid(ent) then
