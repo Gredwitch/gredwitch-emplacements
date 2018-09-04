@@ -58,11 +58,11 @@ function ENT:SwitchAmmoType(plr)
 	elseif self.AmmoType == "Smoke" then
 		if CLIENT then 
 			self.AmmoType = "WP"
-			self.BulletType = "gb_shell_81mmWP"
+			self.BulletType = "gb_shell_105mmWP"
 		end
 		if SERVER then 
 			self.AmmoType = "WP"
-			self.BulletType = "gb_shell_81mmWP"
+			self.BulletType = "gb_shell_105mmWP"
 		end
 	
 	elseif self.AmmoType == "WP" then

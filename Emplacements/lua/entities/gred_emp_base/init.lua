@@ -113,17 +113,8 @@ function ENT:Initialize()
 	self.shootPos:SetRenderMode(RENDERMODE_TRANSCOLOR)
 	self.shootPos:SetColor(Color(255,255,255,1))
 	self:AddSounds()
-	if self.IsInDev then
-		if CLIENT or game.IsDedicated() or !game.IsDedicated() then
-			if GetConVar("gred_cl_devemp_warnings") == nil then return end
-			if GetConVar("gred_cl_devemp_warnings"):GetInt() == 1 then
-				self.Spawner:ChatPrint("This emplacement is currently in development, so some features are missing on it.")
-				self.Spawner:ChatPrint("CURRENT FEATURES NEEDED : ")
-				self.Spawner:ChatPrint(" - The ability to seat on the emplacement")
-				self.Spawner:ChatPrint(" - A third person aiming system")
-				self.Spawner:ChatPrint("To remove this warning message, simply set gred_cl_devemp_warnings to 0 in the developer console.")
-			end
-		end
+	if self.Seatable and GetConVar("gred_sv_enable_dev_emp"):GetInt() == 0 then
+		self.Seatable = false
 	end
 end
 
@@ -154,10 +145,11 @@ function ENT:OnRemove()
 end
 
 function ENT:StartShooting()
-	if self.Seatable then 
+	if self.Seatable and IsValid(self.shield) then 
 		local seat = ents.Create("prop_vehicle_prisoner_pod")
-		seat:SetAngles(self.shield:GetAttachment(self.shield:LookupAttachment("seat")).Ang-Angle(0,90,0))
-		seat:SetPos(self.shield:GetAttachment(self.shield:LookupAttachment("seat")).Pos-Vector(0,0,5))
+		local att = self.shield:GetAttachment(self.shield:LookupAttachment("seat"))
+		seat:SetAngles(att.Ang-Angle(0,90,0))
+		seat:SetPos(att.Pos-Vector(0,0,5))
 		seat:SetModel("models/nova/airboat_seat.mdl")
 		seat:SetKeyValue("vehiclescript", "scripts/vehicles/prisoner_pod.txt")
 		seat:SetKeyValue("limitview","0")
@@ -169,7 +161,11 @@ function ENT:StartShooting()
 		seat:SetSolid		  (SOLID_NONE)
 		seat:SetCollisionGroup(COLLISION_GROUP_WORLD)
 		self.Seat = seat
-		
+		self:SetDTEntity(2,self.Seat)
+		net.Start("gred_net_emp_getplayer")
+			net.WriteEntity(self.Shooter)
+			net.WriteEntity(self)
+		net.Broadcast()
 		self.Shooter:EnterVehicle(self.Seat)
 	end
 end
@@ -182,9 +178,13 @@ function ENT:FinishShooting()
 		net.WriteBit(false)
 		net.Send(self.ShooterLast)
 		self.ShooterLast:DrawViewModel(true)
-		if self.Seatable and IsValid(self.Seat) then
-			self.ShooterLast:ExitVehicle(self.Seat)
-			self.Seat:Remove()
+		if self.Seatable then
+			self.ShooterLast:CrosshairEnable()
+			self.ShooterLast.Gred_Emp_Ent = nil
+			if IsValid(self.Seat) then
+				self.ShooterLast:ExitVehicle(self.Seat)
+				self.Seat:Remove()
+			end
 		end
 		self.ShooterLast=nil
 	end
@@ -208,11 +208,7 @@ function ENT:PhysicsSimulate( phys, deltatime )
 		
 		self.ShadowParams.secondstoarrive = 0.01 
 		
-		if not self.Seatable then 
-			self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight + self:GetRight()*-self.TurretForward
-		else
-			self.ShadowParams.pos = self.BasePos + self.shield:GetUp() + self.turretBase:GetUp()*self.TurretHeight 
-		end
+		self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight + self:GetRight()*-self.TurretForward + self:GetForward()*self.TurretHorrizontal
 		self.ShadowParams.angle =self.BaseAng+self.OffsetAng+Angle(0,0,0)
 		self.ShadowParams.maxangular = 5000
 		self.ShadowParams.maxangulardamp = 10000

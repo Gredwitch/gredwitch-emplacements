@@ -71,6 +71,8 @@ ENT.Recoil				= 50000
 ENT.HasShellEject		= true
 ENT.CanLookArround		= false
 ENT.TurretForward		= 0
+ENT.TurretHorrizontal	= 0
+ENT.ShieldForward		= 0
 
 ENT.HasNoAmmo			= true
 ENT.MultpipleShellEject	= true
@@ -78,6 +80,7 @@ ENT.CurAmmo				= ENT.Ammo
 ENT.CanUseShield		= true
 ENT.CustomRecoil		= false
 
+ENT.CurViewPos			= 0
 ENT.AutomaticFrameAdvance = true -- FUCKING ANIMS NOT WORKING CUZ THIS IS NOT SET TO TRUE
 
 local SmokeSnds = {}
@@ -88,10 +91,14 @@ end
 local noHitSky = false
 local reachSky = Vector(0,0,9999999999)
 local nextplay = 0.5
-if SERVER then util.AddNetworkString("gred_net_emp_muzzle_fx")  end
+if SERVER then 
+	util.AddNetworkString("gred_net_emp_muzzle_fx")
+	util.AddNetworkString("gred_net_emp_getplayer")
+end
 function ENT:SetupDataTables()
 	self:DTVar("Entity",0,"Shooter")
 	self:DTVar("Entity",1,"ShootPos")
+	self:DTVar("Entity",2,"Seat")
 end
 
 function ENT:SetShooter(plr)
@@ -146,7 +153,7 @@ function ENT:PlayerSetSecondary(ply)
 	    if self.CurAmmo >= self.Ammo or self.IsReloading then return end
 		self:ReloadMG(ply)
 	end
-end  
+end
 
 function ENT:LowerTimeFuze(ply)
 	if self.FuzeTime <= 0.01 then
@@ -311,10 +318,9 @@ function ENT:DoShot(plr)
 					
 				elseif self.EmplacementType == "AT" then
 					local b=ents.Create(self.BulletType)
-					ang = attAng + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
-					local shootpos = attPos
-					b:SetPos(shootpos)
-					b:SetAngles(attAng)
+					local ang = attAng + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
+					b:SetPos(attPos)
+					b:SetAngles(ang)
 					b.GBOWNER=plr
 					b.IsOnPlane = true
 					b:Spawn()
@@ -435,6 +441,7 @@ function ENT:SetShootAngles(ply)
 			self:SetShooter(nil)
 			self:FinishShooting()
 		end
+		if !self:ShooterStillValid() then return end
 		offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
 		offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
 		if offsetDot>=self.TurretTurnMax or self.CanLookArround then
@@ -478,8 +485,13 @@ end
 function ENT:ShieldThink()
 	if SERVER then
 		self.shield:SetSkin(self:GetSkin())
-		self.shield:SetPos(self.BasePos)
-		self.shield:SetAngles(Angle(self.turretBase:GetAngles().p,self:GetAngles().y,self.turretBase:GetAngles().r))
+		self.shield:SetPos(self.BasePos + self.shield:GetRight()*-self.ShieldForward)
+		local ta = self.turretBase:GetAngles()
+		self.shield:SetAngles(Angle(ta.p,self:GetAngles().y,ta.r))
+		
+		if self.Seatable and self:ShooterStillValid() then
+			self:GetShooter():CrosshairEnable()
+		end
 	end
 end
 
@@ -549,7 +561,7 @@ function ENT:Think()
 	if CLIENT and not self.m_initialized then self:Initialize() return end 
 	if SERVER and not self.m_initialized then self:Initialize() return end
 	
-	if SERVER and (!IsValid(self.turretBase) or (self.Seatable and !IsValid(self.shield))) then
+	if SERVER and (!IsValid(self.turretBase) or (self.SecondModel != "" and !IsValid(self.shield))) then
 		SafeRemoveEntity(self)
 	else
 		if IsValid(self) then

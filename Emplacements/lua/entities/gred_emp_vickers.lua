@@ -10,6 +10,7 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 
 ENT.MuzzleEffect		= "muzzleflash_garand_3p"
+ENT.EjectAngle			= Angle(0,90,0)
 ENT.MuzzleCount			= 1
 ENT.BulletType			= "wac_base_7mm"
 ENT.ShotInterval		= 0.12

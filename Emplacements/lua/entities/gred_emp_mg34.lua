@@ -36,6 +36,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:SetPos(SpawnPos)
 	ent:Spawn()
 	ent:Activate()
+	ent:SetModelScale(1.1)
 	return ent
 end
 

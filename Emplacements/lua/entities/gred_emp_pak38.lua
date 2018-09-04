@@ -28,7 +28,7 @@ ENT.TurretTurnMax		= 0.7
 ENT.BaseModel			= "models/gredwitch/pak38/pak38_carriage.mdl"
 ENT.Model				= "models/gredwitch/pak38/pak38_gun.mdl"
 ENT.EmplacementType     = "AT"
-ENT.Scatter				= 0.1
+ENT.Scatter				= 0.2
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

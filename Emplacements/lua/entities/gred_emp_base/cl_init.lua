@@ -12,9 +12,30 @@ function ENT:Initialize()
 	
 end
 
+local function MouseSensitivity(s)
+	local ply = LocalPlayer()
+	if string.StartWith(ply.Gred_Emp_Class,"gred_emp") then
+		local ent = ply.Gred_Emp_Ent
+		if IsValid(ent) then
+			if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) then
+				return GetConVar("gred_cl_emp_mouse_sensitivity"):GetFloat() -- 0.2
+			end
+		end
+	end
+end
+hook.Add("AdjustMouseSensitivity", "gred_emp_mouse", MouseSensitivity)
+
 function ENT:Draw()
 	self:DrawModel()
 end
+
+net.Receive("gred_net_emp_getplayer",function()
+	local ply = net.ReadEntity()
+	local self = net.ReadEntity()
+	
+	ply.Gred_Emp_Ent = self
+	ply.Gred_Emp_Class = self:GetClass()
+end)
 
 net.Receive("gred_net_emp_muzzle_fx",function()
 	local self = net.ReadEntity()

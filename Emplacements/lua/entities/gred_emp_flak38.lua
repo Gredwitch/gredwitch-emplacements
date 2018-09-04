@@ -8,7 +8,6 @@ ENT.PrintName 			= "[EMP]20mm Flak 38"
 ENT.Author				= "Gredwitch"
 
 ENT.Spawnable			= true
-ENT.IsInDev				= true
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Flak 38"
 
@@ -39,7 +38,8 @@ ENT.CanLookArround		= true
 ENT.TurretForward		= 12
 ENT.Color				= "Yellow"
 ENT.num					= 0.5
--- ENT.Seatable			= true
+ENT.Seatable			= true
+ENT.TurretHorrizontal 	= -0.6
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -64,3 +64,24 @@ function ENT:SwitchAmmoType(plr)
 	end
 	self.NextSwitch = CurTime()+0.2
 end
+
+local function CalcView(ply, pos, angles, fov)
+	if ply.Gred_Emp_Class == "gred_emp_flak38" then
+		local ent = ply.Gred_Emp_Ent
+		if IsValid(ent) then
+			if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) then
+				if ent:GetDTEntity(2):GetThirdPersonMode() then
+					local view = {}
+
+					view.origin = pos + ent:GetForward()*-16 + ent:GetRight()*-70 + ent:GetUp()*-10
+					view.angles = angles
+					view.fov = fov
+					view.drawviewer = true
+
+					return view
+				end
+			end
+		end
+	end
+end
+hook.Add("CalcView", "gred_emp_flak38_view", CalcView)

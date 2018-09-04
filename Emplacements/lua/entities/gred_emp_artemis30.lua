@@ -9,7 +9,6 @@ ENT.Author				= "Gredwitch"
 
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
-ENT.IsInDev				= true
 ENT.NameToPrint			= "Artemis 30"
 
 ENT.Sequential			= true
@@ -36,7 +35,7 @@ ENT.EmplacementType     = "MG"
 ENT.MaxUseDistance		= 80
 ENT.CanLookArround		= true
 ENT.Color				= "Yellow"
--- ENT.Seatable			= true
+ENT.Seatable			= true
 ENT.created				= false
 ENT.HasShellEject		= false
 
@@ -45,18 +44,9 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 16
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
-	ent:SetSkin(math.random(0,1))
 	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()
-	m = math.random(0,2)
-	if m == 0 then
-		ent.turretBase:SetBodygroup(1,0)
-	elseif m == 1 then
-		ent.turretBase:SetBodygroup(1,1)
-	else
-		ent.turretBase:SetBodygroup(1,2)
-	end
 	return ent
 end
 
@@ -119,3 +109,24 @@ function ENT:DoShot(plr)
 	self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*700000)
 	m = m + 1
 end
+
+local function CalcView(ply, pos, angles, fov)
+	if ply.Gred_Emp_Class == "gred_emp_artemis30" then
+		local ent = ply.Gred_Emp_Ent
+		if IsValid(ent) then
+			if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) then
+				if ent:GetDTEntity(2):GetThirdPersonMode() then
+					local view = {}
+
+					view.origin = pos + ent:GetForward()*1 + ent:GetRight()*-70 + ent:GetUp()*-10
+					view.angles = angles
+					view.fov = fov
+					view.drawviewer = true
+
+					return view
+				end
+			end
+		end
+	end
+end
+hook.Add("CalcView", "gred_emp_artemis30_view", CalcView)

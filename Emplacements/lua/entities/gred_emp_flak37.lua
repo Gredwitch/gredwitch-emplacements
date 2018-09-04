@@ -9,7 +9,6 @@ ENT.Author				= "Gredwitch"
 
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
-ENT.IsInDev				= true
 ENT.NameToPrint			= "Flak 37"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
@@ -35,7 +34,9 @@ ENT.Model				= "models/gredwitch/flak37/flak37_gun.mdl"
 ENT.EmplacementType     = "AT"
 ENT.Scatter				= 0.1
 ENT.CanLookArround		= true
--- ENT.Seatable			= true
+ENT.ShieldForward		= -30
+ENT.TurretHorrizontal 	= -3.5
+ENT.Seatable			= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -68,3 +69,24 @@ function ENT:PlayAnim()
 		end)
 	end
 end
+
+local function CalcView(ply, pos, angles, fov)
+	if ply.Gred_Emp_Class == "gred_emp_flak37" then
+		local ent = ply.Gred_Emp_Ent
+		if IsValid(ent) then
+			if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) then
+				if ent:GetDTEntity(2):GetThirdPersonMode() then
+					local view = {}
+
+					view.origin = pos + ent:GetForward()*-36 + ent:GetRight()*-10 + ent:GetUp()*30
+					view.angles = angles
+					view.fov = fov
+					view.drawviewer = true
+
+					return view
+				end
+			end
+		end
+	end
+end
+hook.Add("CalcView", "gred_emp_flak37_view", CalcView)
