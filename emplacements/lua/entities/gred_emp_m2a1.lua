@@ -21,6 +21,7 @@ ENT.AmmoType			= "HE"
 
 ENT.SoundName			= "shootM2A1"
 ENT.ShootSound			= "gred_emp/common/105mm.wav"
+ENT.ATReloadSound		= "big"
 
 ENT.TurretHeight		= 1
 ENT.TurretFloatHeight	= 0
@@ -75,6 +76,6 @@ function ENT:SwitchAmmoType(plr)
 			self.BulletType = "gb_shell_105mm"
 		end
 	end
-	if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	if self.serv then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end

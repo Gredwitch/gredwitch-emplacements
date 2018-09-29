@@ -4,7 +4,7 @@ ENT.Type 				= "anim"
 ENT.Base 				= "gred_emp_base"
 
 ENT.Category			= "Gredwitch's Stuff"
-ENT.PrintName 			= "[EMP]81mm PM-41 Mortar"
+ENT.PrintName 			= "[EMP]82mm PM-41 Mortar"
 ENT.Author				= "Gredwitch"
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
@@ -15,7 +15,7 @@ ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.ShotInterval		= 2.4
 ENT.AmmoType			= "HE"
 ENT.EffectSmoke			= "m203_smokegrenade"
-ENT.BulletType			= "gb_rocket_81mm"
+ENT.BulletType			= "gb_shell_82mm"
 ENT.Scatter				= 400
 ENT.MuzzleCount			= 1
 
@@ -50,6 +50,6 @@ function ENT:SwitchAmmoType(plr)
 		if CLIENT then self.AmmoType = "HE" end
 		if SERVER then self.AmmoType = "HE" end
 	end
-	if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	if self.serv then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end

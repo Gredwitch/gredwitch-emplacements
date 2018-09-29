@@ -15,8 +15,8 @@ ENT.BulletType			= "wac_base_7mm"
 ENT.ShotInterval		= 0.067
 ENT.Color				= "Green"
 
-ENT.SoundName			= "shootMG34"
 ENT.ShootSound			= "gred_emp/mg34/shoot.wav"
+ENT.SoundName			= "shootMG34"
 
 ENT.BaseModel			= "models/gredwitch/mg81z/mg81z_tripod.mdl"
 ENT.Model				= "models/gredwitch/mg34/mg34.mdl"

@@ -40,6 +40,7 @@ ENT.CanUseShield		= false
 ENT.CustomRecoil		= true
 ENT.Recoil				= 700000
 ENT.Seatable			= true
+ENT.ATReloadSound		= "small"
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

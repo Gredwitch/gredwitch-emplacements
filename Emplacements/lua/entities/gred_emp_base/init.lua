@@ -5,6 +5,7 @@ AddCSLuaFile("shared.lua")
 
 function ENT:CreateEmplacement()
 	local turretBase=ents.Create("prop_physics")
+	turretBase.GredEMPBaseENT = self
 	turretBase:SetModel(self.BaseModel)
 	turretBase:SetAngles(self:GetAngles()+Angle(0,90,0))
 	turretBase:SetPos(self:GetPos()-Vector(0,0,0))
@@ -39,17 +40,14 @@ function ENT:CreateEmplacement()
 end
 
 function ENT:CreateShield()
-	local shield=ents.Create("prop_physics")
-	shield:SetModel(self.SecondModel)
+	local shield=ents.Create("gred_prop_shield")
+	shield.GredEMPBaseENT = self
+	shield.Model = self.SecondModel
 	shield:SetAngles(self:GetAngles()+Angle(0,90,0))
 	shield:SetPos(self:GetPos()-Vector(0,0,0))
-	shield:SetDTEntity(0,self)
-	shield.Use = function(ply,s)
-		shield:GetDTEntity(0):Use(pl,s,3,1)
-	end
+	shield.BaseEntity = self
 	shield:Spawn()
 	shield:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-	
 	self.shield=shield
 	constraint.NoCollide(self.shield,self,0,0,true)
 	constraint.NoCollide(self.shield,self.turretBase,0,0,true)
@@ -64,6 +62,9 @@ function ENT:Initialize()
 	self.Entity:SetCollisionGroup	(COLLISION_GROUP_DEBRIS)
 	if CLIENT then self.m_initialized = true end
 	if SERVER then self.m_initialized = true end
+	if self.Seatable and GetConVar("gred_sv_enable_seats"):GetInt() == 0 then
+		self.Seatable = false
+	end
 	local phys = self.Entity:GetPhysicsObject()
 	if IsValid(phys) then
 		phys:Wake()
@@ -71,27 +72,19 @@ function ENT:Initialize()
 	end
 	self.ShadowParams = {}
 	self:StartMotionController()
-	
-	hook.Add( "DrawPhysgunBeam", "gred_prevent_physgunbeam", function( ply, wep, enabled, target, bone, deltaPos )
-		if self:ShooterStillValid() then return false
-		else return true end
-	end)
-	if self.Seatable then
-		hook.Add("PlayerFootstep",self,function(ply,pos,foot,sound,volume)
-			if !self:ShooterStillValid() then
-				return false 
-			else 
-				return true 
-			end
-		end)
-		hook.Add("KeyPress",self, function(ply,key)
-			if self:ShooterStillValid() and key == IN_USE then
-				self:FinishShooting()
-			end
-		end)
-	end
+	self.OldBulletType = self.BulletType
 	if SERVER then
-	
+		if self.EmplacementType != "MG" and GetConVar("gred_sv_manual_reload"):GetInt() == 1 then
+			self.CurAmmo = 0
+			self.ShotInterval = 1
+			if self.UseSingAnim then
+				self:ResetSequence("reload")
+				self:SetCycle(.5)
+				self:SetPlaybackRate(0)
+			else
+				self:ResetSequence("reload_start")
+			end
+		end
 		if not IsValid(self.turretBase) then
 			self:CreateEmplacement()
 		end
@@ -106,6 +99,15 @@ function ENT:Initialize()
 				self.MuzzleAttachments[v] = self:LookupAttachment("muzzle"..v.."")
 			end
 		end
+		if GetConVar("gred_sv_enable_health"):GetInt() == 1 then
+			if self.EmplacementType == "AT" or self.Seatable then
+				self.Life = GetConVar("gred_sv_arti_health"):GetInt()
+			end
+			self.Life = self.Life + self:BoundingRadius()/10
+			self.CurLife = self.Life
+		else
+			self.Destructible = false
+		end
 	end
 	self:SetUseType(SIMPLE_USE)
 	self:DropToFloor()
@@ -113,9 +115,6 @@ function ENT:Initialize()
 	self.shootPos:SetRenderMode(RENDERMODE_TRANSCOLOR)
 	self.shootPos:SetColor(Color(255,255,255,1))
 	self:AddSounds()
-	if self.Seatable and GetConVar("gred_sv_enable_dev_emp"):GetInt() == 0 then
-		self.Seatable = false
-	end
 end
 
 function ENT:OnRemove()
@@ -166,8 +165,15 @@ function ENT:StartShooting()
 			net.WriteEntity(self.Shooter)
 			net.WriteEntity(self)
 		net.Broadcast()
+		if SERVER then
+			self.Shooter.Gred_Emp_Ent = self
+			self.Shooter.Gred_Emp_Class = self:GetClass()
+		end
 		self.Shooter:EnterVehicle(self.Seat)
+		self.Shooter:ChatPrint("Press crouch to switch to a clearer view")
 	end
+	self.gwep = self.Shooter:GetActiveWeapon()
+	self.Shooter:SetActiveWeapon("weapon_base")
 end
 
 function ENT:FinishShooting()
@@ -186,6 +192,8 @@ function ENT:FinishShooting()
 				self.Seat:Remove()
 			end
 		end
+		self.ShooterLast:SetActiveWeapon(self.gwep)
+		self.ShooterLast:StripWeapon("weapon_base")
 		self.ShooterLast=nil
 	end
 end

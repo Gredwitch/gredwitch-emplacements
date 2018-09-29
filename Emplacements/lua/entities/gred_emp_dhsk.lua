@@ -15,10 +15,12 @@ ENT.BulletType			= "wac_base_12mm"
 ENT.ShotInterval		= 0.1
 ENT.Color				= "Green"
 
+ENT.SoundName			= "shootDhSK"
 ENT.ShootSound			= "gred_emp/dhsk/shoot.wav"
+
 ENT.StopSoundName		= "gred_emp/dhsk/stop.wav"
 ENT.HasStopSound		= true
-ENT.SoundName			= "shootDhSK"
+ENT.StopSound			= "stopDhSK"
 
 ENT.BaseModel			= "models/gredwitch/dhsk/dhsk_tripod.mdl"
 ENT.Model				= "models/gredwitch/dhsk/dhsk_gun.mdl"

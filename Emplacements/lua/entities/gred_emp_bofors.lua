@@ -16,8 +16,9 @@ ENT.ShotInterval		= 0.5
 ENT.BulletType			= "wac_base_40mm"
 ENT.MuzzleCount			= 1
 ENT.num					= 0.7
-
-ENT.SoundName			= "shootArtemis"
+ENT.ExplodeHeight		= -70
+ENT.SoundName			= "shootBofors"
+ENT.StopSound			= "stopBofors"
 ENT.ShootSound			= "gred_emp/bofors/shoot.wav"
 ENT.HasStopSound		= true
 ENT.StopSoundName		= "gred_emp/bofors/stop.wav"

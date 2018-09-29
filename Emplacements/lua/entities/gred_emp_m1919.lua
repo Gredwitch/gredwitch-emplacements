@@ -17,7 +17,7 @@ ENT.Color				= "Green"
 
 ENT.ShootSound			= "gred_emp/m1919/shoot.wav"
 ENT.StopSoundName		= "gred_emp/m1919/stop.wav"
-ENT.SoundName			= "shot"
+ENT.SoundName			= "shootM1919"
 ENT.HasStopSound		= true
 
 ENT.BaseModel			= "models/gredwitch/m1919/m1919_bipod.mdl"

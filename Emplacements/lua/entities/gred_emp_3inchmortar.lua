@@ -15,7 +15,7 @@ ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.ShotInterval		= 3.33
 ENT.AmmoType			= "HE"
 ENT.EffectSmoke			= "m203_smokegrenade"
-ENT.BulletType			= "gb_rocket_81mm"
+ENT.BulletType			= "gb_shell_81mm"
 ENT.Scatter				= 400
 ENT.MuzzleCount			= 1
 
@@ -46,11 +46,11 @@ function ENT:SwitchAmmoType(plr)
 	if self.AmmoType == "HE" then
 		if CLIENT then 
 			self.AmmoType = "Smoke"
-			self.BulletType = "gb_rocket_81mm"
+			self.BulletType = "gb_shell_81mm"
 		end
 		if SERVER then 
 			self.AmmoType = "Smoke"
-			self.BulletType = "gb_rocket_81mm"
+			self.BulletType = "gb_shell_81mm"
 		end
 	
 	elseif self.AmmoType == "Smoke" then
@@ -66,13 +66,13 @@ function ENT:SwitchAmmoType(plr)
 	elseif self.AmmoType == "WP" then
 		if CLIENT then 
 			self.AmmoType = "HE"
-			self.BulletType = "gb_rocket_81mm"
+			self.BulletType = "gb_shell_81mm"
 		end
 		if SERVER then 
 			self.AmmoType = "HE"
-			self.BulletType = "gb_rocket_81mm"
+			self.BulletType = "gb_shell_81mm"
 		end
 	end
-	if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	if self.serv then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end

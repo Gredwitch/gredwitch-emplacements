@@ -18,7 +18,7 @@ local function MouseSensitivity(s)
 	if string.StartWith(ply.Gred_Emp_Class,"gred_emp") then
 		local ent = ply.Gred_Emp_Ent
 		if IsValid(ent) then
-			if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) then
+			if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) and ply == ent:GetShooter() then
 				return GetConVar("gred_cl_emp_mouse_sensitivity"):GetFloat() -- 0.2
 			end
 		end
@@ -40,6 +40,7 @@ end)
 
 net.Receive("gred_net_emp_muzzle_fx",function()
 	local self = net.ReadEntity()
+	if !IsValid(self) then return end
 	canEjectShell = self.EmplacementType == "MG" and GetConVar("gred_cl_shelleject"):GetInt() == 1 and self.HasShellEject
 	if canEjectShell then
 		self.ShellEject = {}
@@ -83,8 +84,9 @@ net.Receive("gred_net_emp_muzzle_fx",function()
 		m = m + 1
 	else
 		for m = 1,self.MuzzleCount do
-			attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
-			attAng = self:GetAttachment(self.MuzzleAttachments[m]).Ang
+			att = self:GetAttachment(self.MuzzleAttachments[m])
+			attPos = att.Pos
+			attAng = att.Ang
 			if GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 1 or 
 			(self.EmplacementType != "MG" and self.EmplacementType != "Mortar") then
 			
@@ -114,7 +116,8 @@ net.Receive("gred_net_emp_muzzle_fx",function()
 					util.Effect("RifleShellEject",effectdata)
 				end
 			end
-
+			self:StopParticlesWithNameAndAttachment("weapon_muzzle_smoke",self.MuzzleAttachments[m])
+			ParticleEffectAttach("weapon_muzzle_smoke",4,self,self.MuzzleAttachments[m])
 		end
 	end
 end)

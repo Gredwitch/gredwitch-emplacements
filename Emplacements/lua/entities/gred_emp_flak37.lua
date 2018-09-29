@@ -8,6 +8,7 @@ ENT.PrintName 			= "[EMP]88mm Flak 37"
 ENT.Author				= "Gredwitch"
 
 ENT.Spawnable			= true
+ENT.ExplodeHeight		= -60
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Flak 37"
 
@@ -15,9 +16,13 @@ ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 5
 ENT.BulletType			= "gb_shell_88mm"
 ENT.MuzzleCount			= 1
+
 ENT.HasReloadAnim		= true
-ENT.AnimRestartTime		= 2
+ENT.ShellSoundTime		= 1.7
 ENT.AnimPlayTime		= 1
+ENT.AnimPauseTime		= 0.3
+ENT.UseSingAnim			= true
+ENT.ATReloadSound		= "big"
 
 
 ENT.SoundName			= "shootFlak37"
@@ -53,21 +58,6 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent.shield:SetBodygroup(3,math.random(0,1))
 	ent.shield:SetBodygroup(4,math.random(0,1))
 	return ent
-end
-
-function ENT:PlayAnim()
-	if SERVER then
-		-- if self.AnimPlaying then return end
-		timer.Simple(self.AnimPlayTime,function()
-			if !IsValid(self) then return end
-			self:ResetSequence(self:LookupSequence("reload"))
-			self.AnimPlaying = true
-		end)
-		timer.Simple(self:SequenceDuration(),function() 
-			if !IsValid(self) then return end
-			self.AnimPlaying = false
-		end)
-	end
 end
 
 local function CalcView(ply, pos, angles, fov)

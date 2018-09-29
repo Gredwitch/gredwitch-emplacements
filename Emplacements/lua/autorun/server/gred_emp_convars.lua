@@ -8,7 +8,11 @@ CreateConVar("gred_sv_mortar_shellspawnaltitude"	, "1000", GRED_SVAR)
 CreateConVar("gred_sv_shell_remove_time"			,  "10" , GRED_SVAR)
 CreateConVar("gred_sv_limitedammo"					,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_cantakemgbase"				,  "1"  , GRED_SVAR)
-CreateConVar("gred_sv_enable_dev_emp"				,  "1"  , GRED_SVAR)
+CreateConVar("gred_sv_enable_seats"					,  "1"  , GRED_SVAR)
+CreateConVar("gred_sv_enable_health"				,  "1"  , GRED_SVAR)
+CreateConVar("gred_sv_health"						, "150" , GRED_SVAR)
+CreateConVar("gred_sv_arti_health"					, "300" , GRED_SVAR)
+CreateConVar("gred_sv_manual_reload"				,  "0"  , GRED_SVAR)
 
 resource.AddWorkshop(1484100983) -- Emplacements materials
 resource.AddWorkshop(1391460275) -- Emplacements

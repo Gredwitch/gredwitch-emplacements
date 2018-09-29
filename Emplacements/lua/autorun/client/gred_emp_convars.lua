@@ -8,7 +8,8 @@ CreateConVar("gred_sv_mortar_shellspawnaltitude"	, "1000", GRED_SVAR)
 CreateConVar("gred_sv_shell_remove_time"			,  "10" , GRED_SVAR)
 CreateConVar("gred_sv_limitedammo"					,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_cantakemgbase"				,  "1"  , GRED_SVAR)
-CreateConVar("gred_sv_enable_dev_emp"				,  "1"  , GRED_SVAR)
+CreateConVar("gred_sv_enable_seats"					,  "1"  , GRED_SVAR)
+CreateConVar("gred_sv_manual_reload"				,  "0"  , GRED_SVAR)
 
 CreateClientConVar("gred_cl_devemp_warnings","1", true,false)
 CreateClientConVar("gred_cl_shelleject","1", true,false)
@@ -27,11 +28,13 @@ local function gredEMPsettings(Panel)
 	
 	Panel:AddControl( "CheckBox", { Label = "Should the players be able to take the MGs' pods?", Command = "gred_sv_cantakemgbase" } );
 	
-	Panel:AddControl( "CheckBox", { Label = "Enable seats?", Command = "gred_sv_enable_dev_emp" } );
+	Panel:AddControl( "CheckBox", { Label = "Enable seats?", Command = "gred_sv_enable_seats" } );
 	
 	Panel:AddControl( "CheckBox", { Label = "Enable development warnings?", Command = "gred_cl_devemp_warnings" } );
 	
 	Panel:AddControl( "CheckBox", { Label = "Should you be able to see the MGs' shells?", Command = "gred_cl_shelleject" } );
+	
+	Panel:AddControl( "CheckBox", { Label = "Use a manual shell reload system?", Command = "gred_sv_manual_reload" } );
 	
 	Panel:NumSlider( "Mortar shells spawn altitude", "gred_sv_mortar_shellspawnaltitude", 1, 1000, 0 );
 	

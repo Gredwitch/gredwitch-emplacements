@@ -12,10 +12,11 @@ ENT.NameToPrint			= "6pdr"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.5
-ENT.BulletType			= "gb_shell_50mm"
+ENT.BulletType			= "gb_shell_57mm"
 ENT.MuzzleCount			= 1
 ENT.HasReloadAnim		= true
-ENT.AnimRestartTime		= 4
+ENT.AnimRestartTime		= 2
+ENT.ShellSoundTime		= 1.9
 ENT.AnimPlayTime		= 1
 
 ENT.SoundName			= "shoot6pdr"
@@ -29,7 +30,10 @@ ENT.TurretTurnMax		= 0.9
 ENT.BaseModel			= "models/gredwitch/6pdr/6pdr_carriage.mdl"
 ENT.Model				= "models/gredwitch/6pdr/6pdr_shield.mdl"
 ENT.EmplacementType     = "AT"
+ENT.ATReloadSound    	= "small"
 ENT.Scatter				= 0.1
+ENT.AnimPauseTime		= 0.3
+ENT.UseSingAnim			= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -40,19 +44,4 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn()
 	ent:Activate()
 	return ent
-end
-
-function ENT:PlayAnim()
-	if SERVER then
-		-- if self.AnimPlaying then return end
-		timer.Simple(self.AnimPlayTime,function()
-			if !IsValid(self) then return end
-			self:ResetSequence(self:LookupSequence("reload"))
-			self.AnimPlaying = true
-		end)
-		timer.Simple(self:SequenceDuration(),function() 
-			if !IsValid(self) then return end
-			self.AnimPlaying = false
-		end)
-	end
 end

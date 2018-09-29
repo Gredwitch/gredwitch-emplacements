@@ -16,6 +16,7 @@ ENT.BulletType			= "gb_shell_75mm"
 ENT.MuzzleCount			= 1
 ENT.HasReloadAnim		= true
 ENT.AnimRestartTime		= 4.6
+ENT.ShellSoundTime		= 3.5
 ENT.AnimPlayTime		= 0.8
 
 ENT.SoundName			= "shootPaK40"

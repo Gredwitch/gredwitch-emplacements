@@ -16,11 +16,13 @@ ENT.MuzzleEffect		= "muzzleflash_bar_3p"
 ENT.ShotInterval		= 0.0375
 ENT.BulletType			= "wac_base_30mm"
 ENT.MuzzleCount			= 2
+ENT.ExplodeHeight		= -30
 
 ENT.SoundName			= "shootArtemis"
 ENT.ShootSound			= "gred_emp/artemis30/shoot.wav"
 ENT.HasStopSound		= true
 ENT.StopSoundName		= "gred_emp/artemis30/stop.wav"
+ENT.StopSound			= "stopArtemis"
 ENT.FuzeEnabled			= true
 ENT.FuzeTime			= 0.01
 ENT.AmmoType			= "Direct Hit"
@@ -38,6 +40,11 @@ ENT.Color				= "Yellow"
 ENT.Seatable			= true
 ENT.created				= false
 ENT.HasShellEject		= false
+
+ENT.ViewForward			= 1
+ENT.ViewRight			= -70
+ENT.ViewUp				= -10
+
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

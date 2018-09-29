@@ -15,7 +15,7 @@ ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.ShotInterval		= 2.4
 ENT.AmmoType			= "HE"
 ENT.EffectSmoke			= "m203_smokegrenade"
-ENT.BulletType			= "gb_rocket_81mm"
+ENT.BulletType			= "gb_shell_81mm"
 ENT.Scatter				= 400
 ENT.MuzzleCount			= 1
 
@@ -30,6 +30,7 @@ ENT.BaseModel			= "models/gredwitch/granatwerfer/granatwerfer_base.mdl"
 ENT.Model				= "models/gredwitch/granatwerfer/granatwerfer_tube.mdl"
 ENT.EmplacementType     = "Mortar"
 ENT.MaxUseDistance		= 80
+ENT.NoWP				= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -51,6 +52,6 @@ function ENT:SwitchAmmoType(plr)
 		if CLIENT then self.AmmoType = "HE" end
 		if SERVER then self.AmmoType = "HE" end
 	end
-	if CLIENT or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	if self.serv then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
 	self.NextSwitch = CurTime()+0.2
 end
