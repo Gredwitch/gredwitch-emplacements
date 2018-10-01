@@ -15,7 +15,7 @@ ENT.ShotInterval		= 4
 ENT.BulletType			= "gb_shell_105mm"
 ENT.MuzzleCount			= 1
 ENT.HasReloadAnim		= true
-ENT.AnimRestartTime		= 3.4
+ENT.AnimRestartTime		= 4.4
 ENT.AnimPlayTime		= 1.6
 ENT.AmmoType			= "HE"
 

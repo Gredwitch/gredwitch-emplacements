@@ -12,7 +12,7 @@ ENT.NameToPrint			= "M5"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
-ENT.BulletType			= "gb_shell_75mm"
+ENT.BulletType			= "gb_shell_76mm"
 ENT.MuzzleCount			= 1
 ENT.HasReloadAnim		= true
 ENT.AnimRestartTime		= 4.6

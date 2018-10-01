@@ -191,9 +191,10 @@ function ENT:FinishShooting()
 				self.ShooterLast:ExitVehicle(self.Seat)
 				self.Seat:Remove()
 			end
+		else
+			self.ShooterLast:SetActiveWeapon(self.gwep)
+			self.ShooterLast:StripWeapon("weapon_base")
 		end
-		self.ShooterLast:SetActiveWeapon(self.gwep)
-		self.ShooterLast:StripWeapon("weapon_base")
 		self.ShooterLast=nil
 	end
 end

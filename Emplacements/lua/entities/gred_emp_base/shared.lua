@@ -334,7 +334,6 @@ function ENT:DoShot(plr)
 					b.Caliber=self.BulletType
 					b:Spawn()
 					b:Activate()
-					constraint.NoCollide(b,self,0,0,true)
 					b.Owner=plr
 					
 					self.tracer = self.tracer + 1
@@ -487,7 +486,9 @@ function ENT:PlayAnim()
 						timer.Simple(self:SequenceDuration(),function() 
 							if !IsValid(self) then return end
 							self.sounds.reload_finish:Play()
-							self.AnimPlaying = false
+							timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function()
+								self.AnimPlaying = false
+							end)
 						end)
 					end
 				end)
@@ -507,7 +508,9 @@ function ENT:PlayAnim()
 					if !IsValid(self) then return end
 					self:ResetSequence("reload_finish")
 					self.sounds.reload_finish:Play()
-					self.AnimPlaying = false
+					timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function()
+						self.AnimPlaying = false
+					end)
 				end)
 			end
 		end
@@ -646,6 +649,7 @@ function ENT:PhysicsCollide(data,phy)
 				if string.StartWith(class,self.OldBulletType) then
 					local isWP = string.EndsWith(class,"wp")
 					if self.NoWP and isWP then return end
+					self.AnimPlaying = true
 					self.BulletType = class
 					self.CurAmmo = 1
 					if isWP then
@@ -665,15 +669,16 @@ function ENT:PhysicsCollide(data,phy)
 						self.sounds.reload_shell:Play()
 						timer.Simple(1.3,function()
 							if !IsValid(self) then return end
+							self.sounds.reload_start:Stop()
+							self.sounds.reload_finish:Play()
 							if self.UseSingAnim then
 								self:SetCycle(.8)
 								self:SetPlaybackRate(1)
+								timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function() self.AnimPlaying = false end)
 							else
 								self:ResetSequence("reload_finish")
+								timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function() self.AnimPlaying = false end)
 							end
-							self.AnimPlaying = false
-							self.sounds.reload_start:Stop()
-							self.sounds.reload_finish:Play()
 						end)
 					end
 				end
@@ -761,7 +766,6 @@ function ENT:Think()
 				if self.Destructible then
 					if self.CurLife <= 0 then self:Explode() end
 				end
-				-- print(self:GetCycle())
 			end
 			if self.SecondModel != "" then
 				self:ShieldThink()
@@ -772,6 +776,7 @@ function ENT:Think()
 				self:SetPlayerKeys(player)
 				self:PlayerSetSecondary(player)
 				if self.Firing and not self.IsReloading and self.LastShot+self.ShotInterval<=CurTime() and self.CurAmmo >= 1 then
+					if SERVER and (self.EmplacementType == "AT" and self.AnimPlaying) then return end
 					self:fire(player)
 					self.LastShot = CurTime()
 				end

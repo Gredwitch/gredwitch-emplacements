@@ -34,13 +34,14 @@ ENT.BaseModel			= "models/gredwitch/kwk/kwk_base.mdl"
 ENT.SecondModel			= "models/gredwitch/kwk/kwk_shield.mdl"
 ENT.Model				= "models/gredwitch/kwk/kwk_gun.mdl"
 ENT.EmplacementType     = "AT"
-ENT.MaxUseDistance		= 130
+ENT.MaxUseDistance		= 60
 ENT.CanLookArround		= true
 ENT.CanUseShield		= false
 ENT.CustomRecoil		= true
 ENT.Recoil				= 700000
 ENT.Seatable			= true
 ENT.ATReloadSound		= "small"
+ENT.UseSingAnim			= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
