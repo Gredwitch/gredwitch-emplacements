@@ -12,6 +12,7 @@ ENT.Armor				= 10
 ENT.ExplodeHeight		= 0
 ENT.Destructible		= true
 
+ENT.MagIn				= true
 ENT.MuzzleEffect		= ""
 ENT.ShotInterval		= 0
 ENT.BulletType			= ""
@@ -27,6 +28,7 @@ ENT.CalcMouse			= 1
 ENT.Life				= 100
 ENT.CurLife				= ENT.Life
 
+ENT.ClassAlt			= ""
 ENT.AnimStopRate		= 1
 
 ENT.AnimPlaying			= false
@@ -95,6 +97,8 @@ ENT.AmmoEnt				= ""
 ENT.AnimPauseTime		= 0
 ENT.UseSingAnim			= false
 ENT.NoWP				= false
+ENT.ReloadTime			= 4.1
+ENT.CycleRate			= 0.4
 
 ENT.ATReloadSound		= "medium"
 
@@ -638,50 +642,57 @@ end
 
 function ENT:PhysicsCollide(data,phy)
 	timer.Simple(0,function()
-		if self.CurAmmo <= 0 then
-			if self.EmplacementType == "MG" then
-				data.HitEntity:Remove()
-				self:SetPlaybackRate(1)
-				self.CurAmmo = self.Ammo
-				self.AnimPlaying = false
-			else
-				local class = data.HitEntity:GetClass()
-				if string.StartWith(class,self.OldBulletType) then
-					local isWP = string.EndsWith(class,"wp")
-					if self.NoWP and isWP then return end
-					self.AnimPlaying = true
-					self.BulletType = class
-					self.CurAmmo = 1
-					if isWP then
-						self.AmmoType = "WP"
-					else
-						if data.HitEntity.AP and !data.HitEntity.Smoke then
-							self.AmmoType = "AP"
-						elseif !data.HitEntity.AP and data.HitEntity.Smoke then
-							self.AmmoType = "Smoke"
-						elseif !data.HitEntity.AP and !data.HitEntity.Smoke then
-							self.AmmoType = "HE"
-						end
-					end
-					data.HitEntity:Remove()
-					if self.EmplacementType == "AT" then
-						self.sounds.reload_shell:Stop()
-						self.sounds.reload_shell:Play()
-						timer.Simple(1.3,function()
-							if !IsValid(self) then return end
-							self.sounds.reload_start:Stop()
-							self.sounds.reload_finish:Play()
-							if self.UseSingAnim then
-								self:SetCycle(.8)
-								self:SetPlaybackRate(1)
-								timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function() self.AnimPlaying = false end)
-							else
-								self:ResetSequence("reload_finish")
-								timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function() self.AnimPlaying = false end)
-							end
-						end)
+		if self.CurAmmo <= 0 and self.EmplacementType != "MG" then
+			if GetConVar("gred_sv_manual_reload"):GetInt() == 0 then return end
+			local class = data.HitEntity:GetClass()
+			if string.StartWith(class,self.OldBulletType) then
+				local isWP = string.EndsWith(class,"wp")
+				if self.NoWP and isWP then return end
+				self.AnimPlaying = true
+				self.BulletType = class
+				self.CurAmmo = 1
+				if isWP then
+					self.AmmoType = "WP"
+				else
+					if data.HitEntity.AP and !data.HitEntity.Smoke then
+						self.AmmoType = "AP"
+					elseif !data.HitEntity.AP and data.HitEntity.Smoke then
+						self.AmmoType = "Smoke"
+					elseif !data.HitEntity.AP and !data.HitEntity.Smoke then
+						self.AmmoType = "HE"
 					end
 				end
+				data.HitEntity:Remove()
+				if self.EmplacementType == "AT" then
+					self.sounds.reload_shell:Stop()
+					self.sounds.reload_shell:Play()
+					timer.Simple(1.3,function()
+						if !IsValid(self) then return end
+						self.sounds.reload_start:Stop()
+						self.sounds.reload_finish:Play()
+						if self.UseSingAnim then
+							self:SetCycle(.8)
+							self:SetPlaybackRate(1)
+							timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function() self.AnimPlaying = false end)
+						else
+							self:ResetSequence("reload_finish")
+							timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function() self.AnimPlaying = false end)
+						end
+					end)
+				end
+			end
+		elseif self.EmplacementType == "MG" and self.CurAmmo < self.Ammo and self.IsReloading then
+			if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then return end
+			if data.HitEntity.gredGunEntity == self:GetClass() or data.HitEntity.gredGunEntity ==  self.ClassAlt then
+				data.HitEntity:Remove()
+				self:SetPlaybackRate(1)
+				self:SetCycle(self.CycleRate)
+				self.MagIn = true
+				timer.Simple(self.ReloadTime, function()
+					self.CurAmmo = self.Ammo
+					self.AnimPlaying = false
+					self.IsReloading = false
+				end)
 			end
 		end
 	end)

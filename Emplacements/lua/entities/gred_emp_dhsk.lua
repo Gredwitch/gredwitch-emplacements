@@ -31,6 +31,7 @@ ENT.Ammo				= 50
 ENT.CurAmmo				= ENT.Ammo
 ENT.CanLookArround		= true
 ENT.HasNoAmmo			= false
+ENT.ReloadTime			= 2.43 - 0.7
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -69,6 +70,7 @@ function ENT:ReloadMG(ply)
 		prop:SetAngles(att.Ang - Angle(0,90,0))
 		prop:Spawn()
 		prop:Activate()
+		self.MagIn = false
 		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
 		if t > 0 then
 			timer.Simple(t,function()
@@ -81,27 +83,33 @@ function ENT:ReloadMG(ply)
 		self:SetBodygroup(3,1)
 	end)
 	created = false
-	timer.Simple(1.2,function() 
-		if !IsValid(self) then return end
-		self:SetBodygroup(2,0)
-		self:SetBodygroup(3,0)
-	end)
-	timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
-		self.CurAmmo = self.Ammo
-		self.IsReloading = false
-		self.tracer = 0
-	end)
+	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
+		timer.Simple(1.2,function() 
+			if !IsValid(self) then return end
+			self:SetBodygroup(2,0)
+			self:SetBodygroup(3,0)
+			self.MagIn = true
+		end)
+		timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
+			self.CurAmmo = self.Ammo
+			self.IsReloading = false
+			self.tracer = 0
+		end)
+	else
+		timer.Simple(1.2,function() 
+			if !IsValid(self) then return end
+			self:SetPlaybackRate(0)
+		end)
+	end
 end
 
 function ENT:AddOnThink()
-	if SERVER then
-		if not self.IsReloading then
-			self:SetBodygroup(2,0)
-			if self.CurAmmo <= 0 then 
-				self:SetBodygroup(3,1)
-			elseif self.CurAmmo > 0 then
-				self:SetBodygroup(3,0)
-			end
+	if SERVER and (!self.IsReloading or self.MagIn) then
+		self:SetBodygroup(2,0)
+		if self.CurAmmo <= 0 then 
+			self:SetBodygroup(3,1)
+		elseif self.CurAmmo > 0 then
+			self:SetBodygroup(3,0)
 		end
 	end
 end

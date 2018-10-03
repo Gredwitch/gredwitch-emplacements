@@ -13,6 +13,7 @@ CreateConVar("gred_sv_enable_health"				,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_health"						, "150" , GRED_SVAR)
 CreateConVar("gred_sv_arti_health"					, "300" , GRED_SVAR)
 CreateConVar("gred_sv_manual_reload"				,  "0"  , GRED_SVAR)
+CreateConVar("gred_sv_manual_reload_mgs"				,  "0"  , GRED_SVAR)
 
 resource.AddWorkshop(1484100983) -- Emplacements materials
 resource.AddWorkshop(1391460275) -- Emplacements

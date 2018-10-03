@@ -114,20 +114,42 @@ end
 
 net.Receive("gred_net_ammobox_sv_createshell",function()
 	local shell = net.ReadString()
-	local AP = net.ReadBool()
-	local Smoke = net.ReadBool()
-	local self = net.ReadEntity()
-	local ply = net.ReadEntity()
-	
-	local ent = ents.Create(shell)
-	ent:SetPos(self:GetPos() + Vector(0,0,70))
-	ent.AP = AP
-	ent.Smoke = Smoke
-	ent.IsOnPlane = true
-	ent:Spawn()
-	ent:Activate()
-	constraint.NoCollide(self,ent,0,0)
-	ent:Use(ply,ply,2,1)
+	if string.StartWith(shell,"models/") then
+		local self = net.ReadEntity()
+		local ply = net.ReadEntity()
+		local gun = net.ReadString()
+		local body1 = net.ReadInt(1)
+		local body2 = net.ReadInt(1)
+		
+		local ent = ents.Create("prop_physics")
+		ent:SetPos(self:GetPos() + Vector(0,0,70))
+		ent:SetModel(shell)
+		ent.gredGunEntity = gun
+		ent:SetBodygroup(body1,body2)
+		ent:Spawn()
+		ent:Activate()
+		local p=ent:GetPhysicsObject()
+		if IsValid(p) then
+			p:SetMass(35)
+		end
+		constraint.NoCollide(self,ent,0,0)
+		ply:PickupObject(ent)
+	else
+		local AP = net.ReadBool()
+		local Smoke = net.ReadBool()
+		local self = net.ReadEntity()
+		local ply = net.ReadEntity()
+		
+		local ent = ents.Create(shell)
+		ent:SetPos(self:GetPos() + Vector(0,0,70))
+		ent.AP = AP
+		ent.Smoke = Smoke
+		ent.IsOnPlane = true
+		ent:Spawn()
+		ent:Activate()
+		constraint.NoCollide(self,ent,0,0)
+		ent:Use(ply,ply,2,1)
+	end
 	
 end)
 net.Receive("gred_net_ammobox_sv_close",function()

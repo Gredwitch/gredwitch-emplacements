@@ -30,6 +30,8 @@ ENT.Ammo				= 200
 ENT.CurAmmo				= ENT.Ammo
 ENT.HasNoAmmo			= false
 
+ENT.ReloadTime			= 4.07 - 1.5
+
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 30
@@ -69,26 +71,37 @@ function ENT:ReloadMG(ply)
 		prop:Spawn()
 		prop:Activate()
 		if self.CurAmmo <= 0 then prop:SetBodygroup(1,1) end
+		
 		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
 		if t > 0 then
 			timer.Simple(t,function()
 				if IsValid(prop) then prop:Remove() end 
 			end)
 		end
+		
 		created = true
 	end)
-	timer.Simple(0.6,function() if IsValid(self) then self:SetBodygroup(7,2) end end)
+	
 	created = false
-	timer.Simple(1.5,function() 
-		if !IsValid(self) then return end
-		self:SetBodygroup(2,1)
-	end)
-	timer.Simple(1.9,function() if IsValid(self) then self:SetBodygroup(7,1) end end)
-	timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
-		self.CurAmmo = self.Ammo
-		self.tracer = 0
-		self.IsReloading = false
-	end)
+	timer.Simple(0.6,function() if IsValid(self) then self.MagIn = false self:SetBodygroup(7,2) end end)
+	timer.Simple(1.9,function() if IsValid(self) then self:SetBodygroup(7,0) end end)
+	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
+		timer.Simple(1.5,function() 
+			if !IsValid(self) then return end
+			self.MagIn = true
+			self:SetBodygroup(2,1)
+		end)
+		timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
+			self.CurAmmo = self.Ammo
+			self.tracer = 0
+			self.IsReloading = false
+		end)
+	else
+		timer.Simple(1.5,function() 
+			if !IsValid(self) then return end
+			self:SetPlaybackRate(0)
+		end)
+	end
 end
 
 function ENT:AddOnThink()
@@ -97,12 +110,12 @@ function ENT:AddOnThink()
 		self:SetBodygroup(1,1) -- Gun
 		self:SetBodygroup(5,1) -- Lid
 		self:SetBodygroup(6,1) -- Mag Base
-		if not self.IsReloading then 
+		if !self.IsReloading or self.MagIn then
 			self:SetBodygroup(2,1) -- Ammo box shown
 			if self.CurAmmo <= 0 then
 				self:SetBodygroup(7,2) -- Ammo belt hidden
-			elseif self.CurAmmo >= 1 then
-				self:SetBodygroup(7,1) -- M240B Ammo belt
+			else
+				self:SetBodygroup(7,0) -- M240B Ammo belt
 			end
 		end
 	end

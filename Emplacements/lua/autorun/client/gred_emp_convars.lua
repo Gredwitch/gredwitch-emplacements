@@ -10,6 +10,7 @@ CreateConVar("gred_sv_limitedammo"					,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_cantakemgbase"				,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_enable_seats"					,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_manual_reload"				,  "0"  , GRED_SVAR)
+CreateConVar("gred_sv_manual_reload_mgs"			,  "0"  , GRED_SVAR)
 
 CreateClientConVar("gred_cl_devemp_warnings","1", true,false)
 CreateClientConVar("gred_cl_shelleject","1", true,false)
@@ -34,7 +35,9 @@ local function gredEMPsettings(Panel)
 	
 	Panel:AddControl( "CheckBox", { Label = "Should you be able to see the MGs' shells?", Command = "gred_cl_shelleject" } );
 	
-	Panel:AddControl( "CheckBox", { Label = "Use a manual shell reload system?", Command = "gred_sv_manual_reload" } );
+	Panel:AddControl( "CheckBox", { Label = "Use a manual shell reload system?", Command = "gred_sv_manual_reload_mgs" } );
+	
+	Panel:AddControl( "CheckBox", { Label = "Use a manual reload system for the MGs?", Command = "gred_sv_manual_reload_mgs" } );
 	
 	Panel:NumSlider( "Mortar shells spawn altitude", "gred_sv_mortar_shellspawnaltitude", 1, 1000, 0 );
 	

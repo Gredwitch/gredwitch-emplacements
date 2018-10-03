@@ -29,6 +29,7 @@ ENT.CanLookArround		= true
 ENT.Ammo				= 50
 ENT.CurAmmo				= ENT.Ammo
 ENT.HasNoAmmo			= false
+ENT.ReloadTime			= 4.07 - 1.5
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -70,6 +71,7 @@ function ENT:ReloadMG(ply)
 		prop:SetAngles(att.Ang + Angle(0,90,0))
 		prop:Spawn()
 		prop:Activate()
+		self.MagIn = false
 		if self.CurAmmo <= 0 then prop:SetBodygroup(1,1) end
 		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
 		if t > 0 then
@@ -80,17 +82,26 @@ function ENT:ReloadMG(ply)
 		created = true
 	end)
 	created = false
-	timer.Simple(1.5,function() 
-		if !IsValid(self) then return end
-		self:SetBodygroup(2,0)
-		self:SetBodygroup(7,0)
-	end)
-	timer.Simple(1.9,function() if IsValid(self) then self:SetBodygroup(7,0) end end)
-	timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
-		self.CurAmmo = self.Ammo
-		self.tracer = 0
-		self.IsReloading = false
-	end)
+	
+	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
+		timer.Simple(1.5,function() 
+			if !IsValid(self) then return end
+			self:SetBodygroup(2,0)
+			self:SetBodygroup(7,0)
+			self.MagIn = true
+		end)
+		timer.Simple(1.9,function() if IsValid(self) then self:SetBodygroup(7,0) end end)
+		timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
+			self.CurAmmo = self.Ammo
+			self.tracer = 0
+			self.IsReloading = false
+		end)
+	else
+		timer.Simple(1.5,function() 
+			if !IsValid(self) then return end
+			self:SetPlaybackRate(0)
+		end)
+	end
 end
 
 function ENT:AddOnThink()
@@ -99,7 +110,7 @@ function ENT:AddOnThink()
 		self:SetBodygroup(1,0) -- Gun
 		self:SetBodygroup(5,0) -- Lid
 		self:SetBodygroup(6,0) -- Mag Base
-		if not self.IsReloading then 
+		if self.MagIn or !self.IsReloading then
 			self:SetBodygroup(2,0) -- Ammo bag shown
 			if self.CurAmmo <= 0 then
 				self:SetBodygroup(7,2) -- Ammo belt hidden
