@@ -29,6 +29,7 @@ ENT.TurretTurnMax		= 0.7
 ENT.Ammo				= 300
 ENT.CurAmmo				= ENT.Ammo
 ENT.HasNoAmmo			= false
+ENT.EndReloadSnd		= "M60ReloadEnd"
 
 ENT.Recoil				= 2000
 ENT.ReloadTime			= 4.07 - 1.3
@@ -54,6 +55,14 @@ sound.Add( {
 	level = 60,
 	pitch = {100},
 	sound = "gred_emp/m60/m60_reload.wav"
+} )
+sound.Add( {
+	name = ENT.EndReloadSnd,
+	channel = CHAN_WEAPON,
+	volume = 1.0,
+	level = 60,
+	pitch = {100},
+	sound = "gred_emp/m60/m60_reloadend.wav"
 } )
 
 function ENT:ReloadMG(ply)
@@ -105,6 +114,7 @@ function ENT:ReloadMG(ply)
 	else
 		timer.Simple(1.3,function() 
 			if !IsValid(self) then return end
+			self:StopSound("M60Reload")
 			self:SetPlaybackRate(0)
 		end)
 	end

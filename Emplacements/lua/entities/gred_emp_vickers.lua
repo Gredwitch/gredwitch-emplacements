@@ -32,6 +32,7 @@ ENT.MaxUseDistance		= 55
 ENT.CurAmmo				= ENT.Ammo
 ENT.HasNoAmmo			= false
 ENT.ReloadTime			= 2.77 - 1
+ENT.EndReloadSnd		= "VickersReloadEnd"
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -52,6 +53,14 @@ sound.Add( {
 	level = 60,
 	pitch = {100},
 	sound = "gred_emp/vickers/vickers_reload.wav"
+} )
+sound.Add( {
+	name = ENT.EndReloadSnd,
+	channel = CHAN_WEAPON,
+	volume = 1.0,
+	level = 60,
+	pitch = {100},
+	sound = "gred_emp/vickers/vickers_reloadend.wav"
 } )
 
 function ENT:ReloadMG(ply)
@@ -95,7 +104,6 @@ function ENT:ReloadMG(ply)
 		self:SetBodygroup(3,1)
 	end)
 	created = false
-	print(self:SequenceDuration())
 	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
 		timer.Simple(2,function() 
 			if !IsValid(self) then return end
@@ -110,7 +118,11 @@ function ENT:ReloadMG(ply)
 			self.tracer = 0
 		end)
 	else
-			timer.Simple(2,function() 
+		timer.Simple(1.5,function() 
+			if !IsValid(self) then return end
+			self:StopSound("VickersReload")
+		end)
+		timer.Simple(2,function() 
 			if !IsValid(self) then return end
 			self:SetPlaybackRate(0)
 		end)

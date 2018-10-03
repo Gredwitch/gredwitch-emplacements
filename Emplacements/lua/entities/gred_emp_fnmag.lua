@@ -25,7 +25,7 @@ ENT.Model				= "models/gredwitch/fnmag/fnmag_gun.mdl"
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 7
 ENT.CanLookArround		= true
-
+ENT.EndReloadSnd		= "FNMAGReloadEnd"
 ENT.Ammo				= 50
 ENT.CurAmmo				= ENT.Ammo
 ENT.HasNoAmmo			= false
@@ -46,19 +46,27 @@ end
 local created = false
 
 sound.Add( {
-	name = "M240Reload",
+	name = "FNMAGReload",
 	channel = CHAN_WEAPON,
 	volume = 1.0,
 	level = 60,
 	pitch = {100},
 	sound = "gred_emp/fnmag/fnmag_reload.wav"
 } )
+sound.Add( {
+	name = ENT.EndReloadSnd,
+	channel = CHAN_WEAPON,
+	volume = 1.0,
+	level = 60,
+	pitch = {100},
+	sound = "gred_emp/fnmag/fnmag_reloadend.wav"
+} )
 
 function ENT:ReloadMG(ply)
 	if self.IsReloading then return end
 	self.IsReloading = true
 	self:ResetSequence(self:LookupSequence("reload"))
-	self:EmitSound("M240Reload")
+	self:EmitSound("FNMAGReload")
 	timer.Simple(0.7, function() 
 		if !IsValid(self) then return end
 		if created then return end
@@ -99,6 +107,7 @@ function ENT:ReloadMG(ply)
 	else
 		timer.Simple(1.5,function() 
 			if !IsValid(self) then return end
+			self:StopSound("FNMAGReload")
 			self:SetPlaybackRate(0)
 		end)
 	end

@@ -29,6 +29,7 @@ ENT.CurAmmo				= ENT.Ammo
 ENT.HasNoAmmo			= false
 ENT.ReloadTime			= 2.4 - 1.2
 ENT.CycleRate			= 0.6
+ENT.EndReloadSnd		= "MG42ReloadEnd"
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -49,6 +50,14 @@ sound.Add( {
 	level = 60,
 	pitch = {100},
 	sound = "gred_emp/mg42/mg42_reload.wav"
+} )
+sound.Add( {
+	name = ENT.EndReloadSnd,
+	channel = CHAN_WEAPON,
+	volume = 1.0,
+	level = 60,
+	pitch = {100},
+	sound = "gred_emp/mg42/mg42_reloadend.wav"
 } )
 
 function ENT:ReloadMG(ply)
@@ -93,6 +102,7 @@ function ENT:ReloadMG(ply)
 	else
 		timer.Simple(1.6,function() 
 			if !IsValid(self) then return end
+			self:StopSound("MG42Reload")
 			self:SetPlaybackRate(0)
 		end)
 	end

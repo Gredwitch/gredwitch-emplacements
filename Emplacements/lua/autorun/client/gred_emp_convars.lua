@@ -35,7 +35,7 @@ local function gredEMPsettings(Panel)
 	
 	Panel:AddControl( "CheckBox", { Label = "Should you be able to see the MGs' shells?", Command = "gred_cl_shelleject" } );
 	
-	Panel:AddControl( "CheckBox", { Label = "Use a manual shell reload system?", Command = "gred_sv_manual_reload_mgs" } );
+	Panel:AddControl( "CheckBox", { Label = "Use a manual shell reload system?", Command = "gred_sv_manual_reload" } );
 	
 	Panel:AddControl( "CheckBox", { Label = "Use a manual reload system for the MGs?", Command = "gred_sv_manual_reload_mgs" } );
 	

@@ -29,6 +29,7 @@ ENT.CanLookArround		= true
 ENT.Ammo				= 200
 ENT.CurAmmo				= ENT.Ammo
 ENT.HasNoAmmo			= false
+ENT.EndReloadSnd		= "M240ReloadEnd"
 
 ENT.ReloadTime			= 4.07 - 1.5
 
@@ -52,6 +53,14 @@ sound.Add( {
 	level = 60,
 	pitch = {100},
 	sound = "gred_emp/m240b/m240_reload.wav"
+} )
+sound.Add( {
+	name = ENT.EndReloadSnd,
+	channel = CHAN_WEAPON,
+	volume = 1.0,
+	level = 60,
+	pitch = {100},
+	sound = "gred_emp/m240b/m240_reloadend.wav"
 } )
 
 function ENT:ReloadMG(ply)
@@ -99,6 +108,7 @@ function ENT:ReloadMG(ply)
 	else
 		timer.Simple(1.5,function() 
 			if !IsValid(self) then return end
+			self:StopSound("M240Reload")
 			self:SetPlaybackRate(0)
 		end)
 	end

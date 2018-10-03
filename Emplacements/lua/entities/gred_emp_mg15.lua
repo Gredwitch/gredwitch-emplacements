@@ -27,6 +27,7 @@ ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 40
 ENT.MaxUseDistance		= 40
 ENT.CanLookArround		= true
+ENT.EndReloadSnd		= "MG42ReloadEnd"
 
 
 ENT.Ammo        		= 75
@@ -54,6 +55,14 @@ sound.Add( {
 	level = 60,
 	pitch = {100},
 	sound = "gred_emp/mg15/mg15_reload.wav"
+} )
+sound.Add( {
+	name = ENT.EndReloadSnd,
+	channel = CHAN_WEAPON,
+	volume = 1.0,
+	level = 60,
+	pitch = {100},
+	sound = "gred_emp/mg15/mg15_reloadend.wav"
 } )
 
 function ENT:ReloadMG(ply)
@@ -94,7 +103,11 @@ function ENT:ReloadMG(ply)
 			self.tracer = 0
 		end)
 	else
-		timer.Simple(1.6,function() 
+		timer.Simple(1,function()
+			if !IsValid(self) then return end
+			self:StopSound("MG15Reload")
+		end)
+		timer.Simple(1.5,function() 
 			if !IsValid(self) then return end
 			self:SetPlaybackRate(0)
 		end)

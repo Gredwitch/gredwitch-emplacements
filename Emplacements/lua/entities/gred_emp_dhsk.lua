@@ -32,6 +32,7 @@ ENT.CurAmmo				= ENT.Ammo
 ENT.CanLookArround		= true
 ENT.HasNoAmmo			= false
 ENT.ReloadTime			= 2.43 - 0.7
+ENT.EndReloadSnd		= "DHsKReloadEnd"
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -53,6 +54,14 @@ sound.Add( {
 	level = 60,
 	pitch = {100},
 	sound = "gred_emp/dhsk/dhsk_reload.wav"
+} )
+sound.Add( {
+	name = ENT.EndReloadSnd,
+	channel = CHAN_WEAPON,
+	volume = 1.0,
+	level = 60,
+	pitch = {100},
+	sound = "gred_emp/dhsk/dhsk_reloadend.wav"
 } )
 
 function ENT:ReloadMG(ply)
@@ -98,6 +107,7 @@ function ENT:ReloadMG(ply)
 	else
 		timer.Simple(1.2,function() 
 			if !IsValid(self) then return end
+			self:StopSound("DHsKReload")
 			self:SetPlaybackRate(0)
 		end)
 	end

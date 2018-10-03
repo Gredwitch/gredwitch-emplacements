@@ -99,7 +99,7 @@ ENT.UseSingAnim			= false
 ENT.NoWP				= false
 ENT.ReloadTime			= 4.1
 ENT.CycleRate			= 0.4
-
+ENT.EndReloadSnd		= ""
 ENT.ATReloadSound		= "medium"
 
 ENT.Attaker				= nil
@@ -687,6 +687,7 @@ function ENT:PhysicsCollide(data,phy)
 				data.HitEntity:Remove()
 				self:SetPlaybackRate(1)
 				self:SetCycle(self.CycleRate)
+				self:EmitSound(self.EndReloadSnd)
 				self.MagIn = true
 				timer.Simple(self.ReloadTime, function()
 					self.CurAmmo = self.Ammo
