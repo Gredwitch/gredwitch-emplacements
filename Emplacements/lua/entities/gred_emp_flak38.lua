@@ -40,6 +40,8 @@ ENT.Color				= "Yellow"
 ENT.num					= 0.5
 ENT.Seatable			= true
 ENT.TurretHorrizontal 	= -0.6
+ENT.CustomRecoil		= true
+ENT.Recoil				= 5000
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -57,11 +59,13 @@ function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
 	if self.AmmoType == "Direct Hit" then
 		self.AmmoType = "Time-Fuze"
-		if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] Time-Fuze rounds selected") end
 	elseif self.AmmoType == "Time-Fuze" then
 		self.AmmoType = "Direct Hit"
-		if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] Direct hit rounds selected") end
 	end
+	net.Start("gred_net_message_ply")
+		net.WriteEntity(plr)
+		net.WriteString("["..self.NameToPrint.."] "..self.AmmoType.." rounds selected")
+	net.Send(plr)
 	self.NextSwitch = CurTime()+0.2
 end
 
@@ -72,7 +76,6 @@ local function CalcView(ply, pos, angles, fov)
 			if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) then
 				if ent:GetDTEntity(2):GetThirdPersonMode() then
 					local view = {}
-
 					view.origin = pos + ent:GetForward()*-16 + ent:GetRight()*-70 + ent:GetUp()*-10
 					view.angles = angles
 					view.fov = fov

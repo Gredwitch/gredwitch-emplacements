@@ -33,6 +33,9 @@ ENT.Model				= "models/gredwitch/M2A1/M2A1_gun.mdl"
 ENT.EmplacementType     = "AT"
 ENT.Scatter				= 0.4
 
+ENT.Wheels				= "models/gredwitch/M2A1/M2A1_wheels.mdl"
+ENT.WheelsPos			= Vector(0,0,0)
+
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 36
@@ -47,35 +50,18 @@ end
 function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
 	if self.AmmoType == "HE" then
-		if CLIENT then 
-			self.AmmoType = "Smoke"
-			self.BulletType = "gb_shell_105mm"
-		end
-		if SERVER then 
-			self.AmmoType = "Smoke"
-			self.BulletType = "gb_shell_105mm"
-		end
-	
+		self.AmmoType = "Smoke"
+		self.BulletType = "gb_shell_105mm"
 	elseif self.AmmoType == "Smoke" then
-		if CLIENT then 
-			self.AmmoType = "WP"
-			self.BulletType = "gb_shell_105mmWP"
-		end
-		if SERVER then 
-			self.AmmoType = "WP"
-			self.BulletType = "gb_shell_105mmWP"
-		end
-	
+		self.AmmoType = "WP"
+		self.BulletType = "gb_shell_105mmWP"
 	elseif self.AmmoType == "WP" then
-		if CLIENT then 
-			self.AmmoType = "HE"
-			self.BulletType = "gb_shell_105mm"
-		end
-		if SERVER then 
-			self.AmmoType = "HE"
-			self.BulletType = "gb_shell_105mm"
-		end
+		self.AmmoType = "HE"
+		self.BulletType = "gb_shell_105mm"
 	end
-	if self.serv then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	net.Start("gred_net_message_ply")
+		net.WriteEntity(plr)
+		net.WriteString("["..self.NameToPrint.."] "..self.AmmoType.." shells selected")
+	net.Send(plr)
 	self.NextSwitch = CurTime()+0.2
 end

@@ -101,10 +101,15 @@ ENT.ReloadTime			= 4.1
 ENT.CycleRate			= 0.4
 ENT.EndReloadSnd		= ""
 ENT.ATReloadSound		= "medium"
+ENT.AddShootAngle		= 1.5
 
 ENT.Attaker				= nil
 ENT.CurViewPos			= 0
 ENT.AutomaticFrameAdvance = true -- FUCKING ANIMS NOT WORKING CUZ THIS IS NOT SET TO TRUE
+
+ENT.Wheels				= ""
+ENT.WheelsPos			= Vector(0,0,0)
+
 local SmokeSnds			 = {}
 for i=1,4 do
 	SmokeSnds[i]		=  "gred_emp/nebelwerfer/artillery_strike_smoke_close_0".. i..".wav"
@@ -114,22 +119,18 @@ local reachSky = Vector(0,0,9999999999)
 local nextplay = 0.5
 ENT.serv	   = CLIENT --or game.IsDedicated() or !game.IsDedicated()
 
-if SERVER then 
-	util.AddNetworkString("gred_net_emp_muzzle_fx")
-	util.AddNetworkString("gred_net_emp_getplayer")
-end
 function ENT:SetupDataTables()
 	self:DTVar("Entity",0,"Shooter")
 	self:DTVar("Entity",1,"ShootPos")
 	self:DTVar("Entity",2,"Seat")
 end
 
-function ENT:SetShooter(plr)
-	self.Shooter=plr
-	self:SetDTEntity(0,plr)
+function ENT:SetShooter(ply)
+	self.Shooter=ply
+	self:SetDTEntity(0,ply)
 end
 
-function ENT:GetShooter(plr)
+function ENT:GetShooter(ply)
 	if SERVER then
 		return self.Shooter
 	elseif CLIENT then
@@ -140,74 +141,77 @@ end
 function ENT:AddOnThink()
 end
 
-function ENT:SwitchAmmoType(plr)
+function ENT:SwitchAmmoType(ply)
 	if self.NextSwitch > CurTime() then return end
 	if self.AmmoType == "AP" then
-		if CLIENT then self.AmmoType = "HE" end
-		if SERVER then self.AmmoType = "HE" end
-	
+		self.AmmoType = "HE"
 	elseif self.AmmoType == "HE" then
-		if CLIENT then self.AmmoType = "Smoke" end
-		if SERVER then self.AmmoType = "Smoke" end
-			
+		self.AmmoType = "Smoke"
 	elseif self.AmmoType == "Smoke" then
-		if CLIENT then self.AmmoType = "AP" end
-		if SERVER then self.AmmoType = "AP" end
+		self.AmmoType = "AP"
 	end
-	if self.serv then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	net.Start("gred_net_message_ply")
+		net.WriteEntity(ply)
+		net.WriteString("["..self.NameToPrint.."] "..self.AmmoType.." shells selected")
+	net.Send(ply)
 	self.NextSwitch = CurTime()+0.2
 end
 
 function ENT:PlayerSetSecondary(ply)
-	if self.Secondary then
-		if (self.EmplacementType != "MG" and GetConVar("gred_sv_manual_reload"):GetInt() == 0) or (self.CanSwitchAmmoTypes and self.EmplacementType == "MG") then 
-			self:SwitchAmmoType(ply) 
+	if SERVER then
+		if self.Secondary then
+			if (self.EmplacementType != "MG" and GetConVar("gred_sv_manual_reload"):GetInt() == 0) or (self.CanSwitchAmmoTypes and self.EmplacementType == "MG") then 
+				self:SwitchAmmoType(ply) 
+			end
 		end
-	end
-	if self.CanSwitchAmmoTypes and self.AmmoType == "Time-Fuze" and self.NextAmmoSwitch < CurTime() then
-		if self.SwitchedFuzeKey then
-			self:SetTimeFuze(ply)
+		if self.CanSwitchAmmoTypes and self.AmmoType == "Time-Fuze" and self.NextAmmoSwitch < CurTime() then
+			if self.SwitchedFuzeKey then
+				self:SetTimeFuze(ply)
+			end
+			if self.ResetFuzeKey then
+				self:LowerTimeFuze(ply)
+			end
 		end
-		if self.ResetFuzeKey then
-			self:LowerTimeFuze(ply)
+		if self.ReloadKey then
+			if self.CurAmmo >= self.Ammo or self.IsReloading then return end
+			self:ReloadMG(ply)
 		end
-	end
-	if self.ReloadKey then
-	    if self.CurAmmo >= self.Ammo or self.IsReloading then return end
-		self:ReloadMG(ply)
 	end
 end
 
 function ENT:LowerTimeFuze(ply)
 	if self.FuzeTime <= 0.01 then
-		if CLIENT then self.FuzeTime = 0.5 end
-		if SERVER then self.FuzeTime = 0.5 end
+		self.FuzeTime = 0.5
 	else
 		self.FuzeTime = self.FuzeTime - 0.01 
 	end
-	if self.serv then ply:ChatPrint("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds") end
+	net.Start("gred_net_message_ply")
+		net.WriteEntity(ply)
+		net.WriteString("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds")
+	net.Send(ply)
 	self.NextAmmoSwitch = CurTime()+0.1
 end
 
 function ENT:SetTimeFuze(ply)
 	if self.FuzeTime >= 0.5 then 
-		if SERVER then self.FuzeTime = 0.01 end
-		if CLIENT then self.FuzeTime = 0.01 end
+		self.FuzeTime = 0.01
 	else 
-		if CLIENT then self.FuzeTime = self.FuzeTime + 0.01 end
-		if SERVER then self.FuzeTime = self.FuzeTime + 0.01 end
+		self.FuzeTime = self.FuzeTime + 0.01
 	end
-	if self.serv then ply:ChatPrint("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds") end
+	net.Start("gred_net_message_ply")
+		net.WriteEntity(ply)
+		net.WriteString("["..self.NameToPrint.."] Time fuze set to "..self.FuzeTime.." seconds")
+	net.Send(ply)
 	self.NextAmmoSwitch = CurTime()+0.1
 end
 
-function ENT:Use(plr)
+function ENT:Use(ply)
 	if not self:ShooterStillValid() then
-		self:SetShooter(plr)
+		self:SetShooter(ply)
 		self:StartShooting()
-		self.ShooterLast=plr
+		self.ShooterLast=ply
 	else
-		if plr==self.Shooter then
+		if ply==self.Shooter then
 			self:SetShooter(nil)
 			self:FinishShooting()
 		end
@@ -293,10 +297,10 @@ function ENT:AddSounds()
 		self.sounds.reload_shell:SetSoundLevel(80)
 		self.sounds.reload_shell:ChangeVolume(1)
 	end
-	PrintTable(self.sounds)
+	-- PrintTable(self.sounds)
 end
 
-function ENT:DoShot(plr)
+function ENT:DoShot(ply,shootPos)
 		if self.EmplacementType == "Mortar" or self.EmplacementType == "AT" then
 			local pos = self:GetPos()
 			util.ScreenShake(pos,5,5,0.5,200)
@@ -308,6 +312,7 @@ function ENT:DoShot(plr)
 				
 				if self.EmplacementType == "MG" then
 					local b = ents.Create("gred_base_bullet")
+					-- local b = ents.Create("gred_base_bullet_testPHY")
 					
 					if self.num > 0 then
 						num = self.num
@@ -324,9 +329,9 @@ function ENT:DoShot(plr)
 							num = 2
 						end
 					end
-					ang = attAng + Angle(math.Rand(num,-num), math.Rand(num,-num), math.Rand(num,-num))
+					attAng:Add(Angle(math.Rand(num,-num), math.Rand(num,-num), math.Rand(num,-num)))
 					b:SetPos(attPos)
-					b:SetAngles(ang)
+					b:SetAngles(attAng)
 					b.Speed=1000
 					b.Size=0
 					b.Width=0
@@ -338,7 +343,7 @@ function ENT:DoShot(plr)
 					b.Caliber=self.BulletType
 					b:Spawn()
 					b:Activate()
-					b.Owner=plr
+					b.Owner=ply
 					
 					self.tracer = self.tracer + 1
 					if self.tracer >= GetConVar("gred_sv_tracers"):GetInt() then
@@ -361,10 +366,10 @@ function ENT:DoShot(plr)
 					
 				elseif self.EmplacementType == "AT" then
 					local b=ents.Create(self.BulletType)
-					local ang = attAng + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter)) + Angle(-2,0,0)
+					attAng:Sub(Angle(self.AddShootAngle,0,0)) -- + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
 					b:SetPos(attPos)
-					b:SetAngles(ang)
-					b.GBOWNER=plr
+					b:SetAngles(attAng)
+					b.GBOWNER=ply
 					b:Spawn()
 					b:SetBodygroup(0,1)
 					b:SetBodygroup	  (1,1)
@@ -374,13 +379,12 @@ function ENT:DoShot(plr)
 						b.Smoke = true
 					end
 					b:Activate()
+					for k,v in pairs(self.Entities) do
+						constraint.NoCollide(v,b,0,0)
+					end
 					b.IsOnPlane = true
-					-- local p = b:GetPhysicsObject()
-					-- if IsValid(p) then
-						-- p:EnableGravity(false)
-					-- end
 					b:Launch()
-					b.Owner=plr
+					b.Owner=ply
 					if self.HasShellEject then
 						local mdlscale = b.ModelSize
 						timer.Simple(self.AnimPlayTime + self.ShellEjectTime,function()
@@ -398,49 +402,97 @@ function ENT:DoShot(plr)
 						end)
 					end
 				elseif self.EmplacementType == "Mortar" then
-					local shootPos=util.TraceLine(util.GetPlayerTrace(self.Shooter)).HitPos
+					-------------------
+					local trace = {}				
+					trace.start = shootPos
+					trace.endpos = shootPos + Vector(0,0,1000) -- This calculates the spawn altitude
+					trace.Mask = MASK_SOLID_BRUSHONLY
+					local tr = util.TraceLine(trace)
+					
+					local BPos = tr.HitPos + 
+					Vector(math.random(-self.Scatter,self.Scatter),
+					math.random(-self.Scatter,self.Scatter),-1) -- Creates our spawn position
+					while !util.IsInWorld(BPos) do
+						BPos = tr.HitPos + 
+						Vector(math.random(-self.Scatter,self.Scatter),
+						math.random(-self.Scatter,self.Scatter),-1) -- re-ceates our spawn position
+					end
+					local HitBPos = Vector(0,0,
+					util.QuickTrace(BPos,BPos - reachSky,{self,self.turretBase,self.shootpos} ).HitPos.z) -- Defines the ground's pos
+					local zpos = Vector(0,0,BPos.z) -- The exact spawn altitude
+					local dist = HitBPos:Distance(zpos) -- Calculates the distance between our spawn altitude and the ground
+					
+					----------------------
+					
+					local snd = "artillery/flyby/artillery_strike_incoming_0"..(math.random(1,4))..".wav"
+					local sndDuration = SoundDuration(snd)
+					
 					local bul = self.BulletType
 					local ammo = self.AmmoType
-					timer.Simple(4,function()
+					timer.Simple(GetConVar("gred_sv_shell_arrival_time"):GetFloat(),function()
 						if not IsValid(self) then return end
 						local b=ents.Create(bul)
-						local spawnAtt = GetConVar("gred_sv_mortar_shellspawnaltitude"):GetInt()
-						if spawnAtt == nil then spawnAtt = 1000 end
-						b:SetPos(shootPos + Vector(math.random(-self.Scatter,self.Scatter),math.random(-self.Scatter,self.Scatter),spawnAtt))
-						b:SetAngles(Angle(90,0,0))
-						b:SetOwner(self.Shooter)
-						b.IsOnPlane = true
-						if ammo == "Smoke" then
-							b.Effect 		  				   = self.EffectSmoke
-							b.EffectAir 	  				   = self.EffectSmoke
-							b.ExplosionRadius 				   = 0
-							b.ExplosionDamage 				   = 0
-							b.SpecialRadius   				   = 0
-							b.PhysForce						   = 0
-							b.RSound						   = 1
-							b.DEFAULT_PHYSFORCE                = 0
-							b.DEFAULT_PHYSFORCE_PLYAIR         = 0
-							b.DEFAULT_PHYSFORCE_PLYGROUND      = 0
-							b.ExplosionSound				   = table.Random(SmokeSnds)
-							b.WaterExplosionSound			   = table.Random(SmokeSnds)
-							b.Smoke = true
+						local time = (dist/-1000)+(sndDuration-0.2) -- Calculates when to play the whistle sound
+						if time < 0 then
+							b:SetPos(BPos)
+							b:SetAngles(Angle(90,0,0))
+							b:SetOwner(self.Shooter)
+							b.IsOnPlane = true
+							if ammo == "Smoke" then
+								b.Smoke = true
+							end
+							b.GBOWNER=ply
+							b.Owner=ply
+							b:Spawn()
+							b:Activate()
+							b:Arm()
+							b.PhysicsUpdate = function(data,phys)
+								phys:SetVelocityInstantaneous(Vector(0,0,-1000))
+							end
+							timer.Simple(-time,function()
+								if !IsValid(b) then return end
+								b:EmitSound(snd, 140, 100, 1)
+							end)
+						else
+							local p = ents.Create("prop_dynamic")
+							p:SetModel("models/hunter/blocks/cube025x025x025.mdl")
+							p:SetPos(BPos)
+							p:Spawn()
+							p:SetRenderMode(RENDERMODE_TRANSALPHA)
+							p:SetColor(255,255,255,0)
+							p:EmitSound(snd,140,100,1)
+							p:Remove()
+							timer.Simple(time,function()
+								if !IsValid(self) then return end
+								b:SetPos(BPos)
+								b:SetAngles(Angle(90,0,0))
+								b:SetOwner(self.Shooter)
+								b.IsOnPlane = true
+								if ammo == "Smoke" then
+									b.Smoke = true
+								end
+								b.GBOWNER=ply
+								b:Spawn()
+								b:Activate()
+								b:Arm()
+								b.PhysicsUpdate = function(data,phys)
+									phys:SetVelocityInstantaneous(Vector(0,0,-1000))
+								end
+								b.Owner=ply
+							end)
 						end
-						b.GBOWNER=plr
-						b:Spawn()
-						b:Activate()
-						b:EmitSound("artillery/flyby/artillery_strike_incoming_0"..(math.random(1,4))..".wav", 140, 100, 1)
-						b:Arm()
-						b.Owner=plr
 					end)
 				end
 				if !self.NoRecoil then
+					local phy = self:GetPhysicsObject()
+					if !IsValid(phy) then return end
 					if self.EmplacementType == "MG" then
-						self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*self.Recoil)
+						phy:ApplyForceCenter(self:GetRight()*self.Recoil)
 					elseif self.EmplacementType == "AT" then
 						if self.CustomRecoil then
-							self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*self.Recoil)
+							phy:ApplyForceCenter(self:GetRight()*self.Recoil)
 						else
-							self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*7000000)
+							phy:ApplyForceCenter(self:GetRight()*7000000)
 						end
 					end
 				end
@@ -523,27 +575,49 @@ end
 
 function ENT:SetShootAngles(ply)
 	if SERVER then
-		ply:DrawViewModel(false)
-		net.Start("TurretBlockAttackToggle")
-		net.WriteBit(true)
-		net.Send(ply)
+		if !self.Seatable then
+			ply:DrawViewModel(false)
+			net.Start("TurretBlockAttackToggle")
+				net.WriteBit(true)
+			net.Send(ply)
+		end
 		if self.Seatable and !ply:InVehicle() then
 			self:SetShooter(nil)
 			self:FinishShooting()
 		end
 		if !self:ShooterStillValid() then return end
-		offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
-		offsetDot=self.turretBase:GetAngles():Right():DotProduct(offsetAng)
-		if (offsetDot>=self.TurretTurnMax or self.CanLookArround) then
-			local offsetAngNew=offsetAng:Angle()
-			offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
+		-- if self.Seatable then
+			-- self.NORESET = true
+			-- local plyang = ply:GetAimVector():Angle()
+			-- local turang = self.turretBase:GetAngles()
+			-- local entang = self:GetAngles()
+			-- local offsetAngNew=Angle(0,0,0)
+			-- if entang != offsetAngNew then
+				-- self:SetAngles(offsetAngNew)
+			-- end
+			-- local oof = math.ApproachAngle(
+							-- self:GetAngles(),
+							-- Angle(-plyang.p,plyang.y,-turang.r),
+							-- 20)
+			-- local offsetAngNew=oof
+			-- offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
 			
-			self.OffsetAng=offsetAngNew
-			if self.EmplacementType == "Mortar" then canShoot = true end
-		else
-			if self.EmplacementType == "Mortar" then canShoot = false end
-		end
-		
+			-- self.OffsetAng=offsetAngNew
+			-- self.OldOffsetAng=offsetAngNew
+		-- else
+			offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
+			offsetDot=self.turretBase:GetAngles():Right():Dot(offsetAng)
+			if (offsetDot>=self.TurretTurnMax or self.CanLookArround) then
+				offsetAngNew=offsetAng:Angle()
+				offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
+				
+				self.OffsetAng=offsetAngNew
+				self.OldOffsetAng=offsetAng:Angle()
+				if self.EmplacementType == "Mortar" then canShoot = true end
+			else
+				if self.EmplacementType == "Mortar" then canShoot = false end
+			end
+		-- end
 	end
 end
 
@@ -557,7 +631,7 @@ function ENT:SetPlayerKeys(ply)
 	local reload    = IN_RELOAD
 	local fuzereset = IN_SPEED
 	local camera	= IN_DUCK
-	if CLIENT and game.SinglePlayer() then
+	if (CLIENT and game.SinglePlayer()) or (self.Seatable) then
 		pressKey  = IN_ATTACK
 		switchKey = IN_ATTACK2
 		fuzekey	  = IN_WALK
@@ -575,7 +649,6 @@ end
 
 function ENT:ShieldThink()
 	if SERVER then
-		self.shield:SetSkin(self:GetSkin())
 		self.shield:SetPos(self.BasePos + self.shield:GetRight()*-self.ShieldForward)
 		local ta = self.turretBase:GetAngles()
 		self.shield:SetAngles(Angle(ta.p,self:GetAngles().y,ta.r))
@@ -588,56 +661,71 @@ end
 
 function ENT:FindNPCs()
     for _,n in pairs (ents.FindInSphere(self:GetPos(),self.MaxUseDistance)) do
-        if n:IsNPC() then
+        if n:IsNPC() and !n.IsUsingGredEmp then
             self:Use(n,n,3,1)
+			n.IsUsingGredEmp = true
         end
     end
 end
 
-function ENT:fire(player)
-	if SERVER then
-		if self.EmplacementType == "Mortar" then
-			local aimpos = self:GetAttachment(self:LookupAttachment("muzzle"))
-			local tr = util.QuickTrace(aimpos.Pos,aimpos.Pos + reachSky,{self,self,self.turretBase,self.shootpos} )
-			
-			if !tr.HitSky or (!tr.HitWorld and !tr.HitSky and !tr.Hit) then
-				canShoot = false
-				noHitSky = true
-				if serv then
-					player:ChatPrint("["..self.NameToPrint.."] Nothing must block the mortar's muzzle!")
-				end
+function ENT:fire(ply,ct)
+	local eyetrace
+	if self.EmplacementType == "Mortar" then
+		local aimpos = self:GetAttachment(self:LookupAttachment("muzzle"))
+		local tr = util.QuickTrace(aimpos.Pos,aimpos.Pos + reachSky,{self,self.turretBase,self.shootpos} )
+		
+		if tr.Hit and !tr.HitSky then
+			canShoot = false
+			noHitSky = true
+			net.Start("gred_net_message_ply")
+				net.WriteEntity(ply)
+				net.WriteString("["..self.NameToPrint.."] Nothing must block the mortar's muzzle!")
+			net.Send(ply)
+			self.LastShot = ct - self.ShotInterval+0.5
+		else
+			noHitSky = false
+			if !canShoot then
+				net.Start("gred_net_message_ply")
+					net.WriteEntity(ply)
+					net.WriteString("["..self.NameToPrint.."] You can't shoot there!")
+				net.Send(ply)
+				self.LastShot = ct - self.ShotInterval+0.5
 			else
-				noHitSky = false
-				if not canShoot then
-					if serv then
-						player:ChatPrint("["..self.NameToPrint.."] You can't shoot there!")
-					end
-				return end
+				eyetrace = util.TraceLine(util.GetPlayerTrace(ply)).HitPos
+				local tr = util.QuickTrace(eyetrace,eyetrace + reachSky,{self,self.turretBase,self.shootpos} )
+				if tr.Hit and !tr.HitSky then
+					canShoot = false
+					net.Start("gred_net_message_ply")
+						net.WriteEntity(ply)
+						net.WriteString("["..self.NameToPrint.."] You can't shoot in interiors!")
+					net.Send(ply)
+					self.LastShot = ct - self.ShotInterval+0.5
+				end
 			end
 		end
 	end
-	if canShoot or self.EmplacementType != "Mortar" and SERVER then
-		self:DoShot(player)
+	if canShoot or self.EmplacementType != "Mortar" then
+		self:DoShot(ply,eyetrace)
+		self.CanPlayStopSnd = true
+		if !self.sounds.shoot:IsPlaying() then
+			self.sounds.shoot:Play()
+		else
+			if self.EmplacementType != "MG" then
+				self.sounds.shoot:Stop()
+				self.sounds.shoot:Play()
+			end
+		end
+		if self.HasStopSound then
+			self.sounds.stop:Stop()
+		end
+		self.sounds.empty:Stop()
+		
+		self:PlayAnim() 
 		net.Start("gred_net_emp_muzzle_fx")
 			net.WriteEntity(self)
 		net.Broadcast()
+		self.LastShot = ct
 	end
-		self.CanPlayStopSnd = true
-		if SERVER then
-			if !self.sounds.shoot:IsPlaying() then
-				self.sounds.shoot:Play()
-			else
-				if self.EmplacementType != "MG" then
-					self.sounds.shoot:Stop()
-					self.sounds.shoot:Play()
-				end
-			end
-			if self.HasStopSound then
-				self.sounds.stop:Stop()
-			end
-			self.sounds.empty:Stop()
-		end
-		self:PlayAnim() 
 end
 
 function ENT:PhysicsCollide(data,phy)
@@ -755,7 +843,7 @@ function ENT:Explode()
 end
 
 function ENT:OnTakeDamage(dmg)
-	if self.Destructible and not dmg:IsFallDamage() then
+	if self.Destructible and not dmg:IsFallDamage() and GetConVar("gred_sv_enable_explosions"):GetInt() >= 1 then
 		if (self.EmplacementType == "AT" or self.Seatable) and dmg:GetDamage() < 50 then return end
 		local n = dmg:GetDamage() - self.Armor / math.Rand(5,6)
 		if n < 0 then n = -n end
@@ -764,15 +852,22 @@ function ENT:OnTakeDamage(dmg)
 	end
 end
 
+-- local ResetAnlges = GetConVar("gred_sv_reset_angles"):GetInt()
+
 function ENT:Think()
 	if SERVER and (!IsValid(self.turretBase) or (self.SecondModel != "" and !IsValid(self.shield))) then
 		SafeRemoveEntity(self)
 	else
 		if IsValid(self) then
+			local ct = CurTime()
 			self:AddOnThink()
 			-- self:FindNPCs()
 			if SERVER then
-				self.turretBase:SetSkin(self:GetSkin())
+				for k,v in pairs(self.Entities) do
+					if v != self then
+						v:SetSkin(self:GetSkin())
+					end
+				end
 				self.BasePos=self.turretBase:GetPos()
 				self.OffsetPos=self.turretBase:GetAngles():Up()*1
 				if self.Destructible then
@@ -783,16 +878,16 @@ function ENT:Think()
 				self:ShieldThink()
 			end
 			if self:ShooterStillValid() then
-				local player = self:GetShooter()
-				self:SetShootAngles(player)
-				self:SetPlayerKeys(player)
-				self:PlayerSetSecondary(player)
-				if self.Firing and not self.IsReloading and self.LastShot+self.ShotInterval<=CurTime() and self.CurAmmo >= 1 then
-					if SERVER and (self.EmplacementType == "AT" and self.AnimPlaying) then return end
-					self:fire(player)
-					self.LastShot = CurTime()
+				local ply = self:GetShooter()
+				self:SetShootAngles(ply)
+				self:SetPlayerKeys(ply)
+				self:PlayerSetSecondary(ply)
+				if self.Firing and not self.IsReloading and self.LastShot+self.ShotInterval<=ct
+				and self.CurAmmo >= 1 then
+					if (self.EmplacementType == "AT" and self.AnimPlaying) or not SERVER then return end
+					self:fire(ply,ct)
 				end
-				if self.LastShot+self.ShotInterval<=CurTime() and self.CanPlayStopSnd and self.EmplacementType == "MG" then
+				if self.LastShot+self.ShotInterval<=ct and self.CanPlayStopSnd and self.EmplacementType == "MG" then
 					self:stop()
 				end
 			else
@@ -801,19 +896,30 @@ function ENT:Think()
 				end
 				self.Firing=false
 				if SERVER then
-					local ang 
-					self.OffsetAng=self.turretBase:GetAngles()
+					-- if ResetAnlges == 1 then
+						local ang 
+						self.OffsetAng=self.turretBase:GetAngles()
+						-- self.NORESET = false
+					-- else
+						-- local tang = self.turretBase:GetAngles()
+						-- local ang = self:GetAngles() - self.turretBase:GetAngles()
+						-- self:SetAngles(ang)
+						-- ang:RotateAroundAxis(ang:Up(),0)
+						-- self.OffsetAng=self.OldOffsetAng:RotateAroundAxis(self.OldOffsetAng:Up(),90)
+					-- end
 					self:SetShooter(nil)
 					self:FinishShooting()
 				end
 			end
 			if not self.Firing and self.EmplacementType == "MG" then
 				self:stop()
-				if SERVER then  end
-				if CLIENT then  end
 			end
-			self:NextThink(CurTime())
+			self:NextThink(ct)
 			return true
 		end
 	end
+end
+
+function ENT:GetCalcView()
+	if not self.Seatable then return nil end
 end

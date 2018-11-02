@@ -22,7 +22,8 @@ ENT.AnimPlayTime		= 0.8
 ENT.SoundName			= "shootPaK40"
 ENT.ShootSound			= "gred_emp/common/75mm_axis.wav"
 
-ENT.TurretHeight		= 1
+ENT.TurretHeight		= 25
+ENT.TurretForward		= -12
 ENT.TurretFloatHeight	= 0
 ENT.TurretModelOffset	= Vector(0,0,0)
 ENT.TurretTurnMax		= 0.7
@@ -30,6 +31,9 @@ ENT.BaseModel			= "models/gredwitch/pak40/pak40_carriage.mdl"
 ENT.Model				= "models/gredwitch/pak40/pak40_base.mdl"
 ENT.EmplacementType     = "AT"
 ENT.Scatter				= 0.1
+
+ENT.Wheels				= "models/gredwitch/pak40/pak40_wheels.mdl"
+ENT.WheelsPos			= Vector(1.5,18,7)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

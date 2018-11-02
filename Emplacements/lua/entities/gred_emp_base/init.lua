@@ -4,12 +4,17 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 
 function ENT:CreateEmplacement()
-	local turretBase=ents.Create("prop_physics")
+	local turretBase=ents.Create("gred_prop_shield")
 	turretBase.GredEMPBaseENT = self
 	turretBase:SetModel(self.BaseModel)
 	turretBase:SetAngles(self:GetAngles()+Angle(0,90,0))
 	turretBase:SetPos(self:GetPos()-Vector(0,0,0))
+	turretBase.BaseEntity = self
+	if self.Wheels != "" then
+		turretBase.Mass = 500
+	end
 	turretBase:Spawn()
+	turretBase:Activate()
 	self.turretBase=turretBase
 	if self.EmplacementType == "MG" and GetConVar("gred_sv_cantakemgbase"):GetInt() == 1 and self.SecondModel == "" then
 		local p = turretBase:GetPhysicsObject()
@@ -36,7 +41,6 @@ function ENT:CreateEmplacement()
 	
 	if self.EmplacementType == "Mortar" then turretBase:SetMoveType(MOVETYPE_FLY) end
 	
-	constraint.NoCollide(self.turretBase,self,0,0) 
 end
 
 function ENT:CreateShield()
@@ -49,8 +53,6 @@ function ENT:CreateShield()
 	shield:Spawn()
 	shield:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 	self.shield=shield
-	constraint.NoCollide(self.shield,self,0,0,true)
-	constraint.NoCollide(self.shield,self.turretBase,0,0,true)
 	
 end
 
@@ -60,54 +62,60 @@ function ENT:Initialize()
 	self.Entity:SetMoveType			(MOVETYPE_VPHYSICS)
 	self.Entity:SetSolid			(SOLID_VPHYSICS)
 	self.Entity:SetCollisionGroup	(COLLISION_GROUP_DEBRIS)
-	if CLIENT then self.m_initialized = true end
-	if SERVER then self.m_initialized = true end
+	self.Entities = {}
+	self.Entities[1] = self
 	if self.Seatable and GetConVar("gred_sv_enable_seats"):GetInt() == 0 then
 		self.Seatable = false
 	end
 	local phys = self.Entity:GetPhysicsObject()
 	if IsValid(phys) then
+		if self.Wheels != "" then
+			phys:SetMass(phys:GetMass()/2)
+		end
 		phys:Wake()
 		phys:SetVelocity(Vector(0,0,0))
 	end
 	self.ShadowParams = {}
 	self:StartMotionController()
 	self.OldBulletType = self.BulletType
-	if SERVER then
-		if self.EmplacementType != "MG" and GetConVar("gred_sv_manual_reload"):GetInt() == 1 then
-			self.CurAmmo = 0
-			self.ShotInterval = 1
-			if self.UseSingAnim then
-				self:ResetSequence("reload")
-				self:SetCycle(.5)
-				self:SetPlaybackRate(0)
-			else
-				self:ResetSequence("reload_start")
-			end
-		end
-		if not IsValid(self.turretBase) then
-			self:CreateEmplacement()
-		end
-		if not IsValid(self.shield) and self.SecondModel != "" then
-			self:CreateShield()
-		end
-		self.MuzzleAttachments = {}
-		self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
-		self.HookupAttachment=self:LookupAttachment("hookup")
-		for v=1,self.MuzzleCount do
-			if v>1 then
-				self.MuzzleAttachments[v] = self:LookupAttachment("muzzle"..v.."")
-			end
-		end
-		if GetConVar("gred_sv_enable_health"):GetInt() == 1 then
-			if self.EmplacementType == "AT" or self.Seatable then
-				self.Life = GetConVar("gred_sv_arti_health"):GetInt()
-			end
-			self.Life = self.Life + self:BoundingRadius()/10
-			self.CurLife = self.Life
+	
+	if self.EmplacementType != "MG" and GetConVar("gred_sv_manual_reload"):GetInt() == 1 then
+		self.CurAmmo = 0
+		self.ShotInterval = 1
+		if self.UseSingAnim then
+			self:ResetSequence("reload")
+			self:SetCycle(.5)
+			self:SetPlaybackRate(0)
 		else
-			self.Destructible = false
+			self:ResetSequence("reload_start")
 		end
+	end
+	if not IsValid(self.turretBase) then
+		self:CreateEmplacement()
+		self.Entities[2] = self.turretBase
+	end
+	if not IsValid(self.shield) and self.SecondModel != "" then
+		self:CreateShield()
+		self.Entities[3] = self.shield
+	end
+	self.MuzzleAttachments = {}
+	self.MuzzleAttachments[1] = self:LookupAttachment("muzzle")
+	self.HookupAttachment=self:LookupAttachment("hookup")
+	for v=1,self.MuzzleCount do
+		if v>1 then
+			self.MuzzleAttachments[v] = self:LookupAttachment("muzzle"..v.."")
+		end
+	end
+	if GetConVar("gred_sv_enable_explosions"):GetInt() == 1 then
+		if self.EmplacementType == "AT" or self.Seatable then
+			self.Life = 150
+		end
+		for k,v in pairs(self.Entities) do
+			self.Life = self.Life + v:BoundingRadius()/5
+		end
+		self.CurLife = self.Life
+	else
+		self.Destructible = false
 	end
 	self:SetUseType(SIMPLE_USE)
 	self:DropToFloor()
@@ -115,13 +123,41 @@ function ENT:Initialize()
 	self.shootPos:SetRenderMode(RENDERMODE_TRANSCOLOR)
 	self.shootPos:SetColor(Color(255,255,255,1))
 	self:AddSounds()
+	
+	if self.Wheels != "" then
+		self:CreateWheels()
+		constraint.Axis(self.wheels,self.turretBase,0,0,Vector(0,0,0),self:WorldToLocal(self.wheels:LocalToWorld(Vector(0,1,0))),0,0,10,1,Vector(90,0,0))
+		-- constraint.Weld(self.turretBase,self.wheels,0,0,0,true,true)
+		self.Entities[4] = self.wheels
+	end
+	for k,v in pairs(self.Entities) do
+		for a,b in pairs(self.Entities) do
+			if v != b then
+				constraint.NoCollide(v,b,0,0)
+			end
+		end
+	end	
+	-- local ang 
+	-- self.OffsetAng=self.turretBase:GetAngles()
+	-- self.OldOffsetAng=self.OffsetAng
+end
+
+function ENT:CreateWheels()
+	local wheels=ents.Create("gred_prop_shield")
+	wheels.GredEMPBaseENT = self
+	wheels.Model = self.Wheels
+	wheels:SetAngles(self:GetAngles()+Angle(0,90,0))
+	wheels:SetPos(self.turretBase:GetPos()+self.WheelsPos)
+	wheels.BaseEntity = self
+	wheels.Mass		  = self.turretBase.phys:GetMass()/2
+	wheels:Spawn()
+	wheels:Activate()
+	wheels:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+	self.wheels=wheels
 end
 
 function ENT:OnRemove()
 	if self.Shooter != nil then
-		net.Start("TurretBlockAttackToggle")
-		net.WriteBit(false)
-		net.Send(self.Shooter)
 		self:SetShooter(nil)
 		self:FinishShooting()
 		self.Shooter=nil
@@ -136,10 +172,8 @@ function ENT:OnRemove()
 		end
 	end
 	if self.HasStopSound then self:StopSound(self.StopSoundName) end
-	SafeRemoveEntity(self.turretBase)
-	if self.SecondModel != "" then 
-		if self.CanUseShield then hook.Remove("PlayerUse","gred_emp_use_shield") end
-		SafeRemoveEntity(self.shield) 
+	for k,v in pairs (self.Entities) do
+	SafeRemoveEntity(v)
 	end
 end
 
@@ -164,34 +198,43 @@ function ENT:StartShooting()
 		net.Start("gred_net_emp_getplayer")
 			net.WriteEntity(self.Shooter)
 			net.WriteEntity(self)
-		net.Broadcast()
-		if SERVER then
-			self.Shooter.Gred_Emp_Ent = self
-			self.Shooter.Gred_Emp_Class = self:GetClass()
-		end
+		net.Send(self.Shooter)
+		self.Shooter.Gred_Emp_Ent = self
+		self.Shooter.Gred_Emp_Class = self:GetClass()
 		self.Shooter:EnterVehicle(self.Seat)
-		self.Shooter:ChatPrint("Press crouch to switch to a clearer view")
+		
+		net.Start("gred_net_message_ply")
+			net.WriteEntity(self.Shooter)
+			net.WriteString("["..self.NameToPrint.."] Press crouch to switch to a clearer view")
+		net.Send(self.Shooter)
+	else
+		self.gwep = self.Shooter:GetActiveWeapon()
+		self.Shooter:SetActiveWeapon("weapon_base")
 	end
-	self.gwep = self.Shooter:GetActiveWeapon()
-	self.Shooter:SetActiveWeapon("weapon_base")
 end
 
 function ENT:FinishShooting()
 	if IsValid(self.ShooterLast) then
 		self.ShooterLast:DrawViewModel(true)
 		
-		net.Start("TurretBlockAttackToggle")
-		net.WriteBit(false)
-		net.Send(self.ShooterLast)
-		self.ShooterLast:DrawViewModel(true)
 		if self.Seatable then
-			self.ShooterLast:CrosshairEnable()
+			net.Start("gred_net_emp_getplayer")
+				net.WriteEntity(self.ShooterLast)
+				net.WriteEntity(nil)
+			net.Send(self.ShooterLast)
 			self.ShooterLast.Gred_Emp_Ent = nil
+			self.ShooterLast.Gred_Emp_Class = nil
+			
 			if IsValid(self.Seat) then
 				self.ShooterLast:ExitVehicle(self.Seat)
+				self.ShooterLast:CrosshairEnable()
 				self.Seat:Remove()
 			end
 		else
+			net.Start("TurretBlockAttackToggle")
+				net.WriteBit(false)
+			net.Send(self.ShooterLast)
+			self.ShooterLast:DrawViewModel(true)
 			self.ShooterLast:SetActiveWeapon(self.gwep)
 			self.ShooterLast:StripWeapon("weapon_base")
 		end
@@ -215,16 +258,22 @@ function ENT:PhysicsSimulate( phys, deltatime )
 		if self.Seatable and not IsValid(self.shield) then return end
 		phys:Wake()
 		
-		self.ShadowParams.secondstoarrive = 0.01 
+		self.ShadowParams.secondstoarrive = 0.01
 		
 		self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight + self:GetRight()*-self.TurretForward + self:GetForward()*self.TurretHorrizontal
-		self.ShadowParams.angle =self.BaseAng+self.OffsetAng+Angle(0,0,0)
+		-- if !self.NORESET then
+			self.ShadowParams.angle =self.BaseAng+self.OffsetAng+Angle(0,0,0)
+		-- end
 		self.ShadowParams.maxangular = 5000
 		self.ShadowParams.maxangulardamp = 10000
 		self.ShadowParams.maxspeed = 1000000 
 		self.ShadowParams.maxspeeddamp = 10000
 		self.ShadowParams.dampfactor = 0.8
-		self.ShadowParams.teleportdistance = 200
+		if self.EmplacementType == "AT" then
+			self.ShadowParams.teleportdistance = 50
+		else
+			self.ShadowParams.teleportdistance = 10
+		end
 		self.ShadowParams.deltatime = deltatime
 	 
 		phys:ComputeShadowControl(self.ShadowParams)

@@ -31,6 +31,9 @@ ENT.Model				= "models/gredwitch/M5/M5_gun.mdl"
 ENT.EmplacementType     = "AT"
 ENT.Scatter				= 0.1
 
+ENT.Wheels				= "models/gredwitch/M5/M5_wheels.mdl"
+ENT.WheelsPos			= Vector(-13,0,-5)
+
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 36

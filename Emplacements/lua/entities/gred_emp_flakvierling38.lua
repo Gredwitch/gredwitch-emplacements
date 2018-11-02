@@ -62,14 +62,15 @@ function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
 	if self.AmmoType == "Direct Hit" then
 		self.AmmoType = "Time-Fuze"
-		if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] Time-Fuze rounds selected") end
 	elseif self.AmmoType == "Time-Fuze" then
 		self.AmmoType = "Direct Hit"
-		if CLIENT or game.IsDedicated() or !game.IsDedicated() then plr:ChatPrint("["..self.NameToPrint.."] Direct hit rounds selected") end
 	end
+	net.Start("gred_net_message_ply")
+		net.WriteEntity(plr)
+		net.WriteString("["..self.NameToPrint.."] "..self.AmmoType.." rounds selected")
+	net.Send(plr)
 	self.NextSwitch = CurTime()+0.2
 end
-
 function ENT:DoShot(plr)
 	if m == nil or m > self.MuzzleCount or m == 0 then m = 1 end
 	

@@ -22,7 +22,8 @@ ENT.AnimPlayTime		= 1
 ENT.SoundName			= "shoot6pdr"
 ENT.ShootSound			= "gred_emp/common/6pdr.wav"
 
-ENT.TurretHeight		= 1
+ENT.TurretHeight		= 20
+ENT.TurretForward		= 60
 ENT.TurretFloatHeight	= 0
 ENT.MaxUseDistance		= 100
 ENT.TurretModelOffset	= Vector(0,0,0)
@@ -34,6 +35,11 @@ ENT.ATReloadSound    	= "small"
 ENT.Scatter				= 0.1
 ENT.AnimPauseTime		= 0.3
 ENT.UseSingAnim			= true
+
+ENT.Wheels				= "models/gredwitch/6pdr/6pdr_wheels.mdl"
+-- ENT.WheelsPos			= Vector(-56,0,46)
+ENT.WheelsPos			= Vector(-56,0,14)
+
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

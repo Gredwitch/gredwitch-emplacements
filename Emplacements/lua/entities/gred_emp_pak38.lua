@@ -6,6 +6,7 @@ ENT.Base 				= "gred_emp_base"
 ENT.Category			= "Gredwitch's Stuff"
 ENT.PrintName 			= "[EMP]50mm PaK 38"
 ENT.Author				= "Gredwitch"
+
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= true
 ENT.NameToPrint			= "PaK 38"
@@ -29,6 +30,10 @@ ENT.BaseModel			= "models/gredwitch/pak38/pak38_carriage.mdl"
 ENT.Model				= "models/gredwitch/pak38/pak38_gun.mdl"
 ENT.EmplacementType     = "AT"
 ENT.Scatter				= 0.2
+ENT.ATReloadSound		= "small"
+
+ENT.Wheels				= "models/gredwitch/pak38/pak38_wheels.mdl"
+ENT.WheelsPos			= Vector(0,0,0)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

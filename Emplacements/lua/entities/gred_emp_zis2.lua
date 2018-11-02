@@ -33,6 +33,9 @@ ENT.Scatter				= 0.1
 ENT.CustomRecoil		= true
 ENT.Recoil				= 2000000
 
+ENT.Wheels				= "models/gredwitch/zis2/zis2_wheels.mdl"
+ENT.WheelsPos			= Vector(0,-5,-6)
+
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 41

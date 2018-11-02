@@ -44,12 +44,13 @@ end
 function ENT:SwitchAmmoType(plr)
 	if self.NextSwitch > CurTime() then return end
 	if self.AmmoType == "HE" then
-		if CLIENT then self.AmmoType = "Smoke" end
-		if SERVER then self.AmmoType = "Smoke" end
+		self.AmmoType = "Smoke"
 	elseif self.AmmoType == "Smoke" then
-		if CLIENT then self.AmmoType = "HE" end
-		if SERVER then self.AmmoType = "HE" end
+		self.AmmoType = "HE"
 	end
-	if self.serv then plr:ChatPrint("["..self.NameToPrint.."] "..self.AmmoType.." shells selected") end
+	net.Start("gred_net_message_ply")
+		net.WriteEntity(plr)
+		net.WriteString("["..self.NameToPrint.."] "..self.AmmoType.." shells selected")
+	net.Send(plr)
 	self.NextSwitch = CurTime()+0.2
 end

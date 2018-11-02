@@ -11,17 +11,15 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "KwK"
 
-ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
+ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
 ENT.BulletType			= "gb_shell_50mm"
 ENT.MuzzleCount			= 1
+
+ENT.ShellSoundTime		= 1.7
 ENT.HasReloadAnim		= true
 ENT.AnimPlayTime		= 1.3
-
-ENT.HERadius			= 300
-ENT.HEDamage			= 75
-ENT.EffectHE			= "gred_50mm"
-ENT.EffectSmoke			= "m203_smokegrenade"
+ENT.AnimPauseTime		= 0.3
 
 ENT.SoundName			= "shootPaK"
 ENT.ShootSound			= "gred_emp/common/50mm.wav"
@@ -54,21 +52,6 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Activate()
 	ent:SetSkin(math.random(0,1))
 	return ent
-end
-
-function ENT:PlayAnim()
-	if SERVER then
-		-- if self.AnimPlaying then return end
-		timer.Simple(self.AnimPlayTime,function()
-			if !IsValid(self) then return end
-			self:ResetSequence(self:LookupSequence("reload"))
-			self.AnimPlaying = true
-		end)
-		timer.Simple(self:SequenceDuration(),function() 
-			if !IsValid(self) then return end
-			self.AnimPlaying = false
-		end)
-	end
 end
 
 local function CalcView(ply, pos, angles, fov)
