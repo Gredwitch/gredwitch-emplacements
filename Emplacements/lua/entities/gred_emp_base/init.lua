@@ -137,9 +137,9 @@ function ENT:Initialize()
 			end
 		end
 	end	
-	-- local ang 
-	-- self.OffsetAng=self.turretBase:GetAngles()
-	-- self.OldOffsetAng=self.OffsetAng
+	local ang 
+	self.OffsetAng=self.turretBase:GetAngles()
+	self.OldOffsetAng=self.OffsetAng
 end
 
 function ENT:CreateWheels()
@@ -261,9 +261,22 @@ function ENT:PhysicsSimulate( phys, deltatime )
 		self.ShadowParams.secondstoarrive = 0.01
 		
 		self.ShadowParams.pos = self.BasePos + self.turretBase:GetUp()*self.TurretHeight + self:GetRight()*-self.TurretForward + self:GetForward()*self.TurretHorrizontal
-		-- if !self.NORESET then
-			self.ShadowParams.angle =self.BaseAng+self.OffsetAng+Angle(0,0,0)
+		
+		-- local b = self.BaseAng.y + self:GetAngles().y + (self.turretBase:GetAngles().y)
+		-- local c = self.OffsetAng.y
+		
+		-- if self.NORESET then
+			self.ShadowParams.angle =self.BaseAng+self.OffsetAng
+		-- else
+			-- self.ShadowParams.angle =self.BaseAng+self.OffsetAng
+			-- local a = self.BaseAng+self.OffsetAng
+			-- self.ShadowParams.angle =Angle(a.p,c,a.r)
 		-- end
+		-- print("oa = ",self.turretBase:GetAngles().y+(self.OffsetAng.y+self.BaseAng.y))
+		-- print("c = ",c)
+		-- print("b = ",b)
+		-- print("shaang = ",self.ShadowParams.angle)
+		-- print("ta = ",self:GetAngles().y)
 		self.ShadowParams.maxangular = 5000
 		self.ShadowParams.maxangulardamp = 10000
 		self.ShadowParams.maxspeed = 1000000 

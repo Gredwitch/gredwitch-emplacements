@@ -95,6 +95,7 @@ ENT.GunRPM 				= ENT.ShotInterval*60
 
 ENT.AmmoEnt				= ""
 ENT.AnimPauseTime		= 0
+ENT.ShieldUp			= 0
 ENT.UseSingAnim			= false
 ENT.NoWP				= false
 ENT.ReloadTime			= 4.1
@@ -344,7 +345,11 @@ function ENT:DoShot(ply,shootPos)
 					b:Spawn()
 					b:Activate()
 					b.Owner=ply
-					
+					if self.SecondModel then
+						b.Filter = {self,self.turretBase,self.shield}
+					else
+						b.Filter = {self,self.turretBase}
+					end
 					self.tracer = self.tracer + 1
 					if self.tracer >= GetConVar("gred_sv_tracers"):GetInt() then
 						if self.Color == "Red" then
@@ -369,7 +374,6 @@ function ENT:DoShot(ply,shootPos)
 					attAng:Sub(Angle(self.AddShootAngle,0,0)) -- + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
 					b:SetPos(attPos)
 					b:SetAngles(attAng)
-					b.GBOWNER=ply
 					b:Spawn()
 					b:SetBodygroup(0,1)
 					b:SetBodygroup	  (1,1)
@@ -378,13 +382,13 @@ function ENT:DoShot(ply,shootPos)
 					elseif self.AmmoType == "Smoke" then
 						b.Smoke = true
 					end
+					b:SetOwner(ply)
 					b:Activate()
 					for k,v in pairs(self.Entities) do
 						constraint.NoCollide(v,b,0,0)
 					end
 					b.IsOnPlane = true
 					b:Launch()
-					b.Owner=ply
 					if self.HasShellEject then
 						local mdlscale = b.ModelSize
 						timer.Simple(self.AnimPlayTime + self.ShellEjectTime,function()
@@ -503,8 +507,8 @@ function ENT:DoShot(ply,shootPos)
 				end
 		end
 		-- if self.EmplacementType != "MG" then self:EmitSound(self.SoundName) end
-		if self.HasShootAnim then self:ResetSequence("shoot") end
-		if self.EmplacementType == "AT" then self:PlayAnim() end
+		
+		if self.EmplacementType == "AT" then self:PlayAnim() else if self.HasShootAnim then self:ResetSequence("shoot") end end
 end
 
 function ENT:PlayAnim()
@@ -586,6 +590,7 @@ function ENT:SetShootAngles(ply)
 			self:FinishShooting()
 		end
 		if !self:ShooterStillValid() then return end
+		self.NORESET = true
 		-- if self.Seatable then
 			-- self.NORESET = true
 			-- local plyang = ply:GetAimVector():Angle()
@@ -649,7 +654,7 @@ end
 
 function ENT:ShieldThink()
 	if SERVER then
-		self.shield:SetPos(self.BasePos + self.shield:GetRight()*-self.ShieldForward)
+		self.shield:SetPos(self.BasePos + self.shield:GetRight()*-self.ShieldForward + self.shield:GetUp()*self.ShieldUp)
 		local ta = self.turretBase:GetAngles()
 		self.shield:SetAngles(Angle(ta.p,self:GetAngles().y,ta.r))
 		
@@ -730,7 +735,7 @@ end
 
 function ENT:PhysicsCollide(data,phy)
 	timer.Simple(0,function()
-		if self.CurAmmo <= 0 and self.EmplacementType != "MG" then
+		if self.CurAmmo && self.CurAmmo <= 0 and self.EmplacementType && self.EmplacementType != "MG" then
 			if GetConVar("gred_sv_manual_reload"):GetInt() == 0 then return end
 			local class = data.HitEntity:GetClass()
 			if string.StartWith(class,self.OldBulletType) then
@@ -836,6 +841,7 @@ function ENT:Explode()
 		local effectdata = EffectData()
 		effectdata:SetOrigin(v)
 		util.Effect("Explosion",effectdata)
+		if !IsValid(self.Attaker) then self.Attaker = self end
 		util.BlastDamage(self.Attaker,self.Attaker,v,100,100)
 	end
 	self.Exploded = true
@@ -852,7 +858,7 @@ function ENT:OnTakeDamage(dmg)
 	end
 end
 
--- local ResetAnlges = GetConVar("gred_sv_reset_angles"):GetInt()
+-- ResetAnlges = GetConVar("gred_sv_reset_angles"):GetInt()
 
 function ENT:Think()
 	if SERVER and (!IsValid(self.turretBase) or (self.SecondModel != "" and !IsValid(self.shield))) then
@@ -899,13 +905,16 @@ function ENT:Think()
 					-- if ResetAnlges == 1 then
 						local ang 
 						self.OffsetAng=self.turretBase:GetAngles()
-						-- self.NORESET = false
+						-- self.NORESET = true
 					-- else
-						-- local tang = self.turretBase:GetAngles()
-						-- local ang = self:GetAngles() - self.turretBase:GetAngles()
-						-- self:SetAngles(ang)
-						-- ang:RotateAroundAxis(ang:Up(),0)
-						-- self.OffsetAng=self.OldOffsetAng:RotateAroundAxis(self.OldOffsetAng:Up(),90)
+						-- local ang
+						-- local ta = self.turretBase:GetAngles()
+						-- local p = ta.r-self.OldOffsetAng.r
+						-- local y = ta.yself.OldOffsetAng.y
+						-- local r = ta.p-self.OldOffsetAng.p
+						-- self.OffsetAng=Angle(p,y,-r)
+						-- self.OffsetAng.y
+						-- self.NORESET = false
 					-- end
 					self:SetShooter(nil)
 					self:FinishShooting()
