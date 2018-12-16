@@ -15,7 +15,9 @@ CreateConVar("gred_sv_shell_arrival_time"			,  "3"  , GRED_SVAR)
 -- CreateConVar("gred_sv_reset_angles"					,  "1"  , GRED_SVAR)
 
 CreateClientConVar("gred_cl_shelleject","1", true,false)
-CreateClientConVar("gred_cl_emp_mouse_sensitivity","0.2", true,false)
+CreateClientConVar("gred_cl_emp_mouse_sensitivity","1", true,false)
+CreateClientConVar("gred_cl_emp_mouse_invert_x","0", true,false)
+CreateClientConVar("gred_cl_emp_mouse_invert_y","0", true,false)
 
 
 -- Adding the spawnmenu options
@@ -61,6 +63,10 @@ local function gredEMPsettings(Panel)
 	end
 	
 	Panel:NumSlider( "Mouse sensitivity on emplacements with seats", "gred_cl_emp_mouse_sensitivity", 0, 0.99, 2 );
+	
+	Panel:AddControl( "CheckBox", { Label = "Invert X axis in seats?", Command = "gred_cl_emp_mouse_invert_x" } );
+	
+	Panel:AddControl( "CheckBox", { Label = "Invert Y axis in seats?", Command = "gred_cl_emp_mouse_invert_y" } );
 	
 end
 

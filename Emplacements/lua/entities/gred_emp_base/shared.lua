@@ -590,39 +590,24 @@ function ENT:SetShootAngles(ply)
 			self:FinishShooting()
 		end
 		if !self:ShooterStillValid() then return end
-		self.NORESET = true
-		-- if self.Seatable then
-			-- self.NORESET = true
-			-- local plyang = ply:GetAimVector():Angle()
-			-- local turang = self.turretBase:GetAngles()
-			-- local entang = self:GetAngles()
-			-- local offsetAngNew=Angle(0,0,0)
-			-- if entang != offsetAngNew then
-				-- self:SetAngles(offsetAngNew)
-			-- end
-			-- local oof = math.ApproachAngle(
-							-- self:GetAngles(),
-							-- Angle(-plyang.p,plyang.y,-turang.r),
-							-- 20)
-			-- local offsetAngNew=oof
-			-- offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
-			
-			-- self.OffsetAng=offsetAngNew
-			-- self.OldOffsetAng=offsetAngNew
-		-- else
-			offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos()):GetNormal()
-			offsetDot=self.turretBase:GetAngles():Right():Dot(offsetAng)
-			if (offsetDot>=self.TurretTurnMax or self.CanLookArround) then
-				offsetAngNew=offsetAng:Angle()
-				offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
-				
+		offsetAng=(self:GetAttachment(self.MuzzleAttachments[1]).Pos-self:GetDesiredShootPos())
+		offsetDot=self.turretBase:GetAngles():Right():Dot(offsetAng)
+		if (offsetDot>=self.TurretTurnMax or self.CanLookArround) then
+			offsetAngNew=offsetAng:Angle()
+			offsetAngNew:RotateAroundAxis(offsetAngNew:Up(),90)
+			if self.Seatable then
+				local plyang = ply:GetAimVector():Angle()
+				plyang:Normalize()
+				self.OffsetAng=offsetAngNew-(Angle(0,plyang.y*2,plyang.r*2))
+				self.OldOffsetAng=offsetAng:Angle()
+			else
 				self.OffsetAng=offsetAngNew
 				self.OldOffsetAng=offsetAng:Angle()
-				if self.EmplacementType == "Mortar" then canShoot = true end
-			else
-				if self.EmplacementType == "Mortar" then canShoot = false end
 			end
-		-- end
+			if self.EmplacementType == "Mortar" then canShoot = true end
+		else
+			if self.EmplacementType == "Mortar" then canShoot = false end
+		end
 	end
 end
 

@@ -77,7 +77,7 @@ end
 function ENT:DoShot(plr)
 	if m == nil or m > self.MuzzleCount or m == 0 then m = 1 end
 	
-	attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
+	attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos + self:GetForward()*10
 	attAng = self:GetAttachment(self.MuzzleAttachments[m]).Ang
 	
 	local b = ents.Create("gred_base_bullet")
@@ -131,14 +131,25 @@ local function CalcView(ply, pos, angles, fov)
 	if ply.Gred_Emp_Class == "gred_emp_zpu4_1949" then
 		local ent = ply.Gred_Emp_Ent
 		if IsValid(ent) then
-			if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) then
-				if ent:GetDTEntity(2):GetThirdPersonMode() then
+			seat = ent:GetDTEntity(2)
+			if ent:ShooterStillValid() and IsValid(seat) then
+				local a = ent:GetAngles()
+				local ang = Angle(-a.r,a.y+90,a.p)
+				if seat:GetThirdPersonMode() then
 					local view = {}
 
 					view.origin = pos + ent:GetForward()*0 + ent:GetRight()*-60 + ent:GetUp()*10
-					view.angles = angles - Angle(3)
+					view.angles = ang
 					view.fov = fov
 					view.drawviewer = true
+
+					return view
+				else
+					local view = {}
+					view.origin = pos
+					view.angles = ang
+					view.fov = fov
+					view.drawviewer = false
 
 					return view
 				end

@@ -39,6 +39,7 @@ ENT.Seatable			= true
 ENT.created				= false
 ENT.Recoil				= 5000000
 ENT.HasShellEject		= false
+ENT.Color				= "Red"
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -78,14 +79,25 @@ local function CalcView(ply, pos, angles, fov)
 	if ply.Gred_Emp_Class == "gred_emp_bofors" then
 		local ent = ply.Gred_Emp_Ent
 		if IsValid(ent) then
-			if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) then
-				if ent:GetDTEntity(2):GetThirdPersonMode() then
+			seat = ent:GetDTEntity(2)
+			if ent:ShooterStillValid() and IsValid(seat) then
+				local a = ent:GetAngles()
+				local ang = Angle(-a.r,a.y+90,a.p)
+				if seat:GetThirdPersonMode() then
 					local view = {}
 
 					view.origin = pos + ent:GetForward()*-40.5 + ent:GetRight()*-70 + ent:GetUp()*15
-					view.angles = angles
+					view.angles = ang
 					view.fov = fov
 					view.drawviewer = true
+
+					return view
+				else
+					local view = {}
+					view.origin = pos
+					view.angles = ang
+					view.fov = fov
+					view.drawviewer = false
 
 					return view
 				end
