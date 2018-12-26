@@ -1,17 +1,5 @@
 AddCSLuaFile()
 
-PrecacheParticleSystem("muzzleflash_bar_3p")
-PrecacheParticleSystem("muzzleflash_garand_3p")
-PrecacheParticleSystem("muzzleflash_mg42_3p")
-PrecacheParticleSystem("ins_weapon_at4_frontblast")
-PrecacheParticleSystem("ins_weapon_rpg_dust")
-PrecacheParticleSystem("gred_arti_muzzle_blast")
-PrecacheParticleSystem("gred_mortar_explosion_smoke_ground")
-PrecacheParticleSystem("weapon_muzzle_smoke")
-PrecacheParticleSystem("ins_ammo_explosionOLD")
-PrecacheParticleSystem("gred_ap_impact")
-PrecacheParticleSystem("AP_impact_wall")
-
 if SERVER then
 	util.AddNetworkString("TurretBlockAttackToggle")
 	util.AddNetworkString("gred_net_emp_muzzle_fx")
