@@ -79,6 +79,7 @@ local function CalcView(ply, pos, angles, fov)
 				local ang = Angle(-a.r,a.y+90,a.p)
 				if seat:GetThirdPersonMode() then
 					local view = {}
+					
 					view.origin = pos + ent:GetForward()*-14.5 + ent:GetRight()*-70 + ent:GetUp()*-10
 					view.angles = ang
 					view.fov = fov

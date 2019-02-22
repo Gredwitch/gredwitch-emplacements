@@ -35,7 +35,7 @@ ENT.HasNoAmmo			= false
 ENT.ReloadTime			= 2.9 - 1.3
 ENT.CycleRate			= 0.6
 ENT.CustomRecoil		= true
-ENT.Recoil				= 5000
+ENT.Recoil				= 9000
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

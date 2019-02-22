@@ -31,6 +31,7 @@ ENT.Model				= "models/gredwitch/pak38/pak38_gun.mdl"
 ENT.EmplacementType     = "AT"
 ENT.Scatter				= 0.2
 ENT.ATReloadSound		= "small"
+ENT.MaxUseDistance		= 70
 
 ENT.Wheels				= "models/gredwitch/pak38/pak38_wheels.mdl"
 ENT.WheelsPos			= Vector(0,0,0)

@@ -305,7 +305,11 @@ function ENT:DoShot(ply,shootPos)
 		if self.EmplacementType == "Mortar" or self.EmplacementType == "AT" then
 			local pos = self:GetPos()
 			util.ScreenShake(pos,5,5,0.5,200)
-			ParticleEffect("gred_mortar_explosion_smoke_ground", pos-Vector(0,0,30),Angle(90,0,0))
+			local effectdata = EffectData()
+			effectdata:SetOrigin(pos-Vector(0,0,30))
+			effectdata:SetAngles(Angle(90,0,0))
+			effectdata:SetFlags(table.KeyFromValue(gred.Particles,"gred_mortar_explosion_smoke_ground"))
+			util.Effect("gred_particle_simple",effectdata)
 		end
 		for m = 1,self.MuzzleCount do
 			    attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
@@ -351,7 +355,8 @@ function ENT:DoShot(ply,shootPos)
 						b.Filter = {self,self.turretBase}
 					end
 					self.tracer = self.tracer + 1
-					if self.tracer >= GetConVar("gred_sv_tracers"):GetInt() then
+					local tracerConvar = GetConVar("gred_sv_tracers"):GetInt()
+					if self.tracer >= tracerConvar then
 						if self.Color == "Red" then
 							b:SetSkin(1)
 						elseif self.Color == "Green" then
@@ -361,7 +366,7 @@ function ENT:DoShot(ply,shootPos)
 						end
 						b:SetModelScale(7)
 						if self.CurAmmo <= 20 then 
-							self.tracer = GetConVar("gred_sv_tracers"):GetInt() - 2
+							self.tracer = tracerConvar - 2
 						else
 							self.tracer = 0
 						end
@@ -710,10 +715,10 @@ function ENT:fire(ply,ct)
 		end
 		self.sounds.empty:Stop()
 		
-		self:PlayAnim() 
-		net.Start("gred_net_emp_muzzle_fx")
-			net.WriteEntity(self)
-		net.Broadcast()
+		self:PlayAnim()
+		local effectdata = EffectData()
+		effectdata:SetEntity(self)
+		util.Effect("gred_particle_emp_muzzle",effectdata)
 		self.LastShot = ct
 	end
 end

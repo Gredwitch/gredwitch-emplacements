@@ -25,6 +25,7 @@ ENT.Model				= "models/gredwitch/m2browning/m2_gun.mdl"
 ENT.TurretTurnMax		= 0
 ENT.TurretHeight		= 50
 ENT.TurretForward		= -2
+ENT.BasePos				= Vector(0,0,53)
 ENT.CanLookArround		= true
 
 ENT.Ammo				= 105

@@ -85,7 +85,7 @@ function ENT:DoShot(plr)
 	if self.num > 0 then
 		num = self.num
 	else
-		num = 2
+		num = 1
 	end
 	ang = attAng + Angle(math.Rand(num,-num), math.Rand(num,-num), math.Rand(num,-num))
 	b:SetPos(attPos)

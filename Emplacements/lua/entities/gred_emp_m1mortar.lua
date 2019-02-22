@@ -60,3 +60,33 @@ function ENT:SwitchAmmoType(plr)
 	net.Send(plr)
 	self.NextSwitch = CurTime()+0.2
 end
+
+local function CalcView(ply, pos, angles, fov)
+	if ply.Gred_Emp_Class == "gred_emp_m1mortar" then
+		local ent = ply.Gred_Emp_Ent
+		if IsValid(ent) then
+			if ent:ShooterStillValid() then
+				local a = ply:EyeAngles()
+				local entAng = ent:GetAngles()
+				local ang = entAng+a
+				print(ang)
+				-- if ang.y > 120 or ang.y < -120 then
+					local view = {}
+
+					view.origin = pos + Vector(0,0,200)
+					if ang.y > 70 or ang.y < 110 then
+						view.angles = ent.oldA
+					else
+						ent.oldA = a
+						view.angles = a
+					end
+					view.fov = fov
+					view.drawviewer = true
+
+					return view
+				-- end
+			end
+		end
+	end
+end
+hook.Add("CalcView", "gred_emp_m1mortar_view", CalcView)

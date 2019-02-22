@@ -1,9 +1,0 @@
-"UnlitGeneric"
-{
-
-$basetexture "models/(Flaczek)/beam2.vtf"
-	"$translucent" 1
-$selfillum "1"
-$selfillummask" "models/(Flaczek)/beam2_A.vtf"
-
-}

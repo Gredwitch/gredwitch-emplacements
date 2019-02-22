@@ -76,7 +76,11 @@ end
 function ENT:Explode()
 	if SERVER then
 	local pos = self:GetPos()
-	ParticleEffect("ins_ammo_explosionOLD",pos+Vector(0,0,100),Angle(0,90,0),nil)
+	local effectdata = EffectData()
+	effectdata:SetOrigin(pos+Vector(0,0,100))
+	effectdata:SetFlags(table.KeyFromValue(gred.Particles,"ins_ammo_explosionOLD"))
+	effectdata:SetAngles(Angle(0,90,0))
+	util.Effect("gred_particle_simple",effectdata)
 	local ent = ents.Create("shockwave_ent")
 	ent:SetPos( pos ) 
 	ent:Spawn()

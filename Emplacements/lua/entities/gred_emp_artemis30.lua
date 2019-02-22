@@ -44,7 +44,7 @@ ENT.HasShellEject		= false
 ENT.ViewForward			= 1
 ENT.ViewRight			= -70
 ENT.ViewUp				= -10
-
+ENT.Recoil				= 80000
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -94,7 +94,7 @@ function ENT:DoShot(plr)
 	b.Radius=70
 	if self.AmmoType == "Time-Fuze" then b.FuzeTime=self.FuzeTime end
 	b.sequential=1
-	b.gunRPM=3600
+	b.gunRPM=self.GunRPM
 	b.Caliber=self.BulletType
 	b:Spawn()
 	b:Activate()
@@ -115,7 +115,7 @@ function ENT:DoShot(plr)
 	end
 	-- if GetConVar("gred_sv_limitedammo"):GetInt() == 1 then self:SetCurAmmo(self:GetCurAmmo() - 1) end
 	
-	self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*700000)
+	self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*self.Recoil)
 	m = m + 1
 end
 
