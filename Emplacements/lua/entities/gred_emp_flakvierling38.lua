@@ -13,32 +13,29 @@ ENT.NameToPrint			= "Flakvierling 38"
 
 ENT.MuzzleEffect		= "muzzleflash_bar_3p"
 ENT.ShotInterval		= 0.0535
-ENT.BulletType			= "wac_base_20mm"
-ENT.MuzzleCount			= 4
+ENT.TracerColor			= "Yellow"
+
+ENT.AmmunitionTypes		= {
+						{"Direct Hit","wac_base_20mm"},
+						{"Time-fuzed","wac_base_20mm"},
+}
 
 ENT.Sequential			= true
-ENT.SoundName			= "shootFlakvierling"
 ENT.ShootSound			= "gred_emp/flakvierling38/20mm_shoot.wav"
-ENT.HasStopSound		= true
-ENT.StopSoundName		= "gred_emp/flakvierling38/20mm_stop.wav"
-ENT.FuzeEnabled			= true
-ENT.FuzeTime			= 0.01
-ENT.AmmoType			= "Direct Hit"
-ENT.CanSwitchAmmoTypes	= true
+ENT.StopShootSound		= "gred_emp/flakvierling38/20mm_stop.wav"
 
-ENT.TurretHeight		= 50
-ENT.TurretTurnMax		= -1
-ENT.BaseModel			= "models/gredwitch/flakvierling38/flakvierling_base.mdl"
-ENT.SecondModel			= "models/gredwitch/flakvierling38/flakvierling_shield.mdl"
-ENT.Model				= "models/gredwitch/flakvierling38/flakvierling_guns.mdl"
+ENT.HullModel			= "models/gredwitch/flakvierling38/flakvierling_base.mdl"
+ENT.YawModel			= "models/gredwitch/flakvierling38/flakvierling_shield.mdl"
+ENT.TurretModel			= "models/gredwitch/flakvierling38/flakvierling_guns.mdl"
 ENT.EmplacementType     = "MG"
-ENT.MaxUseDistance		= 150
-ENT.CanLookArround		= true
-ENT.TurretForward		= 15
-ENT.Color				= "Yellow"
+ENT.Ammo				= -1
 ENT.Seatable			= true
-ENT.HasShellEject		= false
-ENT.TurretHorrizontal 	= 0
+ENT.TurretPos			= Vector(0,15,50)
+ENT.MaxRotation			= Angle(-50)
+ENT.SightPos			= Vector(0,0,20)
+ENT.IsAAA				= true
+ENT.CanSwitchTimeFuze	= true
+ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -50,100 +47,45 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Activate()
 	ent:SetSkin(math.random(0,3))
 	if math.random(0,1) == 0 then
-		ent.shield:SetBodygroup(1,0)
+		ent:GetYaw():SetBodygroup(1,0)
 	else
-		ent.shield:SetBodygroup(1,1)
+		ent:GetYaw():SetBodygroup(1,1)
 	end
 	
 	return ent
 end
 
-function ENT:SwitchAmmoType(plr)
-	if self.NextSwitch > CurTime() then return end
-	if self.AmmoType == "Direct Hit" then
-		self.AmmoType = "Time-Fuze"
-	elseif self.AmmoType == "Time-Fuze" then
-		self.AmmoType = "Direct Hit"
-	end
-	net.Start("gred_net_message_ply")
-		net.WriteEntity(plr)
-		net.WriteString("["..self.NameToPrint.."] "..self.AmmoType.." rounds selected")
-	net.Send(plr)
-	self.NextSwitch = CurTime()+0.2
-end
-function ENT:DoShot(plr)
-	if m == nil or m > self.MuzzleCount or m == 0 then m = 1 end
-	
-	attPos = self:GetAttachment(self.MuzzleAttachments[m]).Pos
-	attAng = self:GetAttachment(self.MuzzleAttachments[m]).Ang
-	
-	local b = ents.Create("gred_base_bullet")
-				
-	if self.num > 0 then
-		num = self.num
-	else
-		num = 1.4
-	end
-	ang = attAng + Angle(math.Rand(num,-num), math.Rand(num,-num), math.Rand(num,-num))
-	b:SetPos(attPos)
-	b:SetAngles(ang)
-	b.Speed=1000
-	b.Size=0
-	b.Width=0
-	b.Damage=20
-	b.Radius=70
-	if self.AmmoType == "Time-Fuze" then b.FuzeTime=self.FuzeTime end
-	b.sequential=1
-	b.gunRPM=3600
-	b.Caliber=self.BulletType
-	b:Spawn()
-	b:Activate()
-	constraint.NoCollide(b,self,0,0,true)
-	b.Owner=plr
-	
-	self.tracer = self.tracer + 1
-	if self.tracer >= GetConVar("gred_sv_tracers"):GetInt() then
-		b:SetSkin(0)
-		b:SetModelScale(7)
-		if self.CurAmmo <= 20 then 
-			self.tracer = GetConVar("gred_sv_tracers"):GetInt() - 2
-		else
-			self.tracer = 0
-		end
-	else 
-		b.noTracer = true
-	end
-	-- if GetConVar("gred_sv_limitedammo"):GetInt() == 1 then self:SetCurAmmo(self:GetCurAmmo() - 1) end
-	
-	self:GetPhysicsObject():ApplyForceCenter(self:GetRight()*700000)
-	m = m + 1
-end
-
 local function CalcView(ply, pos, angles, fov)
-	if ply.Gred_Emp_Class == "gred_emp_flakvierling38" then
+	if ply:GetViewEntity() != ply then return end
+	if ply.Gred_Emp_Ent then
 		local ent = ply.Gred_Emp_Ent
 		if IsValid(ent) then
-			seat = ent:GetDTEntity(2)
-			if ent:ShooterStillValid() and IsValid(seat) then
+			if ent:GetClass() == "gred_emp_flakvierling38" then
+				if ent:GetShooter() != ply then return end
+				seat = ent:GetSeat()
+				local seatValid = IsValid(seat)
+				if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
 				local a = ent:GetAngles()
 				local ang = Angle(-a.r,a.y+90,a.p)
-				if seat:GetThirdPersonMode() then
+				if (seatValid and seat:GetThirdPersonMode()) or ent:GetViewMode() == 1 then
 					local view = {}
 
-					view.origin = pos + ent:GetForward()*0 + ent:GetRight()*-20 + ent:GetUp()*10
+					view.origin = ent:LocalToWorld(ent.SightPos)
 					view.angles = ang
-					view.fov = fov
+					view.fov = 35
 					view.drawviewer = true
 
 					return view
 				else
-					local view = {}
-					view.origin = pos
-					view.angles = ang
-					view.fov = fov
-					view.drawviewer = false
+					if seatValid then
+						local view = {}
+						view.origin = pos
+						view.angles = ang
+						view.fov = fov
+						view.drawviewer = false
 
-					return view
+						return view
+					end
 				end
 			end
 		end

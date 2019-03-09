@@ -13,40 +13,34 @@ ENT.NameToPrint			= "KwK"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
-ENT.BulletType			= "gb_shell_50mm"
-ENT.MuzzleCount			= 1
+ENT.AmmunitionTypes		= {
+						{"HE","gb_shell_50mm"},
+						{"AP","gb_shell_50mm"},
+						{"Smoke","gb_shell_50mm"}
+}
+ENT.ShootAnim			= "shoot"
 
-ENT.ShellSoundTime		= 1.7
-ENT.HasReloadAnim		= true
+ENT.ShellLoadTime		= 1.7
 ENT.AnimPlayTime		= 1.3
 ENT.AnimPauseTime		= 0.3
 
-ENT.SoundName			= "shootPaK"
 ENT.ShootSound			= "gred_emp/common/50mm.wav"
 
-ENT.TurretHeight		= 49.8
-ENT.TurretFloatHeight	= 0
-ENT.TurretModelOffset	= Vector(0,0,0)
-ENT.TurretTurnMax		= -1
-ENT.BaseModel			= "models/gredwitch/kwk/kwk_base.mdl"
-ENT.SecondModel			= "models/gredwitch/kwk/kwk_shield.mdl"
-ENT.Model				= "models/gredwitch/kwk/kwk_gun.mdl"
-ENT.EmplacementType     = "AT"
-ENT.MaxUseDistance		= 60
-ENT.CanLookArround		= true
-ENT.CanUseShield		= false
-ENT.CustomRecoil		= true
-ENT.Recoil				= 700000
+ENT.TurretPos			= Vector(0,0,49.8)
+ENT.HullModel			= "models/gredwitch/kwk/kwk_base.mdl"
+ENT.YawModel			= "models/gredwitch/kwk/kwk_shield.mdl"
+ENT.TurretModel			= "models/gredwitch/kwk/kwk_gun.mdl"
+ENT.EmplacementType     = "Cannon"
 ENT.Seatable			= true
 ENT.ATReloadSound		= "small"
-ENT.UseSingAnim			= true
+ENT.SightPos			= Vector(0,10,5)
+ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
-	ent:SetAngles(ent:GetAngles()+Angle(0,90,0))
 	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()
@@ -55,30 +49,37 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 end
 
 local function CalcView(ply, pos, angles, fov)
-	if ply.Gred_Emp_Class == "gred_emp_kwk" then
+	if ply:GetViewEntity() != ply then return end
+	if ply.Gred_Emp_Ent then
 		local ent = ply.Gred_Emp_Ent
 		if IsValid(ent) then
-			seat = ent:GetDTEntity(2)
-			if ent:ShooterStillValid() and IsValid(seat) then
+			if ent:GetClass() == "gred_emp_kwk" then
+				if ent:GetShooter() != ply then return end
+				seat = ent:GetSeat()
+				local seatValid = IsValid(seat)
+				if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
 				local a = ent:GetAngles()
 				local ang = Angle(-a.r,a.y+90,a.p)
-				if seat:GetThirdPersonMode() then
+				ang:Normalize()
+				if (seatValid and seat:GetThirdPersonMode()) or ent:GetViewMode() == 1 then
 					local view = {}
-
-					view.origin = pos + ent:GetForward()*-26 + ent:GetRight()*-40 + ent:GetUp()*10
+					
+					view.origin = ent:LocalToWorld(ent.SightPos)
 					view.angles = ang
-					view.fov = fov
+					view.fov = 35
 					view.drawviewer = true
 
 					return view
 				else
-					local view = {}
-					view.origin = pos
-					view.angles = ang
-					view.fov = fov
-					view.drawviewer = false
+					if seatValid then
+						local view = {}
+						view.origin = pos
+						view.angles = ang
+						view.fov = fov
+						view.drawviewer = false
 
-					return view
+						return view
+					end
 				end
 			end
 		end

@@ -10,28 +10,27 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
-ENT.MuzzleCount			= 1
-ENT.BulletType			= "wac_base_7mm"
+ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.092
-ENT.Color				= "Red"
+ENT.TracerColor			= "Red"
 
 ENT.ShootSound			= "gred_emp/m240b/shoot.wav"
-ENT.StopSoundName		= "gred_emp/m240b/stop.wav"
-ENT.SoundName			= "shootM240B"
-ENT.HasStopSound		= true
+ENT.StopShootSound		= "gred_emp/m240b/stop.wav"
+ENT.ReloadSound			= "gred_emp/m240b/m240_reload.wav"
+ENT.ReloadEndSound		= "gred_emp/m240b/m240_reloadend.wav"
 
-ENT.BaseModel			= "models/gredwitch/fnmag/fnmag_tripod.mdl"
-ENT.Model				= "models/gredwitch/fnmag/fnmag_gun.mdl"
-ENT.TurretTurnMax		= 0
-ENT.TurretHeight		= 7
-ENT.CanLookArround		= true
+ENT.EmplacementType		= "MG"
+ENT.HullModel			= "models/gredwitch/fnmag/fnmag_tripod.mdl"
+ENT.TurretModel			= "models/gredwitch/fnmag/fnmag_gun.mdl"
 
 ENT.Ammo				= 200
-ENT.CurAmmo				= ENT.Ammo
-ENT.HasNoAmmo			= false
-ENT.EndReloadSnd		= "M240ReloadEnd"
+ENT.ReloadTime			= 2.57
 
-ENT.ReloadTime			= 4.07 - 1.5
+------------------------
+
+ENT.TurretPos			= Vector(0,0,7)
+ENT.SightPos			= Vector(-0.005,-25,5.655)
+ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -43,34 +42,15 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
-
-local created = false
-
-sound.Add( {
-	name = "M240Reload",
-	channel = CHAN_WEAPON,
-	volume = 1.0,
-	level = 60,
-	pitch = {100},
-	sound = "gred_emp/m240b/m240_reload.wav"
-} )
-sound.Add( {
-	name = ENT.EndReloadSnd,
-	channel = CHAN_WEAPON,
-	volume = 1.0,
-	level = 60,
-	pitch = {100},
-	sound = "gred_emp/m240b/m240_reloadend.wav"
-} )
-
-function ENT:ReloadMG(ply)
-	if self.IsReloading then return end
-	self.IsReloading = true
+function ENT:Reload(ply)
+	
 	self:ResetSequence(self:LookupSequence("reload"))
-	self:EmitSound("M240Reload")
+	self.sounds.reload:Stop()
+	self.sounds.reload:Play()
+	self:SetIsReloading(true)
+	
 	timer.Simple(0.7, function() 
 		if !IsValid(self) then return end
-		if created then return end
 		self:SetBodygroup(2,2) -- Ammo box hidden
 		local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
@@ -79,7 +59,7 @@ function ENT:ReloadMG(ply)
 		prop:SetAngles(att.Ang + Angle(0,90,0))
 		prop:Spawn()
 		prop:Activate()
-		if self.CurAmmo <= 0 then prop:SetBodygroup(1,1) end
+		if self:GetAmmo() <= 0 then prop:SetBodygroup(1,1) end
 		
 		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
 		if t > 0 then
@@ -87,11 +67,8 @@ function ENT:ReloadMG(ply)
 				if IsValid(prop) then prop:Remove() end 
 			end)
 		end
-		
-		created = true
 	end)
 	
-	created = false
 	timer.Simple(0.6,function() if IsValid(self) then self.MagIn = false self:SetBodygroup(7,2) end end)
 	timer.Simple(1.9,function() if IsValid(self) then self:SetBodygroup(7,0) end end)
 	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
@@ -100,29 +77,30 @@ function ENT:ReloadMG(ply)
 			self.MagIn = true
 			self:SetBodygroup(2,1)
 		end)
-		timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
-			self.CurAmmo = self.Ammo
-			self.tracer = 0
-			self.IsReloading = false
+		timer.Simple(self:SequenceDuration(),function()
+			if !IsValid(self) then return end
+			self:SetAmmo(self.Ammo)
+			self:SetIsReloading(false)
+			self:SetCurrentTracer(0)
 		end)
 	else
 		timer.Simple(1.5,function() 
 			if !IsValid(self) then return end
-			self:StopSound("M240Reload")
+			self.sounds.reload:Stop()
 			self:SetPlaybackRate(0)
 		end)
 	end
 end
 
-function ENT:AddOnThink()
+function ENT:OnTick()
 	if SERVER then
 		self:SetSkin(1)
 		self:SetBodygroup(1,1) -- Gun
 		self:SetBodygroup(5,1) -- Lid
 		self:SetBodygroup(6,1) -- Mag Base
-		if !self.IsReloading or self.MagIn then
+		if !self:GetIsReloading() or self.MagIn then
 			self:SetBodygroup(2,1) -- Ammo box shown
-			if self.CurAmmo <= 0 then
+			if self:GetAmmo() <= 0 then
 				self:SetBodygroup(7,2) -- Ammo belt hidden
 			else
 				self:SetBodygroup(7,0) -- M240B Ammo belt
@@ -130,3 +108,26 @@ function ENT:AddOnThink()
 		end
 	end
 end
+
+local function CalcView(ply, pos, angles, fov)
+	if ply:GetViewEntity() != ply then return end
+	if ply.Gred_Emp_Ent then
+		if ply.Gred_Emp_Ent.ClassName == "gred_emp_m240b" then
+			local ent = ply.Gred_Emp_Ent
+			if ent:GetShooter() != ply then return end
+			if IsValid(ent) then
+				if ent:GetViewMode() == 1 then
+					local ang = ent:GetAngles()
+					local view = {}
+					view.origin = ent:LocalToWorld(ent.SightPos)
+					view.angles = Angle(-ang.r,ang.y+90,ang.p)
+					view.fov = 35
+					view.drawviewer = false
+
+					return view
+				end
+			end
+		end
+	end
+end
+hook.Add("CalcView", "gred_emp_m240b_view", CalcView)

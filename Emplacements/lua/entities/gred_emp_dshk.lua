@@ -10,29 +10,27 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 
 ENT.MuzzleEffect		= "muzzleflash_bar_3p"
-ENT.MuzzleCount			= 1
-ENT.BulletType			= "wac_base_12mm"
+ENT.AmmunitionType		= "wac_base_12mm"
 ENT.ShotInterval		= 0.1
-ENT.Color				= "Green"
+ENT.TracerColor			= "Green"
 
-ENT.SoundName			= "shootDhSK"
 ENT.ShootSound			= "gred_emp/dhsk/shoot.wav"
+ENT.StopShootSound		= "gred_emp/dhsk/stop.wav"
 
-ENT.StopSoundName		= "gred_emp/dhsk/stop.wav"
-ENT.HasStopSound		= true
-ENT.StopSound			= "stopDhSK"
-
-ENT.BaseModel			= "models/gredwitch/dhsk/dhsk_tripod.mdl"
-ENT.Model				= "models/gredwitch/dhsk/dhsk_gun.mdl"
-ENT.TurretTurnMax		= 0
-ENT.TurretHeight		= 42
+ENT.EmplacementType		= "MG"
+ENT.HullModel			= "models/gredwitch/dhsk/dhsk_tripod.mdl"
+ENT.TurretModel			= "models/gredwitch/dhsk/dhsk_gun.mdl"
+ENT.ReloadSound			= "gred_emp/dhsk/dhsk_reload.wav"
+ENT.ReloadEndSound		= "gred_emp/dhsk/dhsk_reloadend.wav"
 
 ENT.Ammo				= 50
-ENT.CurAmmo				= ENT.Ammo
-ENT.CanLookArround		= true
-ENT.HasNoAmmo			= false
-ENT.ReloadTime			= 2.43 - 0.7
-ENT.EndReloadSnd		= "DHsKReloadEnd"
+ENT.ReloadTime			= 1.73 - 0.7
+
+------------------------
+
+ENT.TurretPos			= Vector(0,0,43)
+ENT.SightPos			= Vector(0.03,-35,16.25)
+ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -45,37 +43,19 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
-local created = false
-
-sound.Add( {
-	name = "DHsKReload",
-	channel = CHAN_WEAPON,
-	volume = 1.0,
-	level = 60,
-	pitch = {100},
-	sound = "gred_emp/dhsk/dhsk_reload.wav"
-} )
-sound.Add( {
-	name = ENT.EndReloadSnd,
-	channel = CHAN_WEAPON,
-	volume = 1.0,
-	level = 60,
-	pitch = {100},
-	sound = "gred_emp/dhsk/dhsk_reloadend.wav"
-} )
-
-function ENT:ReloadMG(ply)
-	if self.IsReloading then return end
-	self.IsReloading = true
+function ENT:Reload(ply)
+	
 	self:ResetSequence(self:LookupSequence("reload"))
-	self:EmitSound("DHsKReload")
+	self.sounds.reload:Stop()
+	self.sounds.reload:Play()
+	self:SetIsReloading(true)
+	
 	timer.Simple(0.7, function()
 		if !IsValid(self) then return end
-		if created then return end
 		local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/dhsk/dhsk_mag.mdl")
-		prop:SetPos(att.Pos)
+		prop:SetPos(att.Pos + self.TurretPos)
 		prop:SetAngles(att.Ang - Angle(0,90,0))
 		prop:Spawn()
 		prop:Activate()
@@ -86,12 +66,12 @@ function ENT:ReloadMG(ply)
 					if IsValid(prop) then prop:Remove() end 
 			end)
 		end
-		created = true
-		if self.CurAmmo <= 0 then prop:SetBodygroup(1,1) end
+		
+		if self:GetAmmo() <= 0 then prop:SetBodygroup(1,1) end
 		self:SetBodygroup(2,1)
 		self:SetBodygroup(3,1)
 	end)
-	created = false
+	
 	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
 		timer.Simple(1.2,function() 
 			if !IsValid(self) then return end
@@ -99,27 +79,50 @@ function ENT:ReloadMG(ply)
 			self:SetBodygroup(3,0)
 			self.MagIn = true
 		end)
-		timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
-			self.CurAmmo = self.Ammo
-			self.IsReloading = false
-			self.tracer = 0
+		timer.Simple(self:SequenceDuration(),function()
+			if !IsValid(self) then return end
+			self:SetAmmo(self.Ammo)
+			self:SetIsReloading(false)
+			self:SetCurrentTracer(0)
 		end)
 	else
 		timer.Simple(1.2,function() 
 			if !IsValid(self) then return end
-			self:StopSound("DHsKReload")
+			self.sounds.reload:Stop()
 			self:SetPlaybackRate(0)
 		end)
 	end
 end
 
-function ENT:AddOnThink()
-	if SERVER and (!self.IsReloading or self.MagIn) then
-		self:SetBodygroup(2,0)
-		if self.CurAmmo <= 0 then 
+function ENT:OnTick()
+	if SERVER and (!self:GetIsReloading() or self.MagIn) then
+		if self:GetAmmo() <= 0 then 
 			self:SetBodygroup(3,1)
-		elseif self.CurAmmo > 0 then
+		else
 			self:SetBodygroup(3,0)
 		end
 	end
 end
+
+local function CalcView(ply, pos, angles, fov)
+	if ply:GetViewEntity() != ply then return end
+	if ply.Gred_Emp_Ent then
+		if ply.Gred_Emp_Ent.ClassName == "gred_emp_dshk" then
+			local ent = ply.Gred_Emp_Ent
+			if ent:GetShooter() != ply then return end
+			if IsValid(ent) then
+				if ent:GetViewMode() == 1 then
+					local ang = ent:GetAngles()
+					local view = {}
+					view.origin = ent:LocalToWorld(ent.SightPos)
+					view.angles = Angle(-ang.r,ang.y+90,ang.p)
+					view.fov = 35
+					view.drawviewer = false
+
+					return view
+				end
+			end
+		end
+	end
+end
+hook.Add("CalcView", "gred_emp_dshk_view", CalcView)

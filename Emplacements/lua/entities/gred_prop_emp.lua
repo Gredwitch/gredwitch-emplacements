@@ -8,7 +8,7 @@ ENT.Author			                =	"Gredwitch"
 ENT.Contact			                =	"qhamitouche@gmail.com"
 ENT.Category                        =	"Gredwitch's Stuff"
 ENT.Model                         	=	""
-ENT.BaseEntity						=	nil
+ENT.NextUse							=	0
 ENT.Mass							=	nil
 
 if SERVER then
@@ -34,19 +34,26 @@ if SERVER then
 			self.phys:Wake()
 		end
 	end
+
+	function ENT:Use(ply,caller,useType,value)
+		if self.canPickUp then
+			if self:IsPlayerHolding() then return end
+			local ct = CurTime()
+			if self.NextUse >= ct then return end
+			ply:PickupObject(self)
+			self.PlyPickup = ply
+			self.NextUse = ct + 0.1
+		end
+	end
+
+	function ENT:OnTakeDamage(dmg)
+		if self.GredEMPBaseENT == nil or !IsValid(self.GredEMPBaseENT) then return end
+		if dmg:IsFallDamage() or dmg:IsExplosionDamage() then return end
+		self.GredEMPBaseENT:TakeDamageInfo(dmg)
+	end
 end
 if CLIENT then
 	function ENT:Draw()
 		self:DrawModel()
 	end
-end
-
-function ENT:Use(activator,caller,useType,value)
-	if self.BaseEntity == nil or !IsValid(self.BaseEntity) then return end
-	self.BaseEntity:Use(activator,caller,useType,value)
-end
-
-function ENT:OnTakeDamage(dmg)
-	if self.BaseEntity == nil or !IsValid(self.BaseEntity) then return end
-	self.BaseEntity:TakeDamageInfo(dmg)
 end

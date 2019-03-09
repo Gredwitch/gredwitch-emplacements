@@ -12,29 +12,29 @@ ENT.NameToPrint			= "M2A1"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4
-ENT.BulletType			= "gb_shell_105mm"
-ENT.MuzzleCount			= 1
-ENT.HasReloadAnim		= true
+ENT.AmmunitionTypes		= {
+						{"HE","gb_shell_105mm"},
+						{"WP","gb_shell_105mmWP"},
+						{"Smoke","gb_shell_105mm"}
+}
+ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 4.4
 ENT.AnimPlayTime		= 1.6
-ENT.AmmoType			= "HE"
+ENT.ShellLoadTime		= 1.3
 
-ENT.SoundName			= "shootM2A1"
 ENT.ShootSound			= "gred_emp/common/105mm.wav"
 ENT.ATReloadSound		= "big"
 
-ENT.TurretHeight		= 1
-ENT.TurretFloatHeight	= 0
-ENT.MaxUseDistance		= 100
-ENT.TurretModelOffset	= Vector(0,0,0)
-ENT.TurretTurnMax		= 0.7
-ENT.BaseModel			= "models/gredwitch/M2A1/M2A1_carriage.mdl"
-ENT.Model				= "models/gredwitch/M2A1/M2A1_gun.mdl"
-ENT.EmplacementType     = "AT"
-ENT.Scatter				= 0.4
+ENT.MaxRotation			= Angle(27,65)
+ENT.HullModel			= "models/gredwitch/M2A1/M2A1_carriage.mdl"
+ENT.TurretModel			= "models/gredwitch/M2A1/M2A1_gun.mdl"
+ENT.EmplacementType     = "Cannon"
+ENT.Spread				= 0.4
 
-ENT.Wheels				= "models/gredwitch/M2A1/M2A1_wheels.mdl"
+ENT.WheelsModel			= "models/gredwitch/M2A1/M2A1_wheels.mdl"
 ENT.WheelsPos			= Vector(0,0,0)
+ENT.Ammo				= -1
+ENT.AddShootAngle		= 4
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -45,23 +45,4 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn()
 	ent:Activate()
 	return ent
-end
-
-function ENT:SwitchAmmoType(plr)
-	if self.NextSwitch > CurTime() then return end
-	if self.AmmoType == "HE" then
-		self.AmmoType = "Smoke"
-		self.BulletType = "gb_shell_105mm"
-	elseif self.AmmoType == "Smoke" then
-		self.AmmoType = "WP"
-		self.BulletType = "gb_shell_105mmWP"
-	elseif self.AmmoType == "WP" then
-		self.AmmoType = "HE"
-		self.BulletType = "gb_shell_105mm"
-	end
-	net.Start("gred_net_message_ply")
-		net.WriteEntity(plr)
-		net.WriteString("["..self.NameToPrint.."] "..self.AmmoType.." shells selected")
-	net.Send(plr)
-	self.NextSwitch = CurTime()+0.2
 end

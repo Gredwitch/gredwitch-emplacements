@@ -1,0 +1,6 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/gredwitch/breda35/Breda35_fin_c"
+	$halflambert			1
+	$nocull 				1
+}

@@ -1,0 +1,22 @@
+"VertexLitGeneric"
+{
+	$basetexture			"models/gredwitch/breda35/Breda_Gunsight_c"
+	$bumpmap				"models/gredwitch/breda35/Breda_Gunsight_n"
+	$halflambert			1
+	$nocull 				1
+
+	$phongexponenttexture 	"models/gredwitch/breda35/Breda_Gunsight_n"
+	$phong 					1
+	$phongboost 			0.2
+	$phongfresnelranges		"[2 2 2]"
+
+	$PhongAlbedoTint 		1
+
+	$rimlight     			0
+	$rimlightexponent   	1
+	$rimlightboost   		0.3
+	$rimmask      			1
+	
+	$translucent			0
+	$alphatest 				0
+}

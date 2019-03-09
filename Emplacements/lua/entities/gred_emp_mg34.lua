@@ -10,26 +10,26 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
-ENT.MuzzleCount			= 1
-ENT.BulletType			= "wac_base_7mm"
+ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.067
-ENT.Color				= "Green"
+ENT.TracerColor			= "Green"
 
 ENT.ShootSound			= "gred_emp/mg34/shoot.wav"
-ENT.SoundName			= "shootMG34"
+ENT.ReloadSound			= "gred_emp/mg34/mg34_reload.wav"
+ENT.ReloadEndSound		= "gred_emp/mg34/mg34_reloadend.wav"
 
-ENT.BaseModel			= "models/gredwitch/mg81z/mg81z_tripod.mdl"
-ENT.Model				= "models/gredwitch/mg34/mg34.mdl"
-ENT.TurretTurnMax		= 0
-ENT.TurretHeight		= 43.5
-ENT.MaxUseDistance		= 45
-ENT.CanLookArround		= true
-ENT.EndReloadSnd		= "MG34"
+ENT.EmplacementType		= "MG"
+ENT.HullModel			= "models/gredwitch/mg81z/mg81z_tripod.mdl"
+ENT.TurretModel			= "models/gredwitch/mg34/mg34.mdl"
 
 ENT.Ammo        		= 50
-ENT.CurAmmo      		= ENT.Ammo
-ENT.HasNoAmmo			= false
-ENT.ReloadTime			= 2.2 - 0.8
+ENT.ReloadTime			= 1.4
+
+------------------------
+
+ENT.TurretPos			= Vector(0,0,43.5)
+ENT.SightPos			= Vector(0.63,-15,2.85)
+ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -42,33 +42,15 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
-local created = false
-
-sound.Add( {
-	name = "MG34Reload",
-	channel = CHAN_WEAPON,
-	volume = 1.0,
-	level = 60,
-	pitch = {100},
-	sound = "gred_emp/mg34/mg34_reload.wav"
-} )
-sound.Add( {
-	name = ENT.EndReloadSnd,
-	channel = CHAN_WEAPON,
-	volume = 1.0,
-	level = 60,
-	pitch = {100},
-	sound = "gred_emp/mg34/mg34_reloadend.wav"
-} )
-
-function ENT:ReloadMG(ply)
-	if self.IsReloading then return end
-	self.IsReloading = true
+function ENT:Reload(ply)
+	
 	self:ResetSequence(self:LookupSequence("reload"))
-	self:EmitSound("MG34Reload")
+	self.sounds.reload:Stop()
+	self.sounds.reload:Play()
+	self:SetIsReloading(true)
+	
 	timer.Simple(0.6, function() 
 		if !IsValid(self) then return end
-		if created then return end
 		self:SetBodygroup(4,1)
 		local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
@@ -85,10 +67,8 @@ function ENT:ReloadMG(ply)
 				if IsValid(prop) then prop:Remove() end 
 			end)
 		end
-		created = true
 		self:SetBodygroup(3,1)
 	end)
-	created = false
 	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
 		timer.Simple(1.1,function() 
 			if !IsValid(self) then return end
@@ -96,23 +76,24 @@ function ENT:ReloadMG(ply)
 			self:SetBodygroup(3,0)
 			self:SetBodygroup(4,0)
 		end)
-		timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
-			self.CurAmmo = self.Ammo
-			self.IsReloading = false
-			self.tracer = 0
+		timer.Simple(self:SequenceDuration(),function()
+			if !IsValid(self) then return end
+			self:SetAmmo(self.Ammo)
+			self:SetIsReloading(false)
+			self:SetCurrentTracer(0)
 		end)
 	else
 		timer.Simple(1.1,function() 
 			if !IsValid(self) then return end
-			self:StopSound("MG34Reload")
+			self.sounds.reload:Stop()
 			self:SetPlaybackRate(0)
 		end)
 	end
 end
 
-function ENT:AddOnThink()
-	if SERVER and (!self.IsReloading or self.MagIn) then
-		if self.CurAmmo <= 0 then 
+function ENT:OnTick()
+	if SERVER and (!self:GetIsReloading() or self.MagIn) then
+		if self:GetAmmo() <= 0 then 
 			self:SetBodygroup(4,1)
 		else
 			self:SetBodygroup(4,0)
@@ -120,3 +101,26 @@ function ENT:AddOnThink()
 		self:SetBodygroup(3,0)
 	end
 end
+
+local function CalcView(ply, pos, angles, fov)
+	if ply:GetViewEntity() != ply then return end
+	if ply.Gred_Emp_Ent then
+		if ply.Gred_Emp_Ent.ClassName == "gred_emp_mg34" then
+			local ent = ply.Gred_Emp_Ent
+			if ent:GetShooter() != ply then return end
+			if IsValid(ent) then
+				if ent:GetViewMode() == 1 then
+					local ang = ent:GetAngles()
+					local view = {}
+					view.origin = ent:LocalToWorld(ent.SightPos)
+					view.angles = Angle(-ang.r,ang.y+90,ang.p)
+					view.fov = 35
+					view.drawviewer = false
+
+					return view
+				end
+			end
+		end
+	end
+end
+hook.Add("CalcView", "gred_emp_mg34_view", CalcView)

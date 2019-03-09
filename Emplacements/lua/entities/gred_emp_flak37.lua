@@ -8,40 +8,37 @@ ENT.PrintName 			= "[EMP]88mm Flak 37"
 ENT.Author				= "Gredwitch"
 
 ENT.Spawnable			= true
-ENT.ExplodeHeight		= -60
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Flak 37"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 5
-ENT.BulletType			= "gb_shell_88mm"
-ENT.MuzzleCount			= 1
+ENT.AmmunitionTypes		= {
+						{"HE","gb_shell_88mm"},
+						{"AP","gb_shell_88mm"},
+						{"Smoke","gb_shell_88mm"}
+}
 
-ENT.HasReloadAnim		= true
-ENT.ShellSoundTime		= 1.7
+ENT.ShellLoadTime		= 1.7
 ENT.AnimPlayTime		= 1
 ENT.AnimPauseTime		= 0.3
-ENT.UseSingAnim			= true
 ENT.ATReloadSound		= "big"
-
-
-ENT.SoundName			= "shootFlak37"
+ENT.ShootAnim			= "shoot"
 ENT.ShootSound			= "gred_emp/common/88mm.wav"
 
-ENT.TurretHeight		= 0
-ENT.TurretForward		= -40
+ENT.TurretPos			= Vector(1.39031,-30.1991,40)
+ENT.YawPos				= Vector(0,0,0)
 
-ENT.MaxUseDistance		= 100
-ENT.TurretTurnMax		= 0.9
-ENT.BaseModel			= "models/gredwitch/flak37/flak37_base.mdl"
-ENT.SecondModel			= "models/gredwitch/flak37/flak37_shield.mdl"
-ENT.Model				= "models/gredwitch/flak37/flak37_gun.mdl"
-ENT.EmplacementType     = "AT"
-ENT.Scatter				= 0.1
-ENT.CanLookArround		= true
-ENT.ShieldForward		= -30
-ENT.TurretHorrizontal 	= -3.5
+ENT.IsAAA				= true
+ENT.HullModel			= "models/gredwitch/flak37/flak37_base.mdl"
+ENT.YawModel			= "models/gredwitch/flak37/flak37_shield.mdl"
+ENT.TurretModel			= "models/gredwitch/flak37/flak37_gun.mdl"
+ENT.EmplacementType     = "Cannon"
+ENT.Spread				= 0.1
 ENT.Seatable			= true
+ENT.Ammo				= -1
+ENT.SightPos			= Vector(0,0,0)
+ENT.AddShootAngle		= 2
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -52,28 +49,33 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn()
 	ent:Activate()
 	ent:SetBodygroup(1,math.random(0,1))
-	ent.turretBase:SetBodygroup(1,math.random(0,1))
-	ent.shield:SetBodygroup(1,math.random(0,3))
-	ent.shield:SetBodygroup(2,math.random(0,1))
-	ent.shield:SetBodygroup(3,math.random(0,1))
-	ent.shield:SetBodygroup(4,math.random(0,1))
+	ent:GetHull():SetBodygroup(1,math.random(0,1))
+	local yaw = ent:GetYaw()
+	yaw:SetBodygroup(1,math.random(0,3))
+	yaw:SetBodygroup(2,math.random(0,1))
+	yaw:SetBodygroup(3,math.random(0,1))
+	yaw:SetBodygroup(4,math.random(0,1))
 	return ent
 end
 
 local function CalcView(ply, pos, angles, fov)
-	if ply.Gred_Emp_Class == "gred_emp_flak37" then
+	if ply:GetViewEntity() != ply then return end
+	if ply.Gred_Emp_Ent then
 		local ent = ply.Gred_Emp_Ent
 		if IsValid(ent) then
-			seat = ent:GetDTEntity(2)
-			if ent:ShooterStillValid() and IsValid(seat) then
+			if ent:GetClass() == "gred_emp_flak37" then
+				if ent:GetShooter() != ply then return end
+				seat = ent:GetSeat()
+				if !IsValid(seat) then return end
 				local a = ent:GetAngles()
 				local ang = Angle(-a.r,a.y+90,a.p)
+				ang:Normalize()
 				if seat:GetThirdPersonMode() then
 					local view = {}
-
-					view.origin = pos + ent:GetForward()*-36 + ent:GetRight()*-10 + ent:GetUp()*30
+					
+					view.origin = ent:LocalToWorld(ent.SightPos)
 					view.angles = ang
-					view.fov = fov
+					view.fov = 35
 					view.drawviewer = true
 
 					return view

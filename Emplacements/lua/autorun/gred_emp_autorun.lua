@@ -18,8 +18,7 @@ CreateConVar("gred_sv_manual_reload_mgs"			,  "0"  , GRED_SVAR)
 CreateConVar("gred_sv_shell_arrival_time"			,  "3"  , GRED_SVAR)
 
 if SERVER then
-	util.AddNetworkString("TurretBlockAttackToggle")
-	util.AddNetworkString("gred_net_emp_getplayer")
+	util.AddNetworkString("gred_net_emp_reloadsounds")
 end
 
 local tableinsert = table.insert
@@ -30,6 +29,7 @@ tableinsert(gred.AddonList,1391460275) -- Emplacements
 tableinsert(gred.AddonList,1131455085) -- Base addon
 
 if CLIENT then
+	
 	local CreateClientConVar = CreateClientConVar
 	CreateClientConVar("gred_cl_shelleject","1", true,false)
 	CreateClientConVar("gred_cl_emp_mouse_sensitivity","1", true,false)
@@ -38,61 +38,38 @@ if CLIENT then
 	
 
 	local shouldBlockAttack=false
-	net.Receive("TurretBlockAttackToggle",function()
-		local blockBit=net.ReadBit()
-		if blockBit==1 then
-			shouldBlockAttack=true
-		elseif blockBit==0 then
-			shouldBlockAttack=false
-		end
-	end)
-	
-	net.Receive("gred_net_emp_getplayer",function()
-		local ply = net.ReadEntity()
+	net.Receive("gred_net_emp_reloadsounds",function()
 		local self = net.ReadEntity()
-		local class = self:GetClass()
-		if class == "worldspawn" then
-			ply.Gred_Emp_Ent = nil
-			ply.Gred_Emp_Class = nil
-		else
-			ply.Gred_Emp_Ent = self
-			ply.Gred_Emp_Class = class
-		end
-	end)
-	
-	hook.Add("CreateMove","gred_turretblock",function(cmd)
-		local lp = LocalPlayer()
-		if shouldBlockAttack and IsValid(lp) and bit.band(cmd:GetButtons(), IN_ATTACK) > 0 then
-			cmd:SetButtons(bit.bor(cmd:GetButtons() - IN_ATTACK, IN_BULLRUSH))
-		end
+		self.ShootSound = net.ReadString()
+		self.StopShootSound = net.ReadString()
+		
+		self:ReloadSounds()
 	end)
 	
 	hook.Add("AdjustMouseSensitivity", "gred_emp_mouse", function(s)
 		local ply = LocalPlayer()
-		if not ply.Gred_Emp_Class then return end
-		if string.StartWith(ply.Gred_Emp_Class,"gred_emp") then
-			local ent = ply.Gred_Emp_Ent
-			if IsValid(ent) then
-				if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) and ply == ent:GetShooter() then
-					return GetConVar("gred_cl_emp_mouse_sensitivity"):GetFloat() -- 0.2
-				end
+		local ent = ply.Gred_Emp_Ent
+		if not IsValid(ent) then ply.Gred_Emp_Ent = nil return end
+		if string.StartWith(ent.ClassName,"gred_emp") then
+			if IsValid(ent:GetSeat()) and ply == ent:GetShooter() then
+				return GetConVar("gred_cl_emp_mouse_sensitivity"):GetFloat()
 			end
 		end
 	end)
 
 	hook.Add("InputMouseApply", "gred_emp_move",function(cmd,x,y,angle)
 		local ply = LocalPlayer()
-		if not ply.Gred_Emp_Class then return end
-		if string.StartWith(ply.Gred_Emp_Class,"gred_emp") then
-			local ent = ply.Gred_Emp_Ent
-			if IsValid(ent) then
-				if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) and ply == ent:GetShooter() then
+		local ent = ply.Gred_Emp_Ent
+		if not IsValid(ent) then ply.Gred_Emp_Ent = nil return end
+		if string.StartWith(ent.ClassName,"gred_emp") then
+			if IsValid(ent:GetSeat()) then
+				if ply == ent:GetShooter() then
 					local InvertX = GetConVar("gred_cl_emp_mouse_invert_x"):GetInt() == 1
 					local InvertY = GetConVar("gred_cl_emp_mouse_invert_Y"):GetInt() == 1
 					if InvertX then
-						angle.yaw = angle.yaw - x / 5
-					else
 						angle.yaw = angle.yaw + x / 50
+					else
+						angle.yaw = angle.yaw - x / 50
 					end
 					if InvertY then
 						angle.pitch = math.Clamp( angle.pitch - y / 50, -89, 89 )
@@ -100,8 +77,28 @@ if CLIENT then
 						angle.pitch = math.Clamp( angle.pitch + y / 50, -89, 89 )
 					end
 					cmd:SetViewAngles( angle )
-
+                   
 					return true
+				end
+			else
+				if ent:GetViewMode() != 0 then
+					if ply == ent:GetShooter() then
+						local InvertX = GetConVar("gred_cl_emp_mouse_invert_x"):GetInt() == 1
+						local InvertY = GetConVar("gred_cl_emp_mouse_invert_Y"):GetInt() == 1
+						if InvertX then
+							angle.yaw = angle.yaw + x / 50
+						else
+							angle.yaw = angle.yaw - x / 50
+						end
+						if InvertY then
+							angle.pitch = math.Clamp( angle.pitch - y / 50, -89, 89 )
+						else
+							angle.pitch = math.Clamp( angle.pitch + y / 50, -89, 89 )
+						end
+						cmd:SetViewAngles( angle )
+
+						return true
+					end
 				end
 			end
 		end
@@ -114,7 +111,7 @@ if CLIENT then
 		local ded = game.IsDedicated()
 		if !ded then
 		
-		Panel:AddControl( "CheckBox", { Label = "Should the howitzers' carriage collide?", Command = "gred_sv_carriage_collision" } );
+		Panel:AddControl( "CheckBox", { Label = "Should the cannons' carriage collide?", Command = "gred_sv_carriage_collision" } );
 		
 		Panel:AddControl( "CheckBox", { Label = "Should the MGs have limited ammo?", Command = "gred_sv_limitedammo" } );
 		
@@ -142,7 +139,7 @@ if CLIENT then
 		
 		Panel:NumSlider( "Shell arrival time (for mortars)", "gred_sv_shell_arrival_time", 0, 10, 2 );
 		
-		Panel:NumSlider( "Shell remove time", "gred_sv_shell_remove_time", 0, 120, 0 );
+		Panel:NumSlider( "Shell casing remove time", "gred_sv_shell_remove_time", 0, 120, 0 );
 		
 		Panel:NumSlider( "Shell speed multiplier", "gred_sv_shellspeed_multiplier", 0, 4, 2 );
 		
@@ -167,22 +164,3 @@ if CLIENT then
 		)
 	end)
 end
-
-
-hook.Add("SetupMove", "gred_emp_calcmouse", function(ply,mv,cmd)
-	if not ply.Gred_Emp_Class then return end
-	if string.StartWith(ply.Gred_Emp_Class,"gred_emp") then
-		local ent = ply.Gred_Emp_Ent
-		if IsValid(ent) then
-			if ent:ShooterStillValid() and IsValid(ent:GetDTEntity(2)) and ply == ent:GetShooter() then
-				ent.CalcMouse = cmd:GetMouseY() + cmd:GetMouseX()
-			end
-		end
-	end
-end)
-
-hook.Add("EntityTakeDamage", "gred_emp_takedmg", function(target,dmginfo)
-	if target.GredEMPBaseENT != nil then
-		target.GredEMPBaseENT:TakeDamageInfo(dmginfo)
-	end
-end)

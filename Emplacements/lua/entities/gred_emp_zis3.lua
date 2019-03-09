@@ -12,36 +12,33 @@ ENT.NameToPrint			= "ZiS-3"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
-ENT.BulletType			= "gb_shell_76mm"
-ENT.MuzzleCount			= 1
-ENT.HasReloadAnim		= true
+ENT.AmmunitionTypes		= {
+						{"HE","gb_shell_75mm"},
+						{"AP","gb_shell_75mm"},
+						{"Smoke","gb_shell_75mm"}
+}
+ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 4.6
 ENT.AnimPlayTime		= 1
 
-ENT.SoundName			= "shootZiS3"
 ENT.ShootSound			= "gred_emp/common/76mm.wav"
 
-ENT.TurretHeight		= 1
-ENT.TurretFloatHeight	= 0
-ENT.MaxUseDistance		= 100
-ENT.TurretModelOffset	= Vector(0,0,0)
-ENT.TurretTurnMax		= 0.7
-ENT.BaseModel			= "models/gredwitch/zis3/zis3_carriage.mdl"
-ENT.Model				= "models/gredwitch/zis3/zis3_gun.mdl"
-ENT.EmplacementType     = "AT"
-ENT.Scatter				= 0.1
-ENT.CustomRecoil		= true
-ENT.Recoil				= 1000000
 
-ENT.Wheels				= "models/gredwitch/zis3/zis3_wheels.mdl"
+ENT.MaxRotation			= Angle(27,65)
+ENT.HullModel			= "models/gredwitch/zis3/zis3_carriage.mdl"
+ENT.TurretModel			= "models/gredwitch/zis3/zis3_gun.mdl"
+ENT.EmplacementType     = "Cannon"
+ENT.Spread				= 0.1
+
+ENT.WheelsModel			= "models/gredwitch/zis3/zis3_wheels.mdl"
 ENT.WheelsPos			= Vector(0,2,17)
+ENT.Ammo				= -1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 36
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
-	ent:SetAngles(ent:GetAngles()+Angle(0,90,0))
 	ent:Spawn()
 	ent:Activate()
 	return ent

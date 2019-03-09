@@ -13,23 +13,20 @@ ENT.NameToPrint			= "PM-41 Mortar"
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
 ENT.ShotInterval		= 2.4
-ENT.AmmoType			= "HE"
-ENT.EffectSmoke			= "m203_smokegrenade"
-ENT.BulletType			= "gb_shell_82mm"
-ENT.Scatter				= 400
-ENT.MuzzleCount			= 1
+ENT.Spread				= 400
 
-ENT.SoundName 			= "81mmMortar"
 ENT.ShootSound			= "gred_emp/common/mortar_fire.wav"
 
-ENT.TurretHeight		= 0
-ENT.TurretFloatHeight	= 0
-ENT.TurretModelOffset	= Vector(0,0,0)
-ENT.TurretTurnMax		= 0.5
-ENT.BaseModel			= "models/gredwitch/pm41/pm41_tripod.mdl"
-ENT.Model				= "models/gredwitch/pm41/pm41_tube.mdl"
+ENT.MaxRotation			= Angle(35,45)
+ENT.HullModel			= "models/gredwitch/pm41/pm41_tripod.mdl"
+ENT.TurretModel			= "models/gredwitch/pm41/pm41_tube.mdl"
+ENT.DefaultPitch		= 30
 ENT.EmplacementType     = "Mortar"
-ENT.MaxUseDistance		= 80
+
+ENT.AmmunitionTypes		= {
+						{"HE","gb_shell_82mm"},
+						{"Smoke","gb_shell_82mm"}
+}
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -39,18 +36,4 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn()
 	ent:Activate()
 	return ent
-end
-
-function ENT:SwitchAmmoType(plr)
-	if self.NextSwitch > CurTime() then return end
-	if self.AmmoType == "HE" then
-		self.AmmoType = "Smoke"
-	elseif self.AmmoType == "Smoke" then
-		self.AmmoType = "HE"
-	end
-	net.Start("gred_net_message_ply")
-		net.WriteEntity(plr)
-		net.WriteString("["..self.NameToPrint.."] "..self.AmmoType.." shells selected")
-	net.Send(plr)
-	self.NextSwitch = CurTime()+0.2
 end

@@ -11,28 +11,28 @@ ENT.AdminSpawnable		= true
 ENT.NameToPrint			= "M5"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
-ENT.ShotInterval		= 4.8
-ENT.BulletType			= "gb_shell_76mm"
-ENT.MuzzleCount			= 1
-ENT.HasReloadAnim		= true
-ENT.AnimRestartTime		= 4.6
+ENT.ShotInterval		= 5.3
+ENT.AmmunitionTypes		= {
+						{"HE","gb_shell_76mm"},
+						{"AP","gb_shell_76mm"},
+						{"Smoke","gb_shell_76mm"}
+}
+ENT.ShootAnim			= "shoot"
+ENT.AnimRestartTime		= 4
 ENT.AnimPlayTime		= 1
 
-ENT.SoundName			= "shootM5"
 ENT.ShootSound			= "gred_emp/common/76mm.wav"
 
-ENT.TurretHeight		= 1
-ENT.TurretFloatHeight	= 0
-ENT.MaxUseDistance		= 100
-ENT.TurretModelOffset	= Vector(0,0,0)
+ENT.MaxRotation			= Angle(27,65)
 ENT.TurretTurnMax		= 0.7
-ENT.BaseModel			= "models/gredwitch/M5/M5_carriage.mdl"
-ENT.Model				= "models/gredwitch/M5/M5_gun.mdl"
-ENT.EmplacementType     = "AT"
-ENT.Scatter				= 0.1
+ENT.HullModel			= "models/gredwitch/M5/M5_carriage.mdl"
+ENT.TurretModel			= "models/gredwitch/M5/M5_gun.mdl"
+ENT.EmplacementType     = "Cannon"
+ENT.Spread				= 0.1
 
-ENT.Wheels				= "models/gredwitch/M5/M5_wheels.mdl"
-ENT.WheelsPos			= Vector(-13,0,-5)
+ENT.WheelsModel			= "models/gredwitch/M5/M5_wheels.mdl"
+ENT.WheelsPos			= Vector(0,13,-4)
+ENT.Ammo				= -1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

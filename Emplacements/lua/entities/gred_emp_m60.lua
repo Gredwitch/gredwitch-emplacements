@@ -10,30 +10,29 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
-ENT.MuzzleCount			= 1
-ENT.BulletType			= "wac_base_7mm"
+ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.092
-ENT.Color				= "Red"
+ENT.TracerColor			= "Red"
 
 ENT.ShootSound			= "gred_emp/m60/shoot.wav"
-ENT.HasStopSound		= true
-ENT.SoundName			= "shootM60"
-ENT.StopSoundName		= "gred_emp/m60/stop.wav"
+ENT.StopShootSound		= "gred_emp/m60/stop.wav"
+ENT.ReloadSound			= "gred_emp/m60/m60_reload.wav"
+ENT.ReloadEndSound		= "gred_emp/m60/m60_reloadend.wav"
 
-ENT.BaseModel			= "models/gredwitch/m60/m60_bipod.mdl"
-ENT.Model				= "models/gredwitch/m60/m60_gun.mdl"
-ENT.TurretTurnMax		= 0
-ENT.TurretHeight		= 7
-ENT.TurretTurnMax		= 0.7
+ENT.EmplacementType		= "MG"
+ENT.HullModel			= "models/gredwitch/m60/m60_bipod.mdl"
+ENT.TurretModel			= "models/gredwitch/m60/m60_gun.mdl"
 
 ENT.Ammo				= 300
-ENT.CurAmmo				= ENT.Ammo
-ENT.HasNoAmmo			= false
-ENT.EndReloadSnd		= "M60ReloadEnd"
-
-ENT.Recoil				= 2000
-ENT.ReloadTime			= 4.07 - 1.3
+ENT.ReloadTime			= 2.77
 ENT.CycleRate			= 0.4
+
+------------------------
+
+ENT.TurretPos			= Vector(0,0,7)
+ENT.SightPos			= Vector(0.41,-31,5)
+ENT.MaxRotation			= Angle(30,45)
+ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -45,35 +44,15 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
-
-local created = false
-
-sound.Add( {
-	name = "M60Reload",
-	channel = CHAN_WEAPON,
-	volume = 1.0,
-	level = 60,
-	pitch = {100},
-	sound = "gred_emp/m60/m60_reload.wav"
-} )
-sound.Add( {
-	name = ENT.EndReloadSnd,
-	channel = CHAN_WEAPON,
-	volume = 1.0,
-	level = 60,
-	pitch = {100},
-	sound = "gred_emp/m60/m60_reloadend.wav"
-} )
-
-function ENT:ReloadMG(ply)
-	if self.IsReloading then return end
-	self.IsReloading = true
+function ENT:Reload(ply)
+	
 	self:ResetSequence(self:LookupSequence("reload"))
-	self:EmitSound("M60Reload")
+	self.sounds.reload:Stop()
+	self.sounds.reload:Play()
+	self:SetIsReloading(true)
 	
 	timer.Simple(0.9, function()
 		if !IsValid(self) then return end
-		if created then return end
 		self:SetBodygroup(1,1) -- Ammo bag hidden
 		self:SetBodygroup(2,1)
 		
@@ -87,17 +66,14 @@ function ENT:ReloadMG(ply)
 		
 		self.MagIn = false
 		
-		if self.CurAmmo >= 0 then prop:SetBodygroup(1,1) end
+		if self:GetAmmo() >= 0 then prop:SetBodygroup(1,1) end
 		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
 		if t > 0 then
 			timer.Simple(t,function()
 				if IsValid(prop) then prop:Remove() end 
 			end)
 		end
-		created = true
 	end)
-	
-	created = false
 	
 	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
 		timer.Simple(1.5,function() 
@@ -106,29 +82,53 @@ function ENT:ReloadMG(ply)
 			self:SetBodygroup(2,0)
 			self:SetBodygroup(1,0)
 		end)
-		timer.Simple(self:SequenceDuration(),function() if !IsValid(self) then return end
-			self.CurAmmo = self.Ammo
-			self.tracer = 0
-			self.IsReloading = false
+		timer.Simple(self:SequenceDuration(),function()
+			if !IsValid(self) then return end
+			self:SetAmmo(self.Ammo)
+			self:SetIsReloading(false)
+			self:SetCurrentTracer(0)
 		end)
 	else
 		timer.Simple(1.3,function() 
 			if !IsValid(self) then return end
-			self:StopSound("M60Reload")
+			self.sounds.reload:Stop()
 			self:SetPlaybackRate(0)
 		end)
 	end
 end
 
-function ENT:AddOnThink()
+function ENT:OnTick()
 	if SERVER then
-		if !self.IsReloading or self.MagIn then 
+		if !self:GetIsReloading() or self.MagIn then 
 			self:SetBodygroup(1,0)
-			if self.CurAmmo <= 0 then
+			if self:GetAmmo() <= 0 then
 				self:SetBodygroup(2,1)
-			elseif self.CurAmmo >= 1 then
+			else
 				self:SetBodygroup(2,0)
 			end
 		end
 	end
 end
+
+local function CalcView(ply, pos, angles, fov)
+	if ply:GetViewEntity() != ply then return end
+	if ply.Gred_Emp_Ent then
+		if ply.Gred_Emp_Ent.ClassName == "gred_emp_m60" then
+			local ent = ply.Gred_Emp_Ent
+			if ent:GetShooter() != ply then return end
+			if IsValid(ent) then
+				if ent:GetViewMode() == 1 then
+					local ang = ent:GetAngles()
+					local view = {}
+					view.origin = ent:LocalToWorld(ent.SightPos)
+					view.angles = Angle(-ang.r,ang.y+90,ang.p)
+					view.fov = 35
+					view.drawviewer = false
+
+					return view
+				end
+			end
+		end
+	end
+end
+hook.Add("CalcView", "gred_emp_m60_view", CalcView)

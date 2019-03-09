@@ -11,26 +11,23 @@ ENT.AdminSpawnable		= false
 
 ENT.AnimRestartTime		= 0.05
 ENT.MuzzleEffect		= "muzzleflash_bar_3p"
-ENT.MuzzleCount			= 1
-ENT.BulletType			= "wac_base_20mm"
+ENT.AmmunitionType		= "wac_base_20mm"
 ENT.ShotInterval		= 0.01
-ENT.Color				= "Red"
-ENT.NoRecoil			= true
+ENT.TracerColor			= "Red"
+ENT.ShootAnim			= "spin"
 
+ENT.EmplacementType		= "MG"
 ENT.ShootSound			= "gred_emp/m61/gun.wav"
-ENT.SoundName			= "shootM61"
-ENT.HasStopSound		= true
-ENT.StopSoundName		= "gred_emp/m61/gun_stop.wav"
+ENT.StopShootSound		= "gred_emp/m61/gun_stop.wav"
 
-ENT.BaseModel			= "models/gredwitch/m61/m61_tripod.mdl"
-ENT.Model				= "models/gredwitch/m61/m61_gun.mdl"
-ENT.HasRotatingBarrel	= true
-ENT.TurretTurnMax		= 0
-ENT.TurretHeight		= 18.5
-ENT.MaxUseDistance		= 55
-ENT.CanLookArround		= true
-ENT.HasShellEject		= false
-ENT.TurretForward		= 4.4
+ENT.HullModel			= "models/gredwitch/m61/m61_tripod.mdl"
+ENT.TurretModel			= "models/gredwitch/m61/m61_gun.mdl"
+
+ENT.Ammo				= -1
+ENT.TurretPos			= Vector(0,4.4,18.5)
+
+ENT.SightPos			= Vector(0.15,-25,14.8)
+ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -41,3 +38,26 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Activate()
 	return ent
 end
+
+local function CalcView(ply, pos, angles, fov)
+	if ply:GetViewEntity() != ply then return end
+	if ply.Gred_Emp_Ent then
+		if ply.Gred_Emp_Ent.ClassName == "gred_emp_m61" then
+			local ent = ply.Gred_Emp_Ent
+			if ent:GetShooter() != ply then return end
+			if IsValid(ent) then
+				if ent:GetViewMode() == 1 then
+					local ang = ent:GetAngles()
+					local view = {}
+					view.origin = ent:LocalToWorld(ent.SightPos)
+					view.angles = Angle(-ang.r,ang.y+90,ang.p+1)
+					view.fov = 35
+					view.drawviewer = false
+
+					return view
+				end
+			end
+		end
+	end
+end
+hook.Add("CalcView", "gred_emp_m61_view", CalcView)

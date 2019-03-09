@@ -12,32 +12,28 @@ ENT.NameToPrint			= "M777"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4
-ENT.BulletType			= "gb_shell_155mm"
-ENT.MuzzleCount			= 1
-ENT.HasReloadAnim		= false
+ENT.AmmunitionTypes		= {
+						{"HE","gb_shell_155mm"},
+						{"Smoke","gb_shell_155mm"}
+}
+ENT.AnimPauseTime		= 1
 ENT.AnimRestartTime		= 4.4
 ENT.ShellEjectTime		= 0.2
 ENT.AnimPlayTime		= 0
-ENT.AmmoType			= "HE"
+ENT.ShootAnim			= "shoot"
 
-ENT.SoundName			= "shootM777"
 ENT.ShootSound			= "gred_emp/common/155mm.wav"
 ENT.ATReloadSound		= "big"
 
-ENT.TurretHeight		= 0
-ENT.TurretForward		= 10
-ENT.MaxUseDistance		= 100
-ENT.ShieldUp			= 21
-ENT.TurretTurnMax		= 0.7
-ENT.BaseModel			= "models/gredwitch/M777/M777_carriage.mdl"
-ENT.Model				= "models/gredwitch/M777/M777_gun.mdl"
-ENT.SecondModel			= "models/gredwitch/M777/M777_shield.mdl"
-ENT.CanLookArround		= true
-ENT.Seatable			= false
-ENT.EmplacementType     = "AT"
-ENT.Scatter				= 0.4
-ENT.HasShootAnim		= true
-ENT.NoRecoil			= true
+ENT.TurretPos			= Vector(0,-10,20)
+ENT.YawPos				= Vector(0,0,21)
+ENT.HullModel			= "models/gredwitch/M777/M777_carriage.mdl"
+ENT.TurretModel			= "models/gredwitch/M777/M777_gun.mdl"
+ENT.YawModel			= "models/gredwitch/M777/M777_shield.mdl"
+ENT.Ammo				= -1
+ENT.EmplacementType     = "Cannon"
+ENT.Spread				= 0.4
+ENT.AddShootAngle		= 4
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -47,18 +43,4 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn()
 	ent:Activate()
 	return ent
-end
-
-function ENT:SwitchAmmoType(plr)
-	if self.NextSwitch > CurTime() then return end
-	if self.AmmoType == "HE" then
-		self.AmmoType = "Smoke"
-	elseif self.AmmoType == "Smoke" then
-		self.AmmoType = "HE"
-	end
-	net.Start("gred_net_message_ply")
-		net.WriteEntity(plr)
-		net.WriteString("["..self.NameToPrint.."] "..self.AmmoType.." shells selected")
-	net.Send(plr)
-	self.NextSwitch = CurTime()+0.2
 end
