@@ -32,14 +32,14 @@ ENT.AimsightModel		= "models/gredwitch/flak36/flak36_aimsight.mdl"
 ENT.EmplacementType     = "MG"
 ENT.Seatable			= true
 ENT.Ammo				= -1
-ENT.ViewPos				= Vector(-8,-26,0)
+ENT.ViewPos				= Vector(45,25,40)
 ENT.TurretPos			= Vector(0,-2,24.6584)
 ENT.SightPos			= Vector(0,-37,39)
 ENT.MaxRotation			= Angle(-10)
 ENT.MaxViewModes		= 1
 ENT.CanSwitchTimeFuze	= true
 ENT.IsAAA				= true
-ENT.AimSightPos			= Vector(22.2,5,5)
+ENT.AimSightPos			= Vector(22,6,4.7)
 
 -- function ENT:AltShootAngles(ply)
 	-- local ang = ply:EyeAngles()
@@ -127,7 +127,8 @@ local function CalcView(ply, pos, angles, fov)
 				else
 					if seatValid then
 						local view = {}
-						view.origin = seat:LocalToWorld(ent.ViewPos)
+						local yaw = ent:GetYaw()
+						view.origin = yaw:GetPos() + yaw:GetForward()*ent.ViewPos.y + yaw:GetRight()*ent.ViewPos.x + yaw:GetUp()*ent.ViewPos.z --seat:LocalToWorld(ent.ViewPos)
 						view.angles = ang
 						view.fov = fov
 						view.drawviewer = false

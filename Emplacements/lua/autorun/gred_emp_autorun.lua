@@ -33,7 +33,7 @@ if CLIENT then
 	CreateClientConVar("gred_cl_emp_mouse_sensitivity","1", true,false)
 	CreateClientConVar("gred_cl_emp_mouse_invert_x","0", true,false)
 	CreateClientConVar("gred_cl_emp_mouse_invert_y","0", true,false)
-	CreateClientConVar("gred_cl_emp_volume","1", true,false)
+	-- CreateClientConVar("gred_cl_emp_volume","1", true,false)
 	
 	
 	net.Receive("gred_net_emp_reloadsounds",function()
@@ -118,7 +118,7 @@ if CLIENT then
 		
 		Panel:NumSlider( "Mouse sensitivity on emplacements with seats", "gred_cl_emp_mouse_sensitivity", 0, 0.99, 2 );
 		
-		Panel:NumSlider( "Shoot sound volume", "gred_cl_emp_volume", 0, 1, 2 );
+		-- Panel:NumSlider( "Shoot sound volume", "gred_cl_emp_volume", 0, 1, 2 );
 		
 		Panel:AddControl( "CheckBox", { Label = "Invert X axis in seats?", Command = "gred_cl_emp_mouse_invert_x" } );
 		

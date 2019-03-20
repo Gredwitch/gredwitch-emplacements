@@ -34,7 +34,7 @@ ENT.AimsightModel		= "models/gredwitch/breda35/breda35_aimsight.mdl"
 ENT.TurretModel			= "models/gredwitch/breda35/breda35_gun.mdl"
 ENT.TurretPos			= Vector(0,3.63057,24)
 ENT.MaxRotation			= Angle(-20)
-ENT.ViewPos				= Vector(-30,0,0)
+ENT.ViewPos				= Vector(32,0,35)
 ENT.IsAAA				= true
 ENT.CanSwitchTimeFuze	= true
 ENT.MaxViewModes		= 1
@@ -104,7 +104,8 @@ local function CalcView(ply, pos, angles, fov)
 				else
 					if seatValid then
 						local view = {}
-						view.origin = seat:LocalToWorld(ent.ViewPos)
+						local yaw = ent:GetYaw()
+						view.origin = yaw:GetPos() + yaw:GetForward()*ent.ViewPos.y + yaw:GetRight()*ent.ViewPos.x + yaw:GetUp()*ent.ViewPos.z --seat:LocalToWorld(ent.ViewPos)
 						view.angles = ang
 						view.fov = fov
 						view.drawviewer = false

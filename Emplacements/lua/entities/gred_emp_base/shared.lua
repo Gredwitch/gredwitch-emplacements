@@ -161,7 +161,34 @@ function ENT:GrabTurret(ply)
 			self:SetPrevPlayerWeapon(wep:GetClass())
 		end
 		if self.Seatable then
+			if self.MaxViewModes > 0 then
+				if self.NameToPrint then
+					net.Start("gred_net_message_ply")
+						net.WriteEntity(ply)
+						net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom or the Crouch key to toggle aimsights")
+					net.Send(ply)
+				else
+					net.Start("gred_net_message_ply")
+						net.WriteEntity(ply)
+						net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom or the Crouch key to toggle aimsights")
+					net.Send(ply)
+				end
+			end
 			self:CreateSeat(ply)
+		else
+			if self.MaxViewModes > 0 then
+				if self.NameToPrint then
+					net.Start("gred_net_message_ply")
+						net.WriteEntity(ply)
+						net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom key to toggle aimsights")
+					net.Send(ply)
+				else
+					net.Start("gred_net_message_ply")
+						net.WriteEntity(ply)
+						net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom key to toggle aimsights")
+					net.Send(ply)
+				end
+			end
 		end
 	end
 end

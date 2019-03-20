@@ -40,6 +40,8 @@ ENT.Seatable			= true
 ENT.Ammo				= -1
 ENT.SightPos			= Vector(-1.3,30,23)
 ENT.AddShootAngle		= 2
+ENT.ViewPos				= Vector(6,6,30)
+ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -68,11 +70,12 @@ local function CalcView(ply, pos, angles, fov)
 			if ent:GetClass() == "gred_emp_flak37" then
 				if ent:GetShooter() != ply then return end
 				seat = ent:GetSeat()
-				if !IsValid(seat) then return end
+				local seatValid = IsValid(seat)
+				if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
 				local a = ent:GetAngles()
-				local ang = Angle(-a.r+0.5,a.y+90,a.p)
+				local ang = Angle(-a.r,a.y+90,a.p)
 				ang:Normalize()
-				if seat:GetThirdPersonMode() then
+				if (seatValid and seat:GetThirdPersonMode()) or ent:GetViewMode() == 1 then
 					local view = {}
 					
 					view.origin = ent:LocalToWorld(ent.SightPos)
@@ -82,13 +85,15 @@ local function CalcView(ply, pos, angles, fov)
 
 					return view
 				else
-					local view = {}
-					view.origin = ply:LocalToWorld(Vector(6,6,30))
-					view.angles = ang
-					view.fov = fov
-					view.drawviewer = false
-
-					return view
+					if seatValid then
+						local view = {}
+						view.origin = pos
+						view.angles = ang
+						view.fov = fov
+						view.drawviewer = false
+		 
+						return view
+					end
 				end
 			end
 		end
