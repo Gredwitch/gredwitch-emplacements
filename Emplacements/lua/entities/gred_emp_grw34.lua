@@ -32,6 +32,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 30
 	local ent = ents.Create(ClassName)
+ 	ent.Owner = ply
 	ent:SetPos(SpawnPos)
 	ent:SetSkin(math.random(0,2))
 	ent:Spawn()

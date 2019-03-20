@@ -21,7 +21,7 @@ ENT.AmmunitionTypes		= {
 }
 
 ENT.ShootSound			= "gred_emp/bofors/shoot.wav"
-ENT.StopShootSound		= "gred_emp/bofors/stop.wav"
+ENT.OnlyShootSound		= true
 
 ENT.HullModel			= "models/gredwitch/bofors/bofors_base.mdl"
 ENT.YawModel			= "models/gredwitch/bofors/bofors_shield.mdl"
@@ -41,6 +41,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 100
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:SetSkin(math.random(0,1))
 	ent.Spawner = ply
 	ent:Spawn()

@@ -1,80 +1,132 @@
 AddCSLuaFile()
-DEFINE_BASECLASS( "base_anim" )
-ENT.Spawnable		            	=	true
-ENT.AdminSpawnable		            =	true
 
-ENT.PrintName		                =	"[EMP]150mm Nebelwerfer 41"
-ENT.Author			                =	"Gredwitch"
-ENT.Contact			                =	"qhamitouche@gmail.com"
-ENT.Category                        =	"Gredwitch's Stuff"
-ENT.Model                         	=	"models/gredwitch/nebelwerfer/nebelwerfer_base.mdl"
-ENT.Mass							=	35
-ENT.ActivationSound                  =  "buttons/button14.wav"
+ENT.Type 				= "anim"
+ENT.Base 				= "gred_emp_base"
 
-if (SERVER) then
-	function ENT:SpawnFunction( ply, tr, ClassName )
-			if (  !tr.Hit ) then return end
-			local SpawnPos = tr.HitPos + tr.HitNormal * 16
-			local ent = ents.Create(ClassName)
-			ent:SetPos(SpawnPos)
-			ent:Spawn()
-			ent.Owner = self.Owner
-			ent:Activate()
-			return ent
-	end
+ENT.Category			= "Gredwitch's Stuff"
+ENT.PrintName 			= "[EMP]150mm Nebelwerfer 41"
 
-	function ENT:Initialize()
-		self:SetModel(self.Model)
-		self.Entity:PhysicsInit(SOLID_VPHYSICS)
-		self.Entity:SetMoveType(MOVETYPE_VPHYSICS)
-		self.Entity:SetSolid(SOLID_VPHYSICS)
-		self:SetUseType(SIMPLE_USE)
-		phys = self.Entity:GetPhysicsObject()
-		if (IsValid(phys)) then
-			phys:SetMass(self.Mass)
-			phys:Wake()
-		end
-		self.nextUse = 0
-		self:SetSkin(math.random(0,3))
-		nebelAng = self:GetAngles() + Angle(0,0,math.random(5,-45))
-		local nebelTubes = ents.Create("gred_emp_nebelwerfer_tubes")
-		nebelTubes:SetPos(self:GetPos() + Vector(0,0,43.8))
-		nebelTubes:SetAngles(nebelAng)
-		nebelTubes.Owner = self.Owner
-		nebelTubes.DefaultAng = nebelAng
-		nebelTubes:Spawn()
-		nebelTubes:Activate()
-		nebelTubes:SetSkin(self:GetSkin())
-		self.nebelTubes = nebelTubes
-		self:DeleteOnRemove(self.nebelTubes)
-		constraint.Axis(nebelTubes,self,0,0,Vector(0,0,0),self:WorldToLocal(nebelTubes:LocalToWorld(Vector(0,1,0))),0,0,10,1,Vector(90,0,0))
+ENT.Author				= "Gredwitch"
+ENT.Spawnable			= true
+ENT.AdminSpawnable		= false
+
+ENT.NameToPrint			= "Nebelwerfer"
+ENT.MuzzleEffect		= "ins_weapon_at4_frontblast"
+ENT.AmmunitionTypes		= {
+						{"HE","gb_rocket_nebel"},
+						{"Smoke","gb_rocket_nebel"}
+}
+ENT.ShotInterval		= 1
+
+ENT.ShootSound			= "gred_emp/common/empty.wav"
+
+ENT.HullModel			= "models/gredwitch/nebelwerfer/nebelwerfer_base.mdl"
+ENT.TurretModel			= "models/gredwitch/nebelwerfer/nebelwerfer_tubes.mdl"
+ENT.Sequential			= true
+
+ENT.EmplacementType		= "Cannon"
+ENT.Ammo				= 6
+ENT.TurretPos			= Vector(0,0,43.8)
+ENT.SightPos			= Vector(0,30,22)
+ENT.MaxViewModes		= 1
+ENT.OffsetAngle			= Angle(-1,180)
+ENT.MaxRotation			= Angle(27,45)
+
+ENT.SmokeExploSNDs		= {}
+ENT.SmokeExploSNDs[1]		=  "gred_emp/nebelwerfer/artillery_strike_smoke_close_01.wav"
+ENT.SmokeExploSNDs[2]		=  "gred_emp/nebelwerfer/artillery_strike_smoke_close_02.wav"
+ENT.SmokeExploSNDs[3]		=  "gred_emp/nebelwerfer/artillery_strike_smoke_close_03.wav"
+ENT.SmokeExploSNDs[4]		=  "gred_emp/nebelwerfer/artillery_strike_smoke_close_04.wav"
+
+function ENT:AddDataTables()
+	self:NetworkVar("Float",11,"MaxRange", { KeyName = "MaxRange", Edit = { type = "Float", order = 0,min = 0, max = 5, category = "Ammo"} } )
+	self:NetworkVar("Float",12,"ReloadTime", { KeyName = "ReloadTime", Edit = { type = "Float", order = 0,min = 0, max = 300, category = "Ammo"} } )
+	self:SetMaxRange(2)
+	self:SetReloadTime(10)
+end
+
+function ENT:SpawnFunction( ply, tr, ClassName )
+	if (  !tr.Hit ) then return end
+	local SpawnPos = tr.HitPos + tr.HitNormal * 16
+	local ent = ents.Create(ClassName)
+	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
+	ent:Spawn()
+	ent:Activate()
+	return ent
+end
+
+function ENT:PlayAnim()
+	self:SetIsReloading(true)
+	timer.Simple(self:GetReloadTime(),function()
+		self:SetAmmo(self.Ammo)
+		self:SetIsReloading(false)
+	end)
+end
+
+function ENT:InitAttachments()
+	local attachments = self:GetAttachments()
+	local tableinsert = table.insert
+	local startsWith = string.StartWith
+	local t
+	for k,v in pairs(attachments) do
+		if startsWith(v.name,"rocket") then
+			t = self:GetAttachment(self:LookupAttachment(v.name))
+			t.Pos = self:WorldToLocal(t.Pos)
+			t.Ang = self:WorldToLocalAngles(t.Ang)
+			tableinsert(self.TurretMuzzles,t)
+			
+		elseif startsWith(v.name,"shelleject") then
 		
-	end
-elseif (CLIENT) then
-	function ENT:Draw()
-		self:DrawModel()
-	end
-end
-
-function ENT:Use(activator, caller)
-	if self.nextUse>CurTime() then return end
-	self.nextUse = CurTime()+0.5
-	
-	if !self.nebelTubes.Smoke then
-		self.nebelTubes.Smoke = true
-		self:EmitSound(self.ActivationSound)
-		activator:ChatPrint("[NEBELWERFER] Smoke rockets selected")
-	elseif self.nebelTubes.Smoke then
-		self.nebelTubes.Smoke = false
-		self:EmitSound(self.ActivationSound)
-		activator:ChatPrint("[NEBELWERFER] HE rockets selected")
-	end
-end
-
-function ENT:Think()
-	if SERVER then
-		if not IsValid(self.nebelTubes) then
-			self:Remove()
+			t = self:GetAttachment(self:LookupAttachment(v.name))
+			t.Pos = self:WorldToLocal(t.Pos)
+			t.Ang = self:WorldToLocalAngles(t.Ang)
+			tableinsert(self.TurretEjects,t)
 		end
 	end
 end
+
+function ENT:InitAttachmentsCL()
+	local tableinsert = table.insert
+	local startsWith = string.StartWith
+	local t
+	for k,v in pairs(self:GetAttachments()) do
+		if startsWith(v.name,"rocket") then
+		
+			t = self:GetAttachment(self:LookupAttachment(v.name))
+			t.Pos = self:WorldToLocal(t.Pos)
+			t.Ang = self:WorldToLocalAngles(t.Ang)
+			tableinsert(self.TurretMuzzles,t)
+			
+		elseif startsWith(v.name,"shelleject") then
+		
+			t = self:GetAttachment(self:LookupAttachment(v.name))
+			t.Pos = self:WorldToLocal(t.Pos)
+			t.Ang = self:WorldToLocalAngles(t.Ang)
+			tableinsert(self.TurretEjects,t)
+		end
+	end
+end
+
+local function CalcView(ply, pos, angles, fov)
+	if ply:GetViewEntity() != ply then return end
+	if ply.Gred_Emp_Ent then
+		if ply.Gred_Emp_Ent.ClassName == "gred_emp_nebelwerfer" then
+			local ent = ply.Gred_Emp_Ent
+			if ent:GetShooter() != ply then return end
+			if IsValid(ent) then
+				if ent:GetViewMode() == 1 then
+					local ang = ent:GetAngles()
+					local view = {}
+					view.origin = ent:LocalToWorld(ent.SightPos)
+					view.angles = Angle(ang.r,ang.y+270,ang.p)
+					view.fov = 35
+					view.drawviewer = false
+
+					return view
+				end
+			end
+		end
+	end
+end
+hook.Add("CalcView", "gred_emp_nebelwerfer_view", CalcView)

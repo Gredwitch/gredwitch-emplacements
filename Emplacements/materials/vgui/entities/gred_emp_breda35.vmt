@@ -1,0 +1,7 @@
+"UnlitGeneric"
+{
+	"$basetexture"			"VGUI/entities/gred_emp_breda35.vmt"
+	"$vertexcolor" 			1
+	"$vertexalpha" 			1
+	"$nolod" 				1
+}

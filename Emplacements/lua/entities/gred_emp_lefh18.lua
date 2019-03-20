@@ -11,7 +11,7 @@ ENT.AdminSpawnable		= true
 ENT.NameToPrint			= "LeFH18"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
-ENT.ShotInterval		= 4
+ENT.ShotInterval		= 5
 ENT.AmmunitionTypes		= {
 						{"HE","gb_shell_105mm"},
 						{"Smoke","gb_shell_105mm"}
@@ -19,7 +19,7 @@ ENT.AmmunitionTypes		= {
 ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 4.4
 ENT.AnimPlayTime		= 1
-ENT.ShellLoadTime		= 2
+ENT.ShellLoadTime		= 1.5
 
 ENT.ShootSound			= "gred_emp/common/105mm_axis.wav"
 ENT.ATReloadSound		= "big"
@@ -39,6 +39,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 36
 	local ent = ents.Create(ClassName)
+ 	ent.Owner = ply
 	ent:SetPos(SpawnPos)
 	ent:SetSkin(math.random(0,2))
 	ent:Spawn()

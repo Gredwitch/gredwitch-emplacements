@@ -12,14 +12,14 @@ ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Flak 37"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
-ENT.ShotInterval		= 5
+ENT.ShotInterval		= 4.5
 ENT.AmmunitionTypes		= {
 						{"HE","gb_shell_88mm"},
 						{"AP","gb_shell_88mm"},
 						{"Smoke","gb_shell_88mm"}
 }
 
-ENT.ShellLoadTime		= 1.7
+ENT.ShellLoadTime		= 1.2
 ENT.AnimPlayTime		= 1
 ENT.AnimPauseTime		= 0.3
 ENT.ATReloadSound		= "big"
@@ -35,9 +35,10 @@ ENT.YawModel			= "models/gredwitch/flak37/flak37_shield.mdl"
 ENT.TurretModel			= "models/gredwitch/flak37/flak37_gun.mdl"
 ENT.EmplacementType     = "Cannon"
 ENT.Spread				= 0.1
+ENT.MaxRotation			= Angle(-20)
 ENT.Seatable			= true
 ENT.Ammo				= -1
-ENT.SightPos			= Vector(0,0,0)
+ENT.SightPos			= Vector(-1.3,30,23)
 ENT.AddShootAngle		= 2
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -45,6 +46,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 100
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()
@@ -68,7 +70,7 @@ local function CalcView(ply, pos, angles, fov)
 				seat = ent:GetSeat()
 				if !IsValid(seat) then return end
 				local a = ent:GetAngles()
-				local ang = Angle(-a.r,a.y+90,a.p)
+				local ang = Angle(-a.r+0.5,a.y+90,a.p)
 				ang:Normalize()
 				if seat:GetThirdPersonMode() then
 					local view = {}
@@ -81,7 +83,7 @@ local function CalcView(ply, pos, angles, fov)
 					return view
 				else
 					local view = {}
-					view.origin = pos
+					view.origin = ply:LocalToWorld(Vector(6,6,30))
 					view.angles = ang
 					view.fov = fov
 					view.drawviewer = false

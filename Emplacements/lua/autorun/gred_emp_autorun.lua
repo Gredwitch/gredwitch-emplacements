@@ -5,8 +5,6 @@ local CreateConVar = CreateConVar
 
 gred = gred or {}
 
-CreateConVar("gred_sv_nebel_reloadtime"				,  "10" , GRED_SVAR)
-CreateConVar("gred_sv_nebel_range_divider"			,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_carriage_collision"			,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_shell_remove_time"			,  "10" , GRED_SVAR)
 CreateConVar("gred_sv_limitedammo"					,  "1"  , GRED_SVAR)
@@ -35,15 +33,12 @@ if CLIENT then
 	CreateClientConVar("gred_cl_emp_mouse_sensitivity","1", true,false)
 	CreateClientConVar("gred_cl_emp_mouse_invert_x","0", true,false)
 	CreateClientConVar("gred_cl_emp_mouse_invert_y","0", true,false)
+	CreateClientConVar("gred_cl_emp_volume","1", true,false)
 	
-
-	local shouldBlockAttack=false
+	
 	net.Receive("gred_net_emp_reloadsounds",function()
 		local self = net.ReadEntity()
-		self.ShootSound = net.ReadString()
-		self.StopShootSound = net.ReadString()
-		
-		self:ReloadSounds()
+		self.ShotInterval = net.ReadFloat()
 	end)
 	
 	hook.Add("AdjustMouseSensitivity", "gred_emp_mouse", function(s)
@@ -62,7 +57,7 @@ if CLIENT then
 		local ent = ply.Gred_Emp_Ent
 		if not IsValid(ent) then ply.Gred_Emp_Ent = nil return end
 		if string.StartWith(ent.ClassName,"gred_emp") then
-			if IsValid(ent:GetSeat()) then
+			if IsValid(ent:GetSeat()) or ent:GetViewMode() != 0 then
 				if ply == ent:GetShooter() then
 					local InvertX = GetConVar("gred_cl_emp_mouse_invert_x"):GetInt() == 1
 					local InvertY = GetConVar("gred_cl_emp_mouse_invert_Y"):GetInt() == 1
@@ -79,26 +74,6 @@ if CLIENT then
 					cmd:SetViewAngles( angle )
                    
 					return true
-				end
-			else
-				if ent:GetViewMode() != 0 then
-					if ply == ent:GetShooter() then
-						local InvertX = GetConVar("gred_cl_emp_mouse_invert_x"):GetInt() == 1
-						local InvertY = GetConVar("gred_cl_emp_mouse_invert_Y"):GetInt() == 1
-						if InvertX then
-							angle.yaw = angle.yaw + x / 50
-						else
-							angle.yaw = angle.yaw - x / 50
-						end
-						if InvertY then
-							angle.pitch = math.Clamp( angle.pitch - y / 50, -89, 89 )
-						else
-							angle.pitch = math.Clamp( angle.pitch + y / 50, -89, 89 )
-						end
-						cmd:SetViewAngles( angle )
-
-						return true
-					end
 				end
 			end
 		end
@@ -133,10 +108,6 @@ if CLIENT then
 		
 		Panel:AddControl( "CheckBox", { Label = "Should the emplacements explode?", Command = "gred_sv_enable_explosions" } );
 		
-		Panel:NumSlider( "Nebelwerfer reload time", "gred_sv_nebel_reloadtime", 0, 60, 0 );
-		
-		Panel:NumSlider( "Nebelwerfer range divider", "gred_sv_nebel_range_divider", 0, 10, 2 );
-		
 		Panel:NumSlider( "Shell arrival time (for mortars)", "gred_sv_shell_arrival_time", 0, 10, 2 );
 		
 		Panel:NumSlider( "Shell casing remove time", "gred_sv_shell_remove_time", 0, 120, 0 );
@@ -146,6 +117,8 @@ if CLIENT then
 		end
 		
 		Panel:NumSlider( "Mouse sensitivity on emplacements with seats", "gred_cl_emp_mouse_sensitivity", 0, 0.99, 2 );
+		
+		Panel:NumSlider( "Shoot sound volume", "gred_cl_emp_volume", 0, 1, 2 );
 		
 		Panel:AddControl( "CheckBox", { Label = "Invert X axis in seats?", Command = "gred_cl_emp_mouse_invert_x" } );
 		

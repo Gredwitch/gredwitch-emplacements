@@ -12,6 +12,7 @@ ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "ZU-23-2"
 
 ENT.Sequential			= true
+-- ENT.SeatAngle			= Angle(0,0,0)
 ENT.MuzzleEffect		= "muzzleflash_bar_3p"
 ENT.ShotInterval		= 0.06
 ENT.AmmunitionTypes		= {
@@ -20,11 +21,12 @@ ENT.AmmunitionTypes		= {
 }
 ENT.TracerColor			= "Green"
 
-ENT.ShootSound			= "gred_emp/flakvierling38/20mm_shoot.wav"
-ENT.StopShootSound		= "gred_emp/flakvierling38/20mm_stop.wav"
+ENT.OnlyShootSound		= true
+ENT.ShootSound			= "gred_emp/common/20mm_01.wav"
 
 
-ENT.Seatable			= true
+ENT.MaxUseDistance		= 200
+-- ENT.Seatable			= true
 ENT.EmplacementType     = "MG"
 ENT.Ammo				= -1
 ENT.HullModel			= "models/gredwitch/zsu23/zsu23_turret.mdl"
@@ -35,6 +37,7 @@ ENT.MaxRotation			= Angle(-10)
 ENT.IsAAA				= true
 ENT.CanSwitchTimeFuze	= true
 ENT.SightPos			= Vector(1,70,10)
+ENT.ViewPos				= Vector(-30,0,0)
 ENT.MaxViewModes		= 1
 
 
@@ -43,6 +46,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 16
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()
@@ -56,13 +60,13 @@ local function CalcView(ply, pos, angles, fov)
 		if IsValid(ent) then
 			if ent:GetClass() == "gred_emp_zsu23" then
 				if ent:GetShooter() != ply then return end
-				seat = ent:GetSeat()
-				local seatValid = IsValid(seat)
-				if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
+				-- seat = ent:GetSeat()
+				-- local seatValid = IsValid(seat)
+				-- if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
 				local a = ent:GetAngles()
 				local ang = Angle(-a.r,a.y+90,a.p)
 				ang:Normalize()
-				if (seatValid and seat:GetThirdPersonMode()) or ent:GetViewMode() == 1 then
+				if --[[(seatValid and seat:GetThirdPersonMode()) or]] ent:GetViewMode() == 1 then
 					local view = {}
 					
 					view.origin = ent:LocalToWorld(ent.SightPos)
@@ -71,16 +75,16 @@ local function CalcView(ply, pos, angles, fov)
 					view.drawviewer = true
 
 					return view
-				else
-					if seatValid then
-						local view = {}
-						view.origin = pos
-						view.angles = ang
-						view.fov = fov
-						view.drawviewer = false
+				-- else
+					-- if seatValid then
+						-- local view = {}
+						-- view.origin = seat:LocalToWorld(ent.ViewPos)
+						-- view.angles = ang
+						-- view.fov = fov
+						-- view.drawviewer = false
 
-						return view
-					end
+						-- return view
+					-- end
 				end
 			end
 		end

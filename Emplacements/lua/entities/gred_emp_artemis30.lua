@@ -20,8 +20,8 @@ ENT.AmmunitionTypes		= {
 						{"Time-fuzed","wac_base_30mm"},
 }
 
-ENT.ShootSound			= "gred_emp/artemis30/shoot.wav"
-ENT.StopShootSound		= "gred_emp/artemis30/stop.wav"
+ENT.OnlyShootSound		= true
+ENT.ShootSound			= "gred_emp/common/20mm_01.wav"
 
 ENT.TurretPos			= Vector(0,0,64)
 ENT.Ammo				= -1
@@ -42,6 +42,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 16
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()

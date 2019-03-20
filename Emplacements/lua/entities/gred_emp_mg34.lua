@@ -14,6 +14,7 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.067
 ENT.TracerColor			= "Green"
 
+ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/mg34/shoot.wav"
 ENT.ReloadSound			= "gred_emp/mg34/mg34_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/mg34/mg34_reloadend.wav"
@@ -36,6 +37,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 7
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
 	ent:SetModelScale(1.1)
@@ -92,7 +94,7 @@ function ENT:Reload(ply)
 end
 
 function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or self.MagIn) then
+	if SERVER and !self:GetIsReloading() then
 		if self:GetAmmo() <= 0 then 
 			self:SetBodygroup(4,1)
 		else

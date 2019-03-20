@@ -40,9 +40,13 @@ if SERVER then
 			if self:IsPlayerHolding() then return end
 			local ct = CurTime()
 			if self.NextUse >= ct then return end
+			local ang = self:GetAngles()
+			ang.p = 0
+			ang.r = 0
+			self:SetAngles(ang)
 			ply:PickupObject(self)
 			self.PlyPickup = ply
-			self.NextUse = ct + 0.1
+			self.NextUse = ct + 0.3
 		end
 	end
 

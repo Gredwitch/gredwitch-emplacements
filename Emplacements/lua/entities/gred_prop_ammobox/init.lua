@@ -145,6 +145,19 @@ net.Receive("gred_net_ammobox_sv_createshell",function()
 		local ply = net.ReadEntity()
 		
 		local ent = ents.Create(shell)
+		if not string.StartWith(shell,"gb_shell") then
+			ent.Use = function(self,activator,caller)
+				local ct = CurTime()
+				self.NextUse = self.NextUse or 0
+				if self.NextUse >= ct then return end
+				if(self.Exploded) then return end
+				if(self.Dumb) then return end
+				if self:IsPlayerHolding() then return end
+				activator:PickupObject(self)
+				self.PlyPickup = activator
+				self.NextUse = ct + 0.1
+			end
+		end
 		ent:SetPos(self:GetPos() + Vector(0,0,70))
 		ent.AP = AP
 		ent.Smoke = Smoke

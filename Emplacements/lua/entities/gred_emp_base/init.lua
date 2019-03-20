@@ -56,6 +56,7 @@ function ENT:Initialize()
 	if self.Seatable then
 		self.Seatable = GetConVar("gred_sv_enable_seats"):GetInt() == 1
 	end
+	self.IsRocketLauncher = string.StartWith(self.AmmunitionType or self.AmmunitionTypes[1][2],"gb_rocket")
 	self.Initialized = true
 end
 
@@ -228,31 +229,34 @@ end
 
 local reachSky = Vector(0,0,9999999999)
 function ENT:CalcMortarCanShoot(ply,ct)
-	local tr = util.QuickTrace(self.TurretMuzzles[1].Pos,self.TurretMuzzles[1].Pos + reachSky,self.Entities)
+	local tr = util.QuickTrace(self:LocalToWorld(self.TurretMuzzles[1].Pos),reachSky,self.Entities)
 	local canShoot = true
 	local botmode = self:GetBotMode()
-	
+	self.Time_Mortar = self.Time_Mortar or 0
 	if tr.Hit and !tr.HitSky then
 		canShoot = false
 		noHitSky = true
-		if !botmode and ct >= self:GetNextShot() then
+		if !botmode and self.Time_Mortar <= ct then
 			net.Start("gred_net_message_ply")
 				net.WriteEntity(ply)
 				net.WriteString("["..self.NameToPrint.."] Nothing must block the mortar's muzzle!")
 			net.Send(ply)
+			self.Time_Mortar = ct + 1
 		end
 	else
 		noHitSky = false
 		local ang = self:GetAngles() - self:GetHull():GetAngles()
 		ang:Normalize()
-		canShoot = not (ang.y > self.MaxRotation.y or ang.y < -self.MaxRotation.y)
+		canShoot = not (ang.y >= self.MaxRotation.y or ang.y-0.1 <= -self.MaxRotation.y)
+		-- canShoot = not (ang.y > self.MaxRotation.y or ang.y < -self.MaxRotation.y)
 		
 		if !canShoot then
-			if !botmode and ct >= self:GetNextShot() then
+			if !botmode and self.Time_Mortar <= ct then
 				net.Start("gred_net_message_ply")
 					net.WriteEntity(ply)
 					net.WriteString("["..self.NameToPrint.."] You can't shoot there!")
 				net.Send(ply)
+				self.Time_Mortar = ct + 1
 			end
 		else
 			if botmode then
@@ -265,11 +269,12 @@ function ENT:CalcMortarCanShoot(ply,ct)
 			local tr = util.QuickTrace(shootPos,shootPos + reachSky,self.Entities)
 			if tr.Hit and !tr.HitSky and !tr.Entity == self:GetTarget() then
 				canShoot = false
-				if !botmode and ct >= self:GetNextShot() then
+				if !botmode and self.Time_Mortar <= ct then
 					net.Start("gred_net_message_ply")
 						net.WriteEntity(ply)
 						net.WriteString("["..self.NameToPrint.."] You can't shoot in interiors!")
 					net.Send(ply)
+					self.Time_Mortar = ct + 1
 				end
 			end
 		end
@@ -415,24 +420,57 @@ function ENT:FireMG(ply,ammo,muzzle)
 end
 
 function ENT:FireCannon(ply,ammo,muzzle)
-	util.ScreenShake(self:GetPos(),5,5,0.5,200)
-	local pos = self:LocalToWorld(muzzle.Pos)
+	
+	local pos = self:GetPos()
+	util.ScreenShake(pos,5,5,0.5,200)
+	local effectdata = EffectData()
+	effectdata:SetOrigin(pos-Vector(0,0,10))
+	effectdata:SetAngles(Angle(90,0,0))
+	effectdata:SetFlags(table.KeyFromValue(gred.Particles,"gred_mortar_explosion_smoke_ground"))
+	util.Effect("gred_particle_simple",effectdata)
+	
+	util.ScreenShake(pos,5,5,0.5,200)
+	pos = self:LocalToWorld(muzzle.Pos)
 	local ang = self:LocalToWorldAngles(muzzle.Ang) + self.ShootAngleOffset
 	
 	local curShell = self:GetAmmoType()
 	local ammotype = self.AmmunitionTypes[curShell][1]
 	local b = ents.Create(self.AmmunitionType or self.AmmunitionTypes[curShell][2])
-	ang:Sub(Angle(self.AddShootAngle or 2,-90,0)) -- + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
+	ang:Sub(Angle(self:GetBotMode() and (self.AddShootAngle or 2) + 2 or (self.AddShootAngle or 2),-90,0)) -- + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
 	b:SetPos(pos)
 	b:SetAngles(ang)
 	b:Spawn()
 	b:SetBodygroup(0,1)
 	b.IsOnPlane = true
 	b:SetBodygroup(1,1)
+	b.Parent = self
+	b.AddOnThink = function(self)
+		-- print(self:GetAngles().p,self.Parent.AddShootAngle or 2)
+			-- print("DIST = ",self:GetPos():Distance(self.Parent:GetPos()))
+			-- print("VEL = ",self:GetVelocity():Length())
+			-- print("VAL = ",self.Val)
+	end
+	if self.IsRocketLauncher then
+		b.FuelBurnoutTime = self:GetMaxRange()
+	end
 	if ammotype == "AP" then
 		b.AP = true
 	elseif ammotype == "Smoke" then
 		b.Smoke = true
+		if self.IsRocketLauncher then
+			b.Effect = "doi_smoke_artillery"
+			b.EffectAir = "doi_smoke_artillery"
+			b.ExplosionRadius = 0
+			b.ExplosionDamage = 0
+			b.SpecialRadius = 0
+			b.PhysForce = 0
+			b.RSound = 1
+			b.DEFAULT_PHYSFORCE                = 0
+			b.DEFAULT_PHYSFORCE_PLYAIR         = 0
+			b.DEFAULT_PHYSFORCE_PLYGROUND      = 0
+			b.ExplosionSound = table.Random(self.SmokeExploSNDs)
+			b.WaterExplosionSound = table.Random(self.SmokeExploSNDs)
+		end
 	end
 	b:SetOwner(ply)
 	b:Activate()
@@ -480,37 +518,65 @@ function ENT:Reload()
 
 end
 
-function ENT:PlayAnim()
+function ENT:CreateSeat(ply)
+	local seat = ents.Create("prop_vehicle_prisoner_pod")
+	local yaw = self:GetYaw()
+	local a = yaw:LookupAttachment("seat")
+	local att = yaw:GetAttachment(a)
 	
-	if self.AnimPlaying then print("NOT ANIMPLAYING") return end
+	-- local ang = Angle(att.Ang + self.SeatAngle)
+	-- ang:Normalize()
+	-- seat:SetAngles(ang)
+	
+	-- seat:SetAngles(yaw:LocalToWorldAngles(att.Ang))
+	seat:SetPos(att.Pos-Vector(0,0,5))
+	seat:SetModel("models/nova/airboat_seat.mdl")
+	seat:SetKeyValue("vehiclescript", "scripts/vehicles/prisoner_pod.txt")
+	seat:SetKeyValue("limitview","0")
+	seat:Spawn()
+	seat:Activate()
+	seat:PhysicsInit	  (SOLID_NONE)
+	seat:SetRenderMode	  (RENDERMODE_NONE)
+	seat:SetSolid		  (SOLID_NONE)
+	seat:SetCollisionGroup(COLLISION_GROUP_WORLD)
+	seat:SetParent(yaw,a)
+	self:SetSeat(seat)
+	ply:EnterVehicle(seat)
+	ply:CrosshairEnable()
+end
+
+function ENT:PlayAnim()
+	if self:GetIsReloading() then print("NOT ANIMPLAYING") return end
 	self.sounds.reload_finish:Stop()
 	self.sounds.reload_start:Stop()
 	self.sounds.reload_shell:Stop()
 	
 	local manualReload = GetConVar("gred_sv_manual_reload"):GetInt() == 1
+	self:SetIsReloading(false)
 	self:SetAmmo(0)
 	timer.Simple(self.AnimPlayTime,function()
 		if !IsValid(self) then return end
-		self:ResetSequence("reload_start")
+		self:ResetSequence("reload")
 		self.sounds.reload_start:Play()
-		self.AnimPlaying = true
-	
-		if not manualReload then
-			timer.Simple(self.ShellLoadTime or 2,function()
+		self:SetIsReloading(true)
+		if manualReload then
+			timer.Simple(self.AnimPauseTime,function() 
+				self:SetCycle(.5)
+				self:SetPlaybackRate(0) 
+			end)
+		else
+			timer.Simple(self.ShellLoadTime or self.AnimRestartTime/2,function()
 				if !IsValid(self) then return end
 				self.sounds.reload_shell:Play()
 			end)
+			timer.Simple(self:SequenceDuration()-0.6,function() 
+				if !IsValid(self) then return end
+				self.sounds.reload_finish:Play()
+				timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function()
+					self:SetIsReloading(false)
+				end)
+			end)
 		end
-	end)
-	if manualReload then return end
-	
-	timer.Simple(self.AnimRestartTime,function()
-		if !IsValid(self) then return end
-		self:ResetSequence("reload_finish")
-		self.sounds.reload_finish:Play()
-		timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function()
-			self.AnimPlaying = false
-		end)
 	end)
 end
 

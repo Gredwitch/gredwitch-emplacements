@@ -14,8 +14,8 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.12
 ENT.TracerColor			= "Red"
 
+ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/bren/shoot.wav"
-ENT.StopShootSound		= "gred_emp/bren/stop.wav"
 ENT.ReloadSound			= "gred_emp/bren/bren_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/bren/bren_reloadend.wav"
 ENT.EmplacementType		= "MG"
@@ -36,6 +36,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 10
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
 	ent:SetModelScale(1.1)
@@ -93,7 +94,7 @@ end
 
 function ENT:OnTick()
 	if SERVER then
-		if !self:GetIsReloading() or self.MagIn then 
+		if !self:GetIsReloading() then 
 			self:SetBodygroup(1,0)
 			local ammo = self:GetAmmo()
 			if ammo <= 0 then

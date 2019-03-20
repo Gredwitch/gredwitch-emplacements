@@ -11,7 +11,7 @@ ENT.AdminSpawnable		= true
 ENT.NameToPrint			= "ZiS-2"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
-ENT.ShotInterval		= 4.8
+ENT.ShotInterval		= 5.5
 ENT.AmmunitionTypes		= {
 						{"HE","gb_shell_57mm"},
 						{"AP","gb_shell_57mm"},
@@ -21,6 +21,7 @@ ENT.ShootAnim			= "shoot"
 
 ENT.AnimRestartTime		= 4.5
 ENT.AnimPlayTime		= 1.1
+ENT.ShellLoadTime		= 1.7
 
 ENT.ShootSound			= "gred_emp/common/50mm.wav"
 
@@ -38,6 +39,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 41
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
 	ent:SetSkin(math.random(0,4))

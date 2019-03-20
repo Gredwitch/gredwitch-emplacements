@@ -14,8 +14,8 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.075
 ENT.TracerColor			= "Red"
 
-ENT.ShootSound			= "gred_emp/fnmag/fnamg_shoot.wav"
-ENT.StopShootSound		= "gred_emp/fnmag/fnmag_stop.wav"
+ENT.OnlyShootSound		= true
+ENT.ShootSound			= "gred_emp/fnmag/shoot.wav"
 ENT.ReloadSound			= "gred_emp/fnmag/fnmag_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/fnmag/fnmag_reloadend.wav"
 
@@ -35,6 +35,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 30
 	local ent = ents.Create(ClassName)
+ 	ent.Owner = ply
 	ent:SetPos(SpawnPos)
 	ent:Spawn()
 	ent:Activate()
@@ -99,7 +100,7 @@ function ENT:OnTick()
 		self:SetBodygroup(1,0) -- Gun
 		self:SetBodygroup(5,0) -- Lid
 		self:SetBodygroup(6,0) -- Mag Base
-		if self.MagIn or !self:GetIsReloading() then
+		if !self:GetIsReloading() then
 			self:SetBodygroup(2,0) -- Ammo bag shown
 			if self:GetAmmo() <= 0 then
 				self:SetBodygroup(7,2) -- Ammo belt hidden

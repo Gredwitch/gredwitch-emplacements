@@ -18,8 +18,8 @@ ENT.AmmunitionTypes		= {
 						{"Fast fire","wac_base_7mm"},
 }
 
-ENT.ShootSound			= "gred_emp/bar/shoot_slow.wav"
-ENT.StopShootSound		= "gred_emp/bar/stop_slow.wav"
+ENT.OnlyShootSound		= true
+ENT.ShootSound			= "gred_emp/bar/shoot.wav"
 ENT.ReloadSound			= "gred_emp/bar/bar_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/bar/bar_reloadend.wav"
 ENT.EmplacementType		= "MG"
@@ -50,20 +50,13 @@ function ENT:SwitchAmmoType(ply)
 	net.Send(ply)
 	if t[1] == self.AmmunitionTypes[1][1] then
 		self.ShotInterval = 0.16
-		self.ShootSound = "gred_emp/bar/shoot_slow.wav"
-		self.StopShootSound = "gred_emp/bar/stop_slow.wav"
 	else
 		self.ShotInterval = 0.092
-		self.ShootSound = "gred_emp/bar/shoot_fast.wav"
-		self.StopShootSound = "gred_emp/bar/stop_fast.wav"
 	end
-	
 	net.Start("gred_net_emp_reloadsounds")
 		net.WriteEntity(self)
-		net.WriteString(self.ShootSound)
-		net.WriteString(self.StopShootSound)
+		net.WriteFloat(self.ShotInterval)
 	net.Broadcast()
-	
 end
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -71,6 +64,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 10
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
 	ent:SetModelScale(1.1)
@@ -134,7 +128,7 @@ end
 
 function ENT:OnTick()
 	if SERVER then
-		if !self:GetIsReloading() or self.MagIn then 
+		if !self:GetIsReloading() then 
 			self:SetBodygroup(1,0)
 			local ammo = self:GetAmmo()
 			if ammo <= 0 then

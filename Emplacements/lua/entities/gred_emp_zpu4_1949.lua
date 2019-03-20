@@ -17,8 +17,8 @@ ENT.ShotInterval		= 0.025
 ENT.TracerColor			= "Green"
 ENT.AmmunitionType		= "wac_base_12mm"
 
-ENT.ShootSound			= "gred_emp/flakvierling38/20mm_shoot.wav"
-ENT.StopShootSound		= "gred_emp/flakvierling38/20mm_stop.wav"
+ENT.OnlyShootSound		= true
+ENT.ShootSound			= "gred_emp/common/20mm_02.wav"
 
 ENT.Seatable			= true
 ENT.Ammo				= -1
@@ -39,6 +39,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 16
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()

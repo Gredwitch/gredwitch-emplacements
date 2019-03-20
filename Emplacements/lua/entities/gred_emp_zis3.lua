@@ -20,6 +20,7 @@ ENT.AmmunitionTypes		= {
 ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 4.6
 ENT.AnimPlayTime		= 1
+ENT.ShellLoadTime		= 1.1
 
 ENT.ShootSound			= "gred_emp/common/76mm.wav"
 
@@ -39,6 +40,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 36
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
 	return ent

@@ -14,13 +14,13 @@ ENT.AmmunitionType		= "wac_base_12mm"
 ENT.ShotInterval		= 0.08
 ENT.TracerColor			= "Green"
 
-ENT.ShootSound			= "gred_emp/dhsk/shoot.wav"
-ENT.StopShootSound		= "gred_emp/dhsk/stop.wav"
+ENT.OnlyShootSound		= true
+ENT.ShootSound			= "gred_emp/kord/shoot.wav"
 
 ENT.EmplacementType		= "MG"
 ENT.HullModel			= "models/gredwitch/kord/kord_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/kord/kord_gun.mdl"
-ENT.ReloadSound			= "gred_emp/dhsk/dhsk_reload.wav"
+ENT.ReloadSound			= "gred_emp/kord/kord_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/dhsk/dhsk_reloadend.wav"
 ENT.ExtractAngle		= Angle(0,0,0)
 
@@ -37,6 +37,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 7
 	local ent = ents.Create(ClassName)
+ 	ent.Owner = ply
 	ent:SetPos(SpawnPos)
 	ent:Spawn()
 	ent:Activate()
@@ -53,11 +54,11 @@ function ENT:Reload(ply)
 	
 	timer.Simple(1, function()
 		if !IsValid(self) then return end
-		local att = self:GetAttachment(self:LookupAttachment("mageject"))
+		-- local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/kord/kord_mag.mdl")
-		prop:SetPos(self:LocalToWorld(att.Pos))
-		prop:SetAngles(att.Ang - Angle(0,180,0))
+		prop:SetPos(self:LocalToWorld(Vector(15,-10,0)))
+		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false
@@ -96,7 +97,7 @@ function ENT:Reload(ply)
 end
 
 function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or self.MagIn) then
+	if SERVER and !self:GetIsReloading() then
 		self:SetBodygroup(1,0)
 		if self:GetAmmo() <= 0 then 
 			self:SetBodygroup(2,1)

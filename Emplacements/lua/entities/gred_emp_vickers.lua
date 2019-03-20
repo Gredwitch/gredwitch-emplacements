@@ -37,6 +37,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 7
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
 	return ent
@@ -54,11 +55,11 @@ function ENT:Reload(ply)
 		for i = 2,4 do
 			self:SetBodygroup(i,1)
 		end
-		local att = self:GetAttachment(self:LookupAttachment("mageject"))
+		-- local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/vickers/vickers_mag.mdl")
-		prop:SetPos(att.Pos)
-		prop:SetAngles(att.Ang - Angle(0,90,0))
+		prop:SetPos(self:LocalToWorld(Vector(20,10,0)))
+		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false
@@ -110,13 +111,14 @@ function ENT:Reload(ply)
 end
 
 function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or self.MagIn) then
+	if SERVER and !self:GetIsReloading() then
 		if self:GetAmmo() <= 7 then 
 			self:SetBodygroup(3,1)
-			self:SetBodygroup(4,0)
-		elseif self:GetAmmo() <= 0 then 
-			self:SetBodygroup(3,1)
-			self:SetBodygroup(4,1)
+			if self:GetAmmo() <= 0 then 
+				self:SetBodygroup(4,1)
+			else
+				self:SetBodygroup(4,0)
+			end
 		else
 			self:SetBodygroup(3,0)
 			self:SetBodygroup(4,0)

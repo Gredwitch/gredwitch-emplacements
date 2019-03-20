@@ -33,6 +33,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 7
 	local ent = ents.Create(ClassName)
+ 	ent.Owner = ply
 	ent:SetPos(SpawnPos)
 	ent:Spawn()
 	ent:Activate()
@@ -48,11 +49,11 @@ function ENT:Reload(ply)
 	
 	timer.Simple(0.6, function()
 		if !IsValid(self) then return end
-		local att = self:GetAttachment(self:LookupAttachment("mageject"))
+		-- local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/mg42/mg42_belt.mdl")
-		prop:SetPos(att.Pos)
-		prop:SetAngles(att.Ang - Angle(0,90,0))
+		prop:SetPos(self:LocalToWorld(Vector(-7,0,5)))
+		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false
@@ -87,7 +88,7 @@ function ENT:Reload(ply)
 end
 
 function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or self.MagIn) then
+	if SERVER and !self:GetIsReloading() then
 		if self:GetAmmo() <= 0 then 
 			self:SetBodygroup(1,1)
 		else

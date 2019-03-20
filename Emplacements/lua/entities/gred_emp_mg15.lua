@@ -36,6 +36,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 7
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
 	return ent
@@ -53,11 +54,11 @@ function ENT:Reload(ply)
 	timer.Simple(0.6, function() 
 		if !IsValid(self) then return end
 		
-		local att = self:GetAttachment(self:LookupAttachment("mageject"))
+		-- local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/mg15/mg15_mag.mdl")
-		prop:SetPos(att.Pos + self.TurretPos)
-		prop:SetAngles(att.Ang + a)
+		prop:SetPos(self:LocalToWorld(Vector(-15,0,10)))
+		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false

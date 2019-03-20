@@ -9,19 +9,20 @@ ENT.Author				= "Gredwitch"
 
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
-ENT.NameToPrint			= "Flak 38"
+ENT.NameToPrint			= "Breda 35"
+ENT.SeatAngle			= Angle(0,0,0)
+ENT.ExtractAngle		= Angle(90,0,0)
 
 ENT.MuzzleEffect		= "muzzleflash_bar_3p"
-ENT.ShotInterval		= 0.214
+ENT.ShotInterval		= 0.25
 
 ENT.AmmunitionTypes		= {
 						{"Direct Hit","wac_base_20mm"},
 						{"Time-fuzed","wac_base_20mm"},
 }
 ENT.TracerColor			= "Yellow"
-
-ENT.ShootSound			= "gred_emp/flak38/20mm_shoot.wav"
-ENT.StopShootSound		= "gred_emp/flak38/20mm_stop.wav"
+ENT.OnlyShootSound		= true
+ENT.ShootSound			= "gred_emp/breda35/shoot.wav"
 
 ENT.Spread				= 0.5
 ENT.Seatable			= true
@@ -29,10 +30,11 @@ ENT.EmplacementType		= "MG"
 ENT.Ammo				= -1
 ENT.HullModel			= "models/gredwitch/breda35/breda35_hull.mdl"
 ENT.YawModel			= "models/gredwitch/breda35/breda35_yaw.mdl"
+ENT.AimsightModel		= "models/gredwitch/breda35/breda35_aimsight.mdl"
 ENT.TurretModel			= "models/gredwitch/breda35/breda35_gun.mdl"
 ENT.TurretPos			= Vector(0,3.63057,24)
 ENT.MaxRotation			= Angle(-20)
-ENT.SightPos			= Vector(0,0,0)
+ENT.ViewPos				= Vector(-30,0,0)
 ENT.IsAAA				= true
 ENT.CanSwitchTimeFuze	= true
 ENT.MaxViewModes		= 1
@@ -42,6 +44,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 16
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()
@@ -49,12 +52,39 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
+function ENT:AddDataTables()
+	self:NetworkVar("Entity",10,"AimSight")
+end
+
+function ENT:OnInit()
+	local yaw = self:GetYaw()
+	local aimsight = ents.Create("gred_prop_emp")
+	aimsight.GredEMPBaseENT = self
+	aimsight:SetModel(self.AimsightModel)
+	aimsight:SetAngles(yaw:GetAngles())
+	aimsight:SetPos(yaw:LocalToWorld(Vector(1,-18,38.8094)))
+	aimsight:Spawn()
+	
+	aimsight:Activate()
+	aimsight:SetParent(yaw)
+	
+	self:SetAimSight(aimsight)
+	self:AddEntity(aimsight)
+end
+
+function ENT:OnTick(ct,ply,botmode)
+	local aimsight = self:GetAimSight()
+	local ang = aimsight:GetAngles()
+	ang.r = self:GetAngles().r
+	aimsight:SetAngles(ang)
+end
+
 local function CalcView(ply, pos, angles, fov)
 	if ply:GetViewEntity() != ply then return end
 	if ply.Gred_Emp_Ent then
 		local ent = ply.Gred_Emp_Ent
 		if IsValid(ent) then
-			if ent:GetClass() == "gred_emp_flak38" then
+			if ent:GetClass() == "gred_emp_breda35" then
 				if ent:GetShooter() != ply then return end
 				seat = ent:GetSeat()
 				local seatValid = IsValid(seat)
@@ -65,16 +95,16 @@ local function CalcView(ply, pos, angles, fov)
 				if (seatValid and seat:GetThirdPersonMode()) or ent:GetViewMode() == 1 then
 					local view = {}
 					
-					view.origin = ent:LocalToWorld(ent.SightPos)
+					view.origin = ent:GetAimSight():LocalToWorld(Vector(-2.35,-10,2.59))
 					view.angles = ang
 					view.fov = 35
-					view.drawviewer = true
+					view.drawviewer = false
 
 					return view
 				else
 					if seatValid then
 						local view = {}
-						view.origin = pos
+						view.origin = seat:LocalToWorld(ent.ViewPos)
 						view.angles = ang
 						view.fov = fov
 						view.drawviewer = false
@@ -86,50 +116,4 @@ local function CalcView(ply, pos, angles, fov)
 		end
 	end
 end
--- local function CalcView(ply, pos, angles, fov)
-	-- if ply:GetViewEntity() != ply then return end
-	-- if ply.Gred_Emp_Ent then
-		-- local ent = ply.Gred_Emp_Ent
-		-- if IsValid(ent) then
-			-- if ent:GetClass() == "gred_emp_flak38" then
-				-- if ent:GetShooter() != ply then return end
-				-- seat = ent:GetSeat()
-				-- if !IsValid(seat) then return end
-				-- local a = ent:GetAngles()
-				-- local ang = Angle(-a.r,a.y+90,a.p)
-				-- ang:Normalize()
-				-- if ent:GetViewMode() == 1 and not seat:GetThirdPersonMode() then
-					-- local view = {}
-					
-					-- view.origin = ent:LocalToWorld(ent.SightPos)
-					-- view.angles = ang
-					-- view.fov = 35
-					-- view.drawviewer = true
-
-					-- return view
-				-- else
-					-- if seat:GetThirdPersonMode() then
-						-- local view = {}
-						-- local camDist = seat:GetCameraDistance()
-						-- camDist = camDist*(ent:GetModelRadius()/10)
-						-- view.origin = pos
-						-- view.angles = ply:EyeAngles()
-						-- view.fov = fov
-						-- view.drawviewer = true
-	 
-						-- return view
-					-- else
-						-- local view = {}
-						-- view.origin = pos
-						-- view.angles = ang
-						-- view.fov = fov
-						-- view.drawviewer = false
-	 
-						-- return view
-					-- end
-				-- end
-			-- end
-		-- end
-	-- end
--- end
-hook.Add("CalcView", "gred_emp_flak38_view", CalcView)
+hook.Add("CalcView", "gred_emp_breda35_view", CalcView)

@@ -21,8 +21,8 @@ ENT.AmmunitionTypes		= {
 }
 
 ENT.Sequential			= true
-ENT.ShootSound			= "gred_emp/flakvierling38/20mm_shoot.wav"
-ENT.StopShootSound		= "gred_emp/flakvierling38/20mm_stop.wav"
+ENT.OnlyShootSound		= true
+ENT.ShootSound			= "gred_emp/common/20mm_02.wav"
 
 ENT.HullModel			= "models/gredwitch/flakvierling38/flakvierling_base.mdl"
 ENT.YawModel			= "models/gredwitch/flakvierling38/flakvierling_shield.mdl"
@@ -42,6 +42,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 16
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent.Spawner = ply
 	ent:Spawn()
 	ent:Activate()

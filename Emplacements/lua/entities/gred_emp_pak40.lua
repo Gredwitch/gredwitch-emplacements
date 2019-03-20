@@ -11,7 +11,7 @@ ENT.AdminSpawnable		= true
 ENT.NameToPrint			= "PaK 40"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
-ENT.ShotInterval		= 4.6
+ENT.ShotInterval		= 5.9
 ENT.AmmunitionTypes		= {
 						{"HE","gb_shell_75mm"},
 						{"AP","gb_shell_75mm"},
@@ -20,7 +20,7 @@ ENT.AmmunitionTypes		= {
 ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 3.5
 ENT.ShellLoadTime		= 1.5
-ENT.AnimPlayTime		= 0.8
+ENT.AnimPlayTime		= 1.3
 
 ENT.ShootSound			= "gred_emp/common/75mm_axis.wav"
 
@@ -40,6 +40,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 36
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
 	return ent

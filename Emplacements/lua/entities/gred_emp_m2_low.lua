@@ -38,6 +38,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 27
 	local ent = ents.Create(ClassName)
+ 	ent.Owner = ply
 	ent:SetPos(SpawnPos)
 	ent:Spawn()
 	ent:Activate()
@@ -56,12 +57,12 @@ function ENT:Reload(ply)
 		
 		self:SetBodygroup(1,1)
 		self:SetBodygroup(2,1)
-		local att = self:GetAttachment(self:LookupAttachment("mageject"))
+		-- local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/m2browning/m2_mag.mdl")
-		prop:SetPos(att.Pos + self.TurretPos)
-		prop:SetAngles(att.Ang+Angle(90,0))
+		prop:SetPos(self:LocalToWorld(Vector(-15,3,5)))
+		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false
@@ -105,7 +106,7 @@ function ENT:Reload(ply)
 end
 
 function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or self.MagIn) then
+	if SERVER and !self:GetIsReloading() then
 		if self:GetAmmo() <= 0 then 
 			self:SetBodygroup(2,1)
 		else

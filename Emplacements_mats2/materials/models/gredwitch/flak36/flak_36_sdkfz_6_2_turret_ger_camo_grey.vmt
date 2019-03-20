@@ -1,0 +1,18 @@
+"VertexlitGeneric"
+{
+
+	"$basetexture" 			"models/gredwitch/flak36/flak_36_sdkfz_6_2_turret_c"
+	"$bumpmap" 				"models/gredwitch/flak36/flak_36_sdkfz_6_2_turret_b"
+	"$halflambert" 			1
+	// "$nocull" 				1
+    "$alphatest" 			0
+
+	"$phong" 				1
+	"$phongexponenttexture" "models/gredwitch/flak36/flak_36_sdkfz_6_2_turret_b"
+	"$phongboost" 			"0.3"
+	"$phongfresnelranges"	"[2 2 2]"
+
+	"$PhongAlbedoTint" 		"1"
+	
+	// "$detail"				"models/gredwitch/flak36/ger_camo_grey"
+}

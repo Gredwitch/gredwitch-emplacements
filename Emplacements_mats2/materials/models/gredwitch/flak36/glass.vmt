@@ -1,0 +1,5 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/gredwitch/flak38/reflex_sight_c"
+	"$translucent" "1"
+}

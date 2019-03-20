@@ -14,8 +14,8 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.1
 ENT.TracerColor			= "Red"
 
+ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/m1919/shoot.wav"
-ENT.StopShootSound		= "gred_emp/m1919/stop.wav"
 ENT.ReloadSound			= "gred_emp/mg42/mg42_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/mg42/mg42_reloadend.wav"
 
@@ -35,6 +35,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 7
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:SetModelScale(1.1)
 	ent:Spawn()
 	ent:Activate()

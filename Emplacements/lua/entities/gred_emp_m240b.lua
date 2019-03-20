@@ -14,8 +14,8 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.092
 ENT.TracerColor			= "Red"
 
+ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/m240b/shoot.wav"
-ENT.StopShootSound		= "gred_emp/m240b/stop.wav"
 ENT.ReloadSound			= "gred_emp/m240b/m240_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/m240b/m240_reloadend.wav"
 
@@ -37,6 +37,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal * 30
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
 	return ent
@@ -56,7 +57,7 @@ function ENT:Reload(ply)
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/fnmag/m240b_mag.mdl")
 		prop:SetPos(att.Pos)
-		prop:SetAngles(att.Ang + Angle(0,90,0))
+		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
 		prop:Spawn()
 		prop:Activate()
 		if self:GetAmmo() <= 0 then prop:SetBodygroup(1,1) end
@@ -98,7 +99,7 @@ function ENT:OnTick()
 		self:SetBodygroup(1,1) -- Gun
 		self:SetBodygroup(5,1) -- Lid
 		self:SetBodygroup(6,1) -- Mag Base
-		if !self:GetIsReloading() or self.MagIn then
+		if !self:GetIsReloading() then
 			self:SetBodygroup(2,1) -- Ammo box shown
 			if self:GetAmmo() <= 0 then
 				self:SetBodygroup(7,2) -- Ammo belt hidden

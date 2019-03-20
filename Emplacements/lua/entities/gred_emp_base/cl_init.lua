@@ -5,6 +5,12 @@ local reachSky = Vector(0,0,9999999999)
 function ENT:Initialize()
 	self:ReloadSounds()
 	self:SetNextShotCL(0)
+	self:InitAttachmentsCL()
+	
+	self.Initialized = true
+end
+
+function ENT:InitAttachmentsCL()
 	local tableinsert = table.insert
 	local startsWith = string.StartWith
 	local t
@@ -24,8 +30,6 @@ function ENT:Initialize()
 			tableinsert(self.TurretEjects,t)
 		end
 	end
-	
-	self.Initialized = true
 end
 
 function ENT:ReloadSounds()
@@ -39,12 +43,12 @@ function ENT:ReloadSounds()
 	if self.ShootSound then
 		self.sounds["shoot"] = CreateSound(self,self.ShootSound)
 		self.sounds.shoot:SetSoundLevel(100)
-		self.sounds.shoot:ChangeVolume(1)
+		-- self.sounds.shoot:ChangeVolume(1)
 	end
 	if self.StopShootSound then
 		self.sounds["stop"] = CreateSound(self,self.StopShootSound)
 		self.sounds.stop:SetSoundLevel(100)
-		self.sounds.stop:ChangeVolume(1)
+		-- self.sounds.stop:ChangeVolume(1)
 	end
 end
 
@@ -56,9 +60,8 @@ function ENT:CheckExtractor()
 end
 
 function ENT:CalcMortarCanShootCL(ply)
-	local tr = util.QuickTrace(self.TurretMuzzles[1].Pos,self.TurretMuzzles[1].Pos + reachSky,self.Entities)
+	local tr = util.QuickTrace(self:LocalToWorld(self.TurretMuzzles[1].Pos),reachSky,self.Entities)
 	local botmode = self:GetBotMode()
-	
 	local canShoot
 	if botmode then
 		canShoot = IsValid(self:GetTarget())
@@ -97,6 +100,9 @@ function ENT:Think()
 	
 	local ply = self:GetShooter()
 	local ct = CurTime() -- Tickrate
+	for k,v in pairs(self.sounds) do
+		v:ChangeVolume(tonumber(GetConVar("gred_cl_emp_volume"):GetFloat()))
+	end
 	if IsValid(ply) then
 		ply.Gred_Emp_Ent = self
 		if ply:KeyDown(IN_ZOOM) then
@@ -107,9 +113,10 @@ function ENT:Think()
 		end
 		local ammo = self:GetAmmo()
 		local IsShooting = self:GetIsShooting()
+		local IsReloading = self:GetIsReloading()
 		if IsShooting then
-			if (self.EmplacementType == "MG" and ((ammo > 0 or self.Ammo < 0) and not IsReloading)) or (self.EmplacementType != "MG" and self:CanShoot(ammo,ct,ply)) then
-				if self.EmplacementType != "MG" then
+			if self:CanShoot(ammo,ct,ply) then
+				if self.EmplacementType != "MG" or self.OnlyShootSound then
 					self:SetNextShotCL(ct + self.ShotInterval)
 					self.sounds.shoot:Stop()
 					self.sounds.shoot:Play()
@@ -121,13 +128,13 @@ function ENT:Think()
 					end
 				end
 			else
-				if self.EmplacementType == "MG" then
+				if self.EmplacementType == "MG" and not self.OnlyShootSound then
 					self.sounds.shoot:Stop()
 					self:StopSoundStuff(ply,ammo,IsReloading,IsShooting)
 				end
 			end
 		else
-			if self.EmplacementType == "MG" then
+			if self.EmplacementType == "MG" and not self.OnlyShootSound then
 				self.sounds.shoot:Stop()
 				self:StopSoundStuff(ply,ammo,IsReloading,IsShooting)
 			end
@@ -136,7 +143,7 @@ function ENT:Think()
 		self:SetViewMode(0)
 		ply.Gred_Emp_Ent = nil
 		self:StopSoundStuff(ply,ammo,IsReloading,IsShooting)
-		if self.EmplacementType == "MG" then
+		if self.EmplacementType == "MG" and not self.OnlyShootSound then
 			self.sounds.shoot:Stop()
 			if self.PlayStopSound and self.sounds.stop then
 				self.sounds.stop:Stop()

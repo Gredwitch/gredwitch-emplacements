@@ -39,6 +39,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	local SpawnPos = tr.HitPos + tr.HitNormal
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
+ 	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
 	return ent
@@ -56,11 +57,11 @@ function ENT:Reload(ply)
 		self:SetBodygroup(1,1) -- Ammo bag hidden
 		self:SetBodygroup(2,1)
 		
-		local att = self:GetAttachment(self:LookupAttachment("mageject"))
+		-- local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/m60/m60_mag.mdl")
-		prop:SetPos(att.Pos)
-		prop:SetAngles(att.Ang + Angle(0,-90,0))
+		prop:SetPos(self:LocalToWorld(Vector(-10,-20,0)))
+		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
 		prop:Spawn()
 		prop:Activate()
 		
@@ -99,7 +100,7 @@ end
 
 function ENT:OnTick()
 	if SERVER then
-		if !self:GetIsReloading() or self.MagIn then 
+		if !self:GetIsReloading() then 
 			self:SetBodygroup(1,0)
 			if self:GetAmmo() <= 0 then
 				self:SetBodygroup(2,1)
