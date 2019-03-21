@@ -59,6 +59,7 @@ end
 function ENT:PlayAnim()
 	self:SetIsReloading(true)
 	timer.Simple(self:GetReloadTime(),function()
+		if not IsValid(self) then return end
 		self:SetAmmo(self.Ammo)
 		self:SetIsReloading(false)
 	end)

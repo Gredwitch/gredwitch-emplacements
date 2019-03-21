@@ -93,13 +93,11 @@ function ENT:Reload(ply)
 end
 
 function ENT:OnTick()
-	if SERVER then
-		if !self:GetIsReloading() or self.MagIn then 
-			if self:GetAmmo() <= 0 then
-				self:SetBodygroup(1,1)
-			else
-				self:SetBodygroup(1,0)
-			end
+	if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
+		if self:GetAmmo() <= 0 then
+			self:SetBodygroup(1,1)
+		else
+			self:SetBodygroup(1,0)
 		end
 	end
 end

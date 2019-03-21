@@ -97,7 +97,7 @@ function ENT:Reload(ply)
 end
 
 function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or self.MagIn) then self:SetBodygroup(2,0) end
+	if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then self:SetBodygroup(2,0) end
 end
 
 local function CalcView(ply, pos, angles, fov)

@@ -22,6 +22,7 @@ ENT.TurretModel			= "models/gredwitch/m1_mortar/m1_mortar.mdl"
 ENT.EmplacementType     = "Mortar"
 ENT.DefaultPitch		= 45
 ENT.MaxRotation			= Angle(35,45)
+ENT.Ammo				= -1
 
 ENT.AmmunitionTypes		= {
 						{"HE","gb_shell_81mm"},

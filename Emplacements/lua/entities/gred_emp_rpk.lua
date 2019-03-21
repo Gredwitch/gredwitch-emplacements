@@ -104,21 +104,12 @@ end
 function ENT:OnTick()
 	if SERVER then
 		local ammo = self:GetAmmo()
-		if !self:GetIsReloading() then 
+		if (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
 			self:SetBodygroup(1,0)
 			if ammo <= 0 then
 				self:SetBodygroup(2,1)
 			elseif ammo >= 1 then
 				self:SetBodygroup(2,0)
-			end
-		else
-			if self.MagIn then
-				self:SetBodygroup(1,0)
-				if ammo <= 0 then
-					self:SetBodygroup(2,1)
-				elseif ammo >= 1 then
-					self:SetBodygroup(2,0)
-				end
 			end
 		end
 	end

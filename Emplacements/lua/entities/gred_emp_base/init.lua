@@ -560,8 +560,9 @@ function ENT:PlayAnim()
 		self.sounds.reload_start:Play()
 		self:SetIsReloading(true)
 		if manualReload then
-			timer.Simple(self.AnimPauseTime,function() 
-				self:SetCycle(.5)
+			timer.Simple(self.AnimPauseTime or 0,function() 
+				if !IsValid(self) then return end
+				self:SetCycle(.6)
 				self:SetPlaybackRate(0) 
 			end)
 		else
@@ -573,6 +574,7 @@ function ENT:PlayAnim()
 				if !IsValid(self) then return end
 				self.sounds.reload_finish:Play()
 				timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function()
+					if !IsValid(self) then return end
 					self:SetIsReloading(false)
 				end)
 			end)
@@ -664,19 +666,24 @@ function ENT:ManualReload(ammo)
 								self:SetCycle(.8)
 								self:SetPlaybackRate(1)
 								timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function() 
+									if !IsValid(self) then return end
 									self.AnimPlaying = false
 									self:SetAmmo(1)
+									self:SetIsReloading(false)
 								end)
 							else
 								self:ResetSequence("reload_finish")
 								timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function() 
+									if !IsValid(self) then return end
 									self.AnimPlaying = false
 									self:SetAmmo(1)
+									self:SetIsReloading(false)
 								end)
 							end
 						end)
 					else
 						self:SetAmmo(1)
+						self:SetIsReloading(false)
 					end
 				end
 			end
@@ -704,6 +711,7 @@ function ENT:ManualReload(ammo)
 				self.sounds.reloadend:Play()
 				self.MagIn = true
 				timer.Simple(self.ReloadTime, function()
+					if !IsValid(self) then return end
 					self:SetAmmo(self.Ammo)
 					self:SetIsReloading(false)
 				end)

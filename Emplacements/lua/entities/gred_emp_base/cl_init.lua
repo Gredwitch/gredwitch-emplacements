@@ -100,9 +100,7 @@ function ENT:Think()
 	
 	local ply = self:GetShooter()
 	local ct = CurTime() -- Tickrate
-	for k,v in pairs(self.sounds) do
-		v:ChangeVolume(tonumber(GetConVar("gred_cl_emp_volume"):GetFloat()))
-	end
+	print(self:GetAmmo())
 	if IsValid(ply) then
 		ply.Gred_Emp_Ent = self
 		if ply:KeyDown(IN_ZOOM) then

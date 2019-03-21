@@ -22,6 +22,7 @@ ENT.HullModel			= "models/gredwitch/pm41/pm41_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/pm41/pm41_tube.mdl"
 ENT.DefaultPitch		= 30
 ENT.EmplacementType     = "Mortar"
+ENT.Ammo				= -1
 
 ENT.AmmunitionTypes		= {
 						{"HE","gb_shell_82mm"},

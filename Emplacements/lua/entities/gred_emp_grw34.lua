@@ -22,6 +22,7 @@ ENT.HullModel			= "models/gredwitch/granatwerfer/granatwerfer_base.mdl"
 ENT.TurretModel			= "models/gredwitch/granatwerfer/granatwerfer_tube.mdl"
 ENT.DefaultPitch		= 50
 ENT.EmplacementType     = "Mortar"
+ENT.Ammo				= -1
 
 ENT.AmmunitionTypes		= {
 						{"HE","gb_shell_81mm"},

@@ -396,7 +396,7 @@ function ENT:GetShootAngles(ply,botmode)
 		elseif self.EmplacementType == "Cannon" then
 			if IsValid(target) then
 				--[[
-				Don't look at this, pretty much everything here is wrong
+				-- Don't look at this, pretty much everything here is wrong
 				
 				local pos = target:LocalToWorld(target:OBBCenter())
 				local attpos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
@@ -761,10 +761,10 @@ function ENT:Think()
 						end
 						
 						self:SetCurrentMuzzle(m + 1)
-						if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then
-							self:SetAmmo(self:GetAmmo() - (self.EmplacementType == "MG" and GetConVar("gred_sv_limitedammo"):GetInt() or 1))
-						-- else
-							-- self:SetAmmo(self:GetAmmo() - 1)
+						if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then -- if MG or Nebelwerfer
+							self:SetAmmo(ammo - (self.EmplacementType == "MG" and GetConVar("gred_sv_limitedammo"):GetInt() or 1))
+						else
+							self:SetAmmo(ammo > 0 and ammo - 1 or 0)
 						end
 					else
 						for k,m in pairs(self.TurretMuzzles) do
@@ -778,10 +778,10 @@ function ENT:Think()
 							local effectdata = EffectData()
 							effectdata:SetEntity(self)
 							util.Effect("gred_particle_emp_muzzle",effectdata)
-							if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then
-								self:SetAmmo(self:GetAmmo() - (self.EmplacementType == "MG" and GetConVar("gred_sv_limitedammo"):GetInt() or 1))
-							-- else
-								-- self:SetAmmo(self:GetAmmo() - 1)
+							if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then -- if MG or Nebelwerfer
+								self:SetAmmo(ammo - (self.EmplacementType == "MG" and GetConVar("gred_sv_limitedammo"):GetInt() or 1))
+							else
+								self:SetAmmo(ammo > 0 and ammo - 1 or 0)
 							end
 						end
 					end

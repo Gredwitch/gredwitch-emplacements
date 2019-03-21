@@ -94,7 +94,7 @@ end
 
 function ENT:OnTick()
 	if SERVER then
-		if !self:GetIsReloading() then 
+		if (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
 			self:SetBodygroup(1,0)
 			local ammo = self:GetAmmo()
 			if ammo <= 0 then

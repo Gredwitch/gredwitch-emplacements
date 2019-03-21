@@ -100,7 +100,7 @@ function ENT:OnTick()
 		self:SetBodygroup(1,0) -- Gun
 		self:SetBodygroup(5,0) -- Lid
 		self:SetBodygroup(6,0) -- Mag Base
-		if !self:GetIsReloading() then
+		if (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
 			self:SetBodygroup(2,0) -- Ammo bag shown
 			if self:GetAmmo() <= 0 then
 				self:SetBodygroup(7,2) -- Ammo belt hidden
