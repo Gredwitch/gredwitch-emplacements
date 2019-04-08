@@ -67,7 +67,25 @@ ENT.MagIn					= true -- bool
 ENT.MaxViewModes			= 0 -- int
 ENT.DefaultPitch			= 0
 ENT.HP						= 200 --+ (ENT.HullModel and 75 or 0) + (ENT.YawModel and 75 or 0)
----------------------
+
+--------------------------------------------
+
+local IsValid = IsValid
+local InVehicle = InVehicle
+local GetVehicle = GetVehicle
+local Team = Team
+local IsPlayer = IsPlayer
+local IsNPC = IsNPC
+local GetPos = GetPos
+local Distance = Distance
+local LocalToWorld = LocalToWorld
+local GetVelocity = GetVelocity
+local Length = Length
+
+
+local METERS_IN_UNIT = 0.01905
+local G_UNITS = GetConVar("sv_gravity"):GetInt()
+local G_METERS = G_UNITS * METERS_IN_UNIT
 
 function ENT:SetupDataTables()
 	self:NetworkVar("Entity",0,"Hull")
@@ -93,15 +111,17 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Float",3,"NextEmptySound")
 	self:NetworkVar("Float",4,"Recoil")
 	self:NetworkVar("Float",5,"NextShootAnim")
-	self:NetworkVar("Float",6,"FuzeTime")
+	self:NetworkVar("Float",6,"FuseTime")
 	self:NetworkVar("Float",7,"NextSwitchAmmoType")
 	self:NetworkVar("Float",8,"NextSwitchViewMode")
-	self:NetworkVar("Float",9,"NextSwitchTimeFuze")
+	self:NetworkVar("Float",9,"NextSwitchTimeFuse")
 	self:NetworkVar("Float",10,"NextShotCL")
 	
 	self:NetworkVar("Float",7,"HP", { KeyName = "HP", Edit = { type = "Int", order = 0,min = 0, max = self.HP} } )
 	
 	self:NetworkVar("String",0,"PrevPlayerWeapon")
+	
+	self:NetworkVar("Vector",0,"TargetOrigin")
 	
 	self:NetworkVar("Bool",0,"BotMode", { KeyName = "BotMode", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
 	self:SetBotMode(false)
@@ -111,19 +131,19 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Bool",4,"IsAntiAircraft", { KeyName = "IsAntiAircraft", Edit = {type = "Boolean", order = 0, category = "Bots"}})
 	self:NetworkVar("Bool",5,"IsAntiGroundVehicles", { KeyName = "IsAntiGroundVehicles", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
 	self:NetworkVar("Bool",6,"AttackPlayers", { KeyName = "AttackPlayers", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
-	self:NetworkVar("Bool",7,"AttackEveryPlayers", { KeyName = "AttackEveryPlayers", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
+	self:NetworkVar("Bool",7,"ShouldNotCareAboutOwnersTeam", { KeyName = "ShouldNotCareAboutOwnersTeam", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
 	self:NetworkVar("Bool",8,"AttackNPCs", { KeyName = "AttackNPCs", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
 	
 	
 	
 	self:SetAttackPlayers(true)
 	self:SetAttackNPCs(true)
-	self:SetAttackEveryPlayers(false)
+	self:SetShouldNotCareAboutOwnersTeam(false)
 	self:SetIsAntiAircraft(self.IsAAA)
 	self:SetIsAntiGroundVehicles(self.EmplacementType == "Cannon")
 	self:SetHP(self.HP)
 	self:SetAmmoType(1)
-	self:SetFuzeTime(0)
+	self:SetFuseTime(0)
 	self:SetAmmo(self.Ammo)
 	self:SetCurrentMuzzle(1)
 	self:SetRoundsPerMinute(self.ShotInterval*60)
@@ -131,96 +151,22 @@ function ENT:SetupDataTables()
 	self:AddDataTables()
 end
 
--- for k,v in pairs(scripted_ents.Get("gred_emp_base")) do
-	-- v = v
--- end
-local IsValid = IsValid
-local InVehicle = InVehicle
-local GetVehicle = GetVehicle
-local Team = Team
-local IsPlayer = IsPlayer
-local IsNPC = IsNPC
-
 function ENT:AddDataTables()
 
 end
 
 function ENT:AddEntity(ent)
 	table.insert(self.Entities,ent)
+	local noColl = constraint.NoCollide
 	for k,v in pairs(self.Entities) do
-		constraint.NoCollide(v,ent,0,0)
+		noColl(v,ent,0,0)
 	end
 end
 
-function ENT:GrabTurret(ply)
-	self:SetShooter(ply)
-	if !self:GetBotMode() then
-		self.Owner = ply
-		local wep = ply:GetActiveWeapon()
-		if IsValid(wep) then
-			self:SetPrevPlayerWeapon(wep:GetClass())
-		end
-		if self.Seatable then
-			if self.MaxViewModes > 0 then
-				if self.NameToPrint then
-					net.Start("gred_net_message_ply")
-						net.WriteEntity(ply)
-						net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom or the Crouch key to toggle aimsights")
-					net.Send(ply)
-				else
-					net.Start("gred_net_message_ply")
-						net.WriteEntity(ply)
-						net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom or the Crouch key to toggle aimsights")
-					net.Send(ply)
-				end
-			end
-			self:CreateSeat(ply)
-		else
-			if self.MaxViewModes > 0 then
-				if self.NameToPrint then
-					net.Start("gred_net_message_ply")
-						net.WriteEntity(ply)
-						net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom key to toggle aimsights")
-					net.Send(ply)
-				else
-					net.Start("gred_net_message_ply")
-						net.WriteEntity(ply)
-						net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom key to toggle aimsights")
-					net.Send(ply)
-				end
-			end
-		end
-	end
-end
-
-function ENT:LeaveTurret(ply)
-	if ply:IsPlayer() then
-		if ply.StripWeapon and not self.Seatable then
-			ply:StripWeapon("weapon_base")
-			ply:SelectWeapon(self:GetPrevPlayerWeapon())
-		end
-		if self.Seatable then
-			local seat = self:GetSeat()
-			if IsValid(seat) then
-				ply:ExitVehicle()
-				seat:Remove()
-				self:SetSeat(nil)
-			end
-			if self.YawModel then
-				local yaw = self:GetYaw()
-				local pos = IsValid(yaw) and yaw:BoundingRadius() or 10
-				ply:SetPos(self:LocalToWorld(Vector(pos,0,0)))
-			end
-		end
-	end
-	self:SetPrevShooter(ply)
-	self:SetShooter(nil)
-end
-
-function ENT:ShooterStillValid(ply)
+function ENT:ShooterStillValid(ply,botmode)
 	if not ply then return false
 	else
-		if self:GetBotMode() then 
+		if botmode then 
 			return true 
 		else 
 			return ply:GetPos():Distance(self:GetPos()) <= self.MaxUseDistance 
@@ -228,7 +174,7 @@ function ENT:ShooterStillValid(ply)
 	end
 end
 
-function ENT:CanShoot(ammo,ct,ply)
+function ENT:CanShoot(ammo,ct,ply,IsReloading)
 	local nextShot
 	if CLIENT then
 		nextShot = self:GetNextShotCL()
@@ -238,15 +184,16 @@ function ENT:CanShoot(ammo,ct,ply)
 	if self.EmplacementType != "MG" then
 		if self.EmplacementType == "Mortar" then
 			if CLIENT then
-				return (ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0)) and nextShot <= ct and !self:GetIsReloading() and self:CalcMortarCanShootCL(ply)
+				return (ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0)) and nextShot <= ct and !IsReloading and self:CalcMortarCanShootCL(ply)
 			else
-				return (ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0)) and nextShot <= ct and !self:GetIsReloading() and self:CalcMortarCanShoot(ply,ct)
+				return (ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0)) and nextShot <= ct and !IsReloading and self:CalcMortarCanShoot(ply,ct)
 			end
 		else
-			return (ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0)) and nextShot <= ct and !self:GetIsReloading()
+			print(ammo)
+			return (ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0)) and nextShot <= ct and !IsReloading
 		end
 	else
-		return (ammo > 0 or self.Ammo < 0) and nextShot <= ct and !self:GetIsReloading()
+		return (ammo > 0 or self.Ammo < 0) and nextShot <= ct and !IsReloading
 	end
 end
 
@@ -254,68 +201,6 @@ function ENT:CheckMuzzle()
 	local m = self:GetCurrentMuzzle()
 	if m <= 0 or m > table.Count(self.TurretMuzzles) then
 		self:SetCurrentMuzzle(1)
-	end
-end
-
-function ENT:IsValidTarget(ent)
-	self.Owner = self.Owner or self
-	return IsValid(ent) and (self:IsValidBot(ent) or self:IsValidHuman(ent))
-end
-
-function ENT:IsValidBot(ent,b)
-	self.Owner = self.Owner or self
-	return ent:IsNPC() and self:GetAttackNPCs() and (!self.Owner:IsPlayer() or ent:Disposition(self.Owner) == 1) or (ent.LFS and b and ent:GetAI() and self:GetIsAntiAircraft() and (ent:GetAITEAM() != (self.Owner.lfsGetAITeam and self.Owner:lfsGetAITeam() or nil) or self:GetAttackEveryPlayers()))
-end
-
-
-function ENT:IsValidGroundTarget(ply)
-	ent = ply.GetVehicle and ply:GetVehicle() or nil
-	if IsValid(ent) then
-		local car = ent:GetParent()
-		local driver = ent.GetDriver and ent:GetDriver() or nil
-		return (simfphys.IsCar and IsValid(car) and simfphys.IsCar(car) and (driver != self.Owner and (self.Owner:IsPlayer() and driver:Team() != self.Owner:Team())) or self:GetAttackEveryPlayers())
-	end
-end 
-
-function ENT:IsValidHuman(ent)
-	return ((ent:IsPlayer() and self:GetAttackPlayers() and ent:Alive()) and ((ent != self.Owner and (self.Owner:IsPlayer() and ent:Team() != self.Owner:Team())) or self:GetAttackEveryPlayers()) or (self:IsValidGroundTarget(ent) and self:GetIsAntiGroundVehicles()) or self:IsValidAirTarget(ent) and self:GetIsAntiAircraft() and self.EmplacementType != "Mortar")
-end
-
-function ENT:IsValidAirTarget(ent)
-	
-	local seat = (ent.GetVehicle and ent:GetVehicle() or nil) or ent
-	if IsValid(seat) then
-		local aircraft = seat:GetParent()
-		if IsValid(aircraft) then
-			if aircraft.LFS and (IsValid(aircraft:GetDriver()) or self:IsValidBot(aircraft,true)) then
-				return aircraft:GetHP() > 0
-			elseif aircraft.isWacAircraft then
-				return ent.engineHealth > 0
-			else
-				return false
-			end
-		else
-			return false
-		end
-	else
-		return false
-	end
-end
-
-function ENT:KeyDown(key)
-	if key == 1 then
-		return self:GetTargetValid()
-	elseif key == 8192 then
-		local ammo = self:GetAmmo()
-		if self.EmplacementType == "MG" then
-			return !(ammo > 0 or self.Ammo < 0)
-		else
-			return !(ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0))
-		end
-	elseif key == 524288 then
-		return false
-	else
-		return false
 	end
 end
 
@@ -330,25 +215,21 @@ function ENT:SwitchAmmoType(ply)
 	net.Send(ply)
 end
 
-function ENT:SetNewFuzeTime(ply,minus)
+function ENT:SetNewFuseTime(ply,minus)
 	if minus then
-		self:SetFuzeTime(self:GetFuzeTime()-0.01)
+		self:SetFuseTime(self:GetFuseTime()-0.01)
 	else
-		self:SetFuzeTime(self:GetFuzeTime()+0.01)
+		self:SetFuseTime(self:GetFuseTime()+0.01)
 	end
-	local fuzetime = self:GetFuzeTime()
-	if fuzetime <= 0 or fuzetime > 0.5 then self:SetFuzeTime(0.01) end
+	local fusetime = self:GetFuseTime()
+	if fusetime <= 0 or fusetime > 0.5 then self:SetFuseTime(0.01) end
 	net.Start("gred_net_message_ply")
 		net.WriteEntity(ply)
-		net.WriteString("["..self.NameToPrint.."] Time fuze set to "..math.Round(self:GetFuzeTime(),2).." seconds")
+		net.WriteString("["..self.NameToPrint.."] Time fuse set to "..math.Round(self:GetFuseTime(),2).." seconds")
 	net.Send(ply)
 end
-				
--- local METERS_IN_UNIT = 0.01905
--- local G_UNITS = GetConVar("sv_gravity"):GetInt()
--- local G_METERS = G_UNITS * METERS_IN_UNIT
 
-function ENT:GetShootAngles(ply,botmode)
+function ENT:GetShootAngles(ply,botmode,target)
 	local ang
 	if botmode then
 		local target = self:GetTarget()
@@ -356,24 +237,11 @@ function ENT:GetShootAngles(ply,botmode)
 			if IsValid(target) then
 				local pos = target:LocalToWorld(target:OBBCenter())
 				local attpos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
-				local vel = target:GetVelocity()/10
+				
+				local vel = target:GetVelocity()/10 
 				local dist = attpos:Distance(pos)
-				local v
-				local ammotype = self.AmmunitionType or self.AmmunitionTypes[1][2]
-				if ammotype == "wac_base_7mm" then
-					v = 7000
-				elseif ammotype == "wac_base_12mm" then
-					v = 5000
-				elseif ammotype == "wac_base_20mm" then
-					v = 3500
-				elseif ammotype == "wac_base_30mm" then
-					v = 3000
-				elseif ammotype == "wac_base_40mm" then
-					v = 2000
-				else 
-					v = 500 
-				end
-				local calcPos = pos+vel*(dist/v)
+				self:BulletCalcVel()
+				local calcPos = pos+vel*(dist/self.BulletVelCalc)
 				local trace = util.QuickTrace(attpos,(pos-attpos)*100000,self.Entities)
 				if (((trace.Entity == target or target:GetParent() == trace.Entity) or trace.Entity:IsPlayer() or trace.Entity:IsNPC()) or trace.HitSky) and dist > 0.015 then
 					ang = (calcPos - attpos):Angle()
@@ -385,7 +253,7 @@ function ENT:GetShootAngles(ply,botmode)
 					-- self:SetTargetValid(false)
 				end
 				if self:GetIsAntiAircraft() and self:GetAmmoType() == 2 then
-					self:SetFuzeTime(((dist/v)/(12+math.Rand(0,1)))+(vel:Length()*0.0002))
+					self:SetFuseTime(((dist/self.BulletVelCalc)/(10+math.Rand(0,1)))+(vel:Length()*0.0002))
 				end
 				-- debugoverlay.Line(trace.StartPos,calcPos,FrameTime()+0.02,Color( 255, 255, 255 ),false )
 			else
@@ -520,6 +388,7 @@ function ENT:GetShootAngles(ply,botmode)
 			-- debugoverlay.Line(trace.StartPos,trace.HitPos,FrameTime()+0.02,Color( 255, 255, 255 ),false )
 		end
 	end
+	
 	if self.EmplacementType == "Mortar" and !noAngleChange and ang then
 		ang.r = -ang.r - self.DefaultPitch
 	end
@@ -530,8 +399,8 @@ function ENT:GetShootAngles(ply,botmode)
 		end
 		ang:Normalize()
 	end
+	local hullAng = self:GetHull():GetAngles()
 	if self.MaxRotation and !noAngleChange and ang then
-		local hullAng = self:GetHull():GetAngles()
 		local newang = ang - hullAng
 		newang:Normalize()
 		
@@ -581,42 +450,6 @@ function ENT:GetShootAngles(ply,botmode)
 	return ang
 end
 
-function ENT:CheckTarget()
-	local target = self:GetTarget()
-	if !IsValid(target) then
-		self:SetTarget(nil)
-		self:SetTargetValid(false)
-	else
-		if target:IsPlayer() then
-			if self:IsValidHuman(target) then
-				if not target:Alive() then
-					self:SetTarget(nil)
-					self:SetTargetValid(false)
-				else
-					if target:InVehicle() then
-						local veh = target:GetVehicle()
-						if (self.EmplacementType == "Mortar" and not self:IsValidAirTarget(veh)) or self.EmplacementType != "Mortar" then
-							self:SetTarget(veh)
-						else
-							self:SetTarget(nil)
-							self:SetTargetValid(false)
-							target = nil
-						end
-					end
-				end
-			else
-				self:SetTarget(nil)
-				self:SetTargetValid(false)
-			end
-		elseif target:IsNPC() then
-			if !self:IsValidBot(target) then
-				self:SetTarget(nil)
-				self:SetTargetValid(false)
-			end
-		end
-	end
-end
-
 function ENT:Think()
 	if not self.Initialized then return end
 	
@@ -627,13 +460,41 @@ function ENT:Think()
 	local seat
 	local seatValid
 	local shouldProceed = true
+	local target = self:GetTarget()
+	local skin = self:GetSkin()
+	local IsReloading = self:GetIsReloading()
 	
 	for k,v in pairs(self.Entities) do
 		if IsValid(v) then
-			v:SetSkin(self:GetSkin())
+			v:SetSkin(skin)
 		end
 	end
 	
+	-- if self.EmplacementType == "Cannon" then
+			-- self:SetBotMode(false)
+			-- botmode = false
+		-- else
+			-- if ply != self then
+				-- self:GrabTurret(self)
+			-- end
+			-- local validTarget = self.IsValidTarget
+			-- if not IsValid(target) then
+				-- if simfphys.LFS then
+					-- for k,v in pairs(simfphys.LFS:PlanesGetAll()) do
+						-- if self:IsValidTarget(v) then
+							-- self:SetTarget(v)
+							-- target = target
+							-- break
+						-- end
+					-- end
+				-- end
+				-- if not target then
+					-- for k,v in pairs(
+				-- end
+			-- end
+		-- end
+	
+	-- If bot mode is on, find a target
 	if botmode then
 		if self.EmplacementType == "Cannon" then
 			self:SetBotMode(false)
@@ -642,17 +503,24 @@ function ENT:Think()
 			if ply != self then
 				self:GrabTurret(self)
 			end
-			
-			if not IsValid(self:GetTarget()) then
-				-- for k,v in pairs(player.GetAll()) do
-					-- if self:IsValidTarget(v) then
-						-- self:SetTarget(v)
-					-- end
-				-- end
-				for k,v in pairs(ents.GetAll()) do
-					if self:IsValidTarget(v) then
-						self:SetTarget(v)
-						break
+			if not IsValid(target) then
+				target = nil
+				if istable(simfphys.LFS) then
+					for k,v in pairs(simfphys.LFS:PlanesGetAll()) do
+						if self:IsValidTarget(v) then
+							self:SetTarget(v)
+							target = target
+							break
+						end
+					end
+				end
+				if not target then
+					for k,v in pairs(player.GetAll()) do
+						if self:IsValidTarget(v) then
+							self:SetTarget(v)
+							target = v
+							break
+						end
 					end
 				end
 			end
@@ -673,16 +541,19 @@ function ENT:Think()
 	end
 	
 	if IsValid(ply) and shouldProceed then
-		if not self:ShooterStillValid(ply) then 
+		if not self:ShooterStillValid(ply,botmode) then 
 			self:LeaveTurret(ply)
 		else
-			local ang = self:GetShootAngles(ply,botmode)
+			-- Angle Stuff
+			
+			local ang = self:GetShootAngles(ply,botmode,target)
 			if ang then
 				if self.YawModel then
 					local yaw = self:GetYaw()
 					local yawang = yaw:GetAngles()
-					local hullang = self:GetHull():GetAngles()
-					yawang = Angle(hullang.p,ang.y,hullang.r)
+					local hullAng = self:GetHull():GetAngles()
+					yawang = Angle(hullAng.p,ang.y,hullAng.r)
+					ang = Angle(ang.p - hullAng.p,ang.y,ang.r - hullAng.r)
 					yawang:Normalize()
 					yaw:SetAngles(yawang)
 					self:SetAngles(ang)
@@ -692,9 +563,12 @@ function ENT:Think()
 				end
 			end
 			
+			-- Seat checking
 			if self.Seatable then
+			
 				seat = seat or self:GetSeat()
 				seatValid = seatValid or IsValid(seat)
+				
 				if botmode and seatValid then
 					seat:Remove()
 					self:SetSeat(nil)
@@ -711,18 +585,18 @@ function ENT:Think()
 				end
 			end
 			
+			-- Bot stuff (this might need to be optimised)
 			if botmode then
 				self:CheckTarget()
-				local target = self:GetTarget()
 				if IsValid(target) then
 					local tparent = target:GetParent()
-					if target.GetDriver and not IsValid(target:GetDriver()) and not (tparent.LFS and self:IsValidAirTarget(target)) then
-						-- print("woof")
+					local isValidAirTarget = self:IsValidAirTarget(target)
+					if target.GetDriver and not IsValid(target:GetDriver()) and not (tparent.LFS and isValidAirTarget) then
 						self:SetTarget(nil)
 						target = nil
 					else
 						if self:GetIsAntiAircraft() and self.EmplacementType == "MG" then
-							if self:IsValidAirTarget(target) then
+							if isValidAirTarget then
 								self:SetAmmoType(2)
 							else
 								self:SetAmmoType(1)
@@ -741,10 +615,12 @@ function ENT:Think()
 			end
 			
 			-- addRecoil = 0
+			-- Shooting stuff
 			local IsShooting = ply:KeyDown(IN_ATTACK)
+			
 			self:SetIsShooting(IsShooting)
 			if IsShooting then
-				if self:CanShoot(ammo,ct,ply) then
+				if self:CanShoot(ammo,ct,ply,IsReloading) then
 					if self.Sequential then
 						self:CheckMuzzle()
 						local m = self:GetCurrentMuzzle()
@@ -785,36 +661,41 @@ function ENT:Think()
 							end
 						end
 					end
+					
 					-- addRecoil = 1
-					if self.ShootAnim then 
-						if self.AnimRestartTime and self.EmplacementType != "Cannon" then
-							if self:GetNextShootAnim() < ct then
+					if self.CustomShootAnim then
+						self:CustomShootAnim(self:GetCurrentMuzzle()-1)
+					else
+						if self.ShootAnim then 
+							if self.AnimRestartTime and self.EmplacementType != "Cannon" then
+								if self:GetNextShootAnim() < ct then
+									self:ResetSequence(self.ShootAnim)
+									self:SetNextShootAnim(ct + self.AnimRestartTime)
+								end
+							else
 								self:ResetSequence(self.ShootAnim)
-								self:SetNextShootAnim(ct + self.AnimRestartTime)
 							end
-						else
-							self:ResetSequence(self.ShootAnim)
 						end
 					end
-					if self.EmplacementType != "Mortar" then
-						self:SetNextShot(ct + self.ShotInterval)
-					end
+					
 					if self.EmplacementType == "Cannon" and ammo-1 <= 0 then
 						self:PlayAnim()
 					end
-					if self.EmplacementType == "Mortar" then
-						self:SetNextShot(ct + self.ShotInterval)
-					end
+					
+					self:SetNextShot(ct + self.ShotInterval)
 				end
 			end
 			
+			-- Reload stuff
 			if ammo < self.Ammo and self.Ammo > 0 then
-				if ply:KeyDown(IN_RELOAD) and not self:GetIsReloading() then
+				if ply:KeyDown(IN_RELOAD) and not IsReloading then
 					self:Reload()
 				end
 			end
-		
+			
 			if self.AmmunitionTypes then
+			
+				-- Toggle ammo types
 				if ply:KeyDown(IN_ATTACK2) then
 					if self:GetNextSwitchAmmoType() <= ct then
 						if self.EmplacementType != "MG" then
@@ -827,16 +708,18 @@ function ENT:Think()
 						self:SetNextSwitchAmmoType(ct + 0.3)
 					end
 				end
-				if self.CanSwitchTimeFuze then
-					if self.AmmunitionTypes[self:GetAmmoType()][1] == "Time-fuzed" then
-						if self:GetNextSwitchTimeFuze() <= ct then
-							if ply:KeyDown(IN_WALK) then
-								self:SetNewFuzeTime(ply)
-							end
+				
+				-- Update fuse time
+				if self.CanSwitchTimeFuse then
+					if self.AmmunitionTypes[self:GetAmmoType()][1] == "Time-fused" then
+						if self:GetNextSwitchTimeFuse() <= ct then self:GetSkin()
 							if ply:KeyDown(IN_SPEED) then
-								self:SetNewFuzeTime(ply,true)
+								self:SetNewFuseTime(ply)
 							end
-							self:SetNextSwitchTimeFuze(ct + 0.2)
+							if ply:KeyDown(IN_WALK) then
+								self:SetNewFuseTime(ply,true)
+							end
+							self:SetNextSwitchTimeFuse(ct + 0.2)
 						end
 					end
 				end
@@ -856,3 +739,104 @@ function ENT:Think()
 	self:NextThink(ct)
 	return true
 end
+
+-------------------------------------------- Bot stuff
+
+function ENT:IsValidTarget(ent)
+	self.Owner = self.Owner or self
+	return IsValid(ent) and (self:IsValidBot(ent) or self:IsValidHuman(ent))
+end
+
+function ENT:IsValidBot(ent,b)
+	self.Owner = self.Owner or self
+	
+	return (ent:IsNPC() and self:GetAttackNPCs() and (!self.Owner:IsPlayer() or ent:Disposition(self.Owner) == 1)) or (ent.LFS and ent:GetAI() and self:GetIsAntiAircraft() and (ent:GetAITEAM() != (self.Owner.lfsGetAITeam and self.Owner:lfsGetAITeam() or nil) or self:GetShouldNotCareAboutOwnersTeam()))
+end
+
+function ENT:IsValidGroundTarget(ply)
+	ent = ply.GetVehicle and ply:GetVehicle() or nil
+	if IsValid(ent) then
+		local car = ent:GetParent()
+		local driver = ent.GetDriver and ent:GetDriver() or nil
+		return (simfphys.IsCar and IsValid(car) and simfphys.IsCar(car) and (driver != self.Owner and (self.Owner:IsPlayer() and driver:Team() != self.Owner:Team())) or self:GetShouldNotCareAboutOwnersTeam())
+	end
+end 
+
+function ENT:IsValidHuman(ent)
+	return ((ent:IsPlayer() and self:GetAttackPlayers() and ent:Alive()) and ((ent != self.Owner and (self.Owner:IsPlayer() and ent:Team() != self.Owner:Team())) or self:GetShouldNotCareAboutOwnersTeam()) or (self:IsValidGroundTarget(ent) and self:GetIsAntiGroundVehicles()) or self:IsValidAirTarget(ent) and self:GetIsAntiAircraft() and self.EmplacementType != "Mortar")
+end
+
+function ENT:IsValidAirTarget(ent)
+	local seat = (ent.GetVehicle and ent:GetVehicle() or nil) or ent
+	if IsValid(seat) then
+		local aircraft = seat:GetParent()
+		if IsValid(aircraft) then
+			if aircraft.LFS and (IsValid(aircraft:GetDriver()) or self:IsValidBot(aircraft,true)) then
+				return aircraft:GetHP() > 0
+			elseif aircraft.isWacAircraft then
+				return aircraft.engineHealth > 0 and IsValid(seat:GetDriver())
+			else
+				return false
+			end
+		else
+			return false
+		end
+	else
+		return false
+	end
+end
+
+function ENT:KeyDown(key)
+	if key == 1 then
+		return self:GetTargetValid()
+	elseif key == 8192 then
+		local ammo = self:GetAmmo()
+		if self.EmplacementType == "MG" then
+			return !(ammo > 0 or self.Ammo < 0)
+		else
+			return !(ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0))
+		end
+	elseif key == 524288 then
+		return false
+	else
+		return false
+	end
+end
+
+function ENT:CheckTarget()
+	local target = self:GetTarget()
+	if !IsValid(target) then
+		self:SetTarget(nil)
+		self:SetTargetValid(false)
+	else
+		if target:IsPlayer() then
+			if self:IsValidHuman(target) then
+				if not target:Alive() then
+					self:SetTarget(nil)
+					self:SetTargetValid(false)
+				else
+					if target:InVehicle() then
+						local veh = target:GetVehicle():GetParent()
+						if (self.EmplacementType == "Mortar" and not self:IsValidAirTarget(veh)) or self.EmplacementType != "Mortar" then
+							self:SetTarget(veh)
+							self:SetTargetOrigin(veh:OBBCenter())
+						else
+							self:SetTarget(nil)
+							self:SetTargetValid(false)
+							target = nil
+						end
+					end
+				end
+			else
+				self:SetTarget(nil)
+				self:SetTargetValid(false)
+			end
+		elseif target:IsNPC() then
+			if !self:IsValidBot(target) then
+				self:SetTarget(nil)
+				self:SetTargetValid(false)
+			end
+		end
+	end
+end
+

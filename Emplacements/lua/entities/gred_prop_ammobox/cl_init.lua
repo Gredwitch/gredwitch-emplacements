@@ -410,6 +410,14 @@ net.Receive("gred_net_ammobox_cl_gui",function()
 		end
 		
 		local DButton = DScrollPanel:Add("DButton")
+		DButton:SetText("128mm shell")
+		DButton:Dock( TOP )
+		DButton:DockMargin( 0, 0, 0, 5 )
+		DButton.DoClick = function()
+			AddShellMenu("gb_shell_128mm",self,ply,frame)
+		end
+		
+		local DButton = DScrollPanel:Add("DButton")
 		DButton:SetText("152mm shell")
 		DButton:Dock( TOP )
 		DButton:DockMargin( 0, 0, 0, 5 )

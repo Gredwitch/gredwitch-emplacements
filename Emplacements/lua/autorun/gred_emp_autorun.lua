@@ -51,7 +51,17 @@ if CLIENT then
 			end
 		end
 	end)
-
+	
+	hook.Add("CalcView","gred_emp_calcview",function(ply, pos, angles, fov)
+		if ply:GetViewEntity() != ply then return end
+		if ply.Gred_Emp_Ent then
+			local ent = ply.Gred_Emp_Ent
+			if IsValid(ent) then
+				return ent:ViewCalc(ply,pos,angles,fov)
+			end
+		end
+	end)
+	
 	hook.Add("InputMouseApply", "gred_emp_move",function(cmd,x,y,angle)
 		local ply = LocalPlayer()
 		local ent = ply.Gred_Emp_Ent

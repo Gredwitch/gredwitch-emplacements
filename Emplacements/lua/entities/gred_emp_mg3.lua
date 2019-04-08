@@ -31,7 +31,11 @@ ENT.CycleRate			= 0.5
 ENT.ExtractAngle		= Angle(0,0,0)
 ENT.MaxRotation			= Angle(30,45)
 
-ENT.SightPos			= Vector(0,-25,3.65)
+if game.SinglePlayer() then
+	ENT.SightPos		= Vector(0.02,-25,3.65)
+else
+	ENT.SightPos		= Vector(0,-25,3.65)
+end
 ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -113,25 +117,17 @@ function ENT:OnTick()
 	end
 end
 
-local function CalcView(ply, pos, angles, fov)
-	if ply:GetViewEntity() != ply then return end
-	if ply.Gred_Emp_Ent then
-		if ply.Gred_Emp_Ent.ClassName == "gred_emp_mg3" then
-			local ent = ply.Gred_Emp_Ent
-			if ent:GetShooter() != ply then return end
-			if IsValid(ent) then
-				if ent:GetViewMode() == 1 then
-					local ang = ent:GetAngles()
-					local view = {}
-					view.origin = ent:LocalToWorld(ent.SightPos)
-					view.angles = Angle(-ang.r,ang.y+90,ang.p)
-					view.fov = 35
-					view.drawviewer = false
-
-					return view
-				end
-			end
-		end
+function ENT:ViewCalc(ply, pos, angles, fov)
+	if self:GetShooter() != ply then return end
+	if self:GetViewMode() == 1 then
+		local ang = self:GetAngles()
+		local view = {}
+		view.origin = self:LocalToWorld(self.SightPos)
+		local a = game.SinglePlayer() and 0.1 or 0
+		view.angles = Angle(-ang.r,ang.y+90 + a,ang.p)
+		view.fov = 35
+		view.drawviewer = false
+				
+		return view
 	end
 end
-hook.Add("CalcView", "gred_emp_mg3_view", CalcView)

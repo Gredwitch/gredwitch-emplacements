@@ -17,7 +17,7 @@ ENT.ShotInterval		= 0.0375
 
 ENT.AmmunitionTypes		= {
 						{"Direct Hit","wac_base_30mm"},
-						{"Time-fuzed","wac_base_30mm"},
+						{"Time-fused","wac_base_30mm"},
 }
 
 ENT.OnlyShootSound		= true
@@ -34,7 +34,7 @@ ENT.Seatable			= true
 ENT.MaxRotation			= Angle(-18)
 ENT.SightPos			= Vector(-1,70,-10)
 ENT.IsAAA				= true
-ENT.CanSwitchTimeFuze	= true
+ENT.CanSwitchTimeFuse	= true
 ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -49,41 +49,32 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
-local function CalcView(ply, pos, angles, fov)
-	if ply:GetViewEntity() != ply then return end
-	if ply.Gred_Emp_Ent then
-		local ent = ply.Gred_Emp_Ent
-		if IsValid(ent) then
-			if ent:GetClass() == "gred_emp_artemis30" then
-				if ent:GetShooter() != ply then return end
-				seat = ent:GetSeat()
-				local seatValid = IsValid(seat)
-				if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
-				local a = ent:GetAngles()
-				local ang = Angle(-a.r,a.y+90,a.p)
-				ang:Normalize()
-				if (seatValid and seat:GetThirdPersonMode()) or ent:GetViewMode() == 1 then
-					local view = {}
-					
-					view.origin = ent:LocalToWorld(ent.SightPos)
-					view.angles = ang
-					view.fov = 35
-					view.drawviewer = true
-
-					return view
-				else
-					if seatValid then
-						local view = {}
-						view.origin = pos
-						view.angles = ang
-						view.fov = fov
-						view.drawviewer = false
-
-						return view
-					end
-				end
-			end
+function ENT:ViewCalc(ply, pos, angles, fov)
+	if self:GetShooter() != ply then return end
+	seat = self:GetSeat()
+	local seatValid = IsValid(seat)
+	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
+	local a = self:GetAngles()
+	local ang = Angle(-a.r,a.y+90,a.p)
+	ang:Normalize()
+	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
+		local view = {}
+		
+		view.origin = self:LocalToWorld(self.SightPos)
+		view.angles = ang
+		view.fov = 35
+		view.drawviewer = true
+	
+		return view
+	else
+		if seatValid then
+			local view = {}
+			view.origin = pos
+			view.angles = ang
+			view.fov = fov
+			view.drawviewer = false
+	
+			return view
 		end
 	end
 end
-hook.Add("CalcView", "gred_emp_artemis30_view", CalcView)

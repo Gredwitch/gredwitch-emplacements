@@ -106,25 +106,16 @@ function ENT:OnTick()
 	end
 end
 
-local function CalcView(ply, pos, angles, fov)
-	if ply:GetViewEntity() != ply then return end
-	if ply.Gred_Emp_Ent then
-		if ply.Gred_Emp_Ent.ClassName == "gred_emp_bren" then
-			local ent = ply.Gred_Emp_Ent
-			if ent:GetShooter() != ply then return end
-			if IsValid(ent) then
-				if ent:GetViewMode() == 1 then
-					local ang = ent:GetAngles()
-					local view = {}
-					view.origin = ent:LocalToWorld(ent.SightPos)
-					view.angles = Angle(-ang.r,ang.y+89.8,ang.p)
-					view.fov = 35
-					view.drawviewer = false
+function ENT:ViewCalc(ply, pos, angles, fov)
+	if self:GetShooter() != ply then return end
+	if self:GetViewMode() == 1 then
+		local ang = self:GetAngles()
+		local view = {}
+		view.origin = self:LocalToWorld(self.SightPos)
+		view.angles = Angle(-ang.r,ang.y+89.8,ang.p)
+		view.fov = 35
+		view.drawviewer = false
 
-					return view
-				end
-			end
-		end
+		return view
 	end
 end
-hook.Add("CalcView", "gred_emp_bren_view", CalcView)

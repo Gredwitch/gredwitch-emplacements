@@ -14,14 +14,14 @@ ENT.AmmunitionType		= "wac_base_12mm"
 ENT.ShotInterval		= 0.1
 ENT.TracerColor			= "Green"
 
-ENT.ShootSound			= "gred_emp/dhsk/shoot.wav"
-ENT.StopShootSound		= "gred_emp/dhsk/stop.wav"
+ENT.ShootSound			= "gred_emp/dshk/shoot.wav"
+ENT.StopShootSound		= "gred_emp/dshk/stop.wav"
 
 ENT.EmplacementType		= "MG"
 ENT.HullModel			= "models/gredwitch/dhsk/dhsk_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/dhsk/dhsk_gun.mdl"
-ENT.ReloadSound			= "gred_emp/dhsk/dhsk_reload.wav"
-ENT.ReloadEndSound		= "gred_emp/dhsk/dhsk_reloadend.wav"
+ENT.ReloadSound			= "gred_emp/dshk/dhsk_reload.wav"
+ENT.ReloadEndSound		= "gred_emp/dshk/dhsk_reloadend.wav"
 
 ENT.Ammo				= 50
 ENT.ReloadTime			= 1.73 - 0.7
@@ -105,25 +105,16 @@ function ENT:OnTick()
 	end
 end
 
-local function CalcView(ply, pos, angles, fov)
-	if ply:GetViewEntity() != ply then return end
-	if ply.Gred_Emp_Ent then
-		if ply.Gred_Emp_Ent.ClassName == "gred_emp_dshk" then
-			local ent = ply.Gred_Emp_Ent
-			if ent:GetShooter() != ply then return end
-			if IsValid(ent) then
-				if ent:GetViewMode() == 1 then
-					local ang = ent:GetAngles()
-					local view = {}
-					view.origin = ent:LocalToWorld(ent.SightPos)
-					view.angles = Angle(-ang.r,ang.y+90,ang.p)
-					view.fov = 35
-					view.drawviewer = false
+function ENT:ViewCalc(ply, pos, angles, fov)
+	if self:GetShooter() != ply then return end
+	if self:GetViewMode() == 1 then
+		local ang = self:GetAngles()
+		local view = {}
+		view.origin = self:LocalToWorld(self.SightPos)
+		view.angles = Angle(-ang.r,ang.y+90,ang.p)
+		view.fov = 35
+		view.drawviewer = false
 
-					return view
-				end
-			end
-		end
+		return view
 	end
 end
-hook.Add("CalcView", "gred_emp_dshk_view", CalcView)

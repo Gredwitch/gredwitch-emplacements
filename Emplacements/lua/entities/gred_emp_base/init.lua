@@ -4,6 +4,7 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 
 local IsValid = IsValid
+local reachSky = Vector(0,0,9999999999)
 
 function ENT:Initialize()
 	self:SetModel(self.TurretModel)
@@ -21,6 +22,9 @@ function ENT:Initialize()
 	self:InitYaw(pos,ang)
 	self:InitWheels(ang)
 	
+	self:BulletCalcVel()
+	self:CalcSpread()
+	
 	self:ReloadSounds()
 	self:ResetSequence("reload")
 	self:SetCycle(1)
@@ -30,17 +34,19 @@ function ENT:Initialize()
 	if self.AmmunitionTypes then
 		local IsAAA = false
 		for k,v in pairs(self.AmmunitionTypes) do
-			if v[1] == "Time-fuzed" then 
+			if v[1] == "Time-fused" then 
 				IsAAA = true
-				self.TimeFuze = k
+				self.TimeFuse = k
 			end
 		end
 		self.IsAAA = IsAAA
 	end
+	
 	for k,v in pairs(self.Entities) do
 		self.HP = (self.HP+75+(v:BoundingRadius()/table.Count(self.Entities)))
 		-- self:SetHP(self.HP)
 	end
+	
 	if self.EmplacementType != "MG" then
 		if GetConVar("gred_sv_manual_reload"):GetInt() == 1 then
 			if self.EmplacementType == "Mortar" then
@@ -53,9 +59,11 @@ function ENT:Initialize()
 			self:GetStoredShellProperties()
 		end
 	end
+	
 	if self.Seatable then
 		self.Seatable = GetConVar("gred_sv_enable_seats"):GetInt() == 1
 	end
+	
 	self.IsRocketLauncher = string.StartWith(self.AmmunitionType or self.AmmunitionTypes[1][2],"gb_rocket")
 	self.Initialized = true
 end
@@ -221,13 +229,10 @@ function ENT:Use(ply,caller,use,val)
 	self:SetUseDelay(ct + 0.2)
 end
 
----------------------
-
 function ENT:OnTick(ct,ply,botmode)
 	
 end
 
-local reachSky = Vector(0,0,9999999999)
 function ENT:CalcMortarCanShoot(ply,ct)
 	local tr = util.QuickTrace(self:LocalToWorld(self.TurretMuzzles[1].Pos),reachSky,self.Entities)
 	local canShoot = true
@@ -282,12 +287,49 @@ function ENT:CalcMortarCanShoot(ply,ct)
 	return canShoot
 end
 
+local fuckHavok = GetConVar("gred_sv_override_hab"):GetInt() == 1
+
+function ENT:BulletCalcVel(ammotype)
+	ammotype = ammotype or (self.AmmunitionType or self.AmmunitionTypes[1][2])
+	if hab and hab.Module.PhysBullet and not fuckHavok then
+		if ammotype == "wac_base_7mm" then
+			self.BulletVelCalc = 100
+		elseif ammotype == "wac_base_12mm" then
+			self.BulletVelCalc = 5000
+		elseif ammotype == "wac_base_20mm" then
+			self.BulletVelCalc = 4000
+		elseif ammotype == "wac_base_30mm" then
+			self.BulletVelCalc = 3000
+		elseif ammotype == "wac_base_40mm" then
+			self.BulletVelCalc = 1500
+		else 
+			self.BulletVelCalc = 500 
+		end
+	else
+		if ammotype == "wac_base_7mm" then
+			self.BulletVelCalc = 7000
+		elseif ammotype == "wac_base_12mm" then
+			self.BulletVelCalc = 5000
+		elseif ammotype == "wac_base_20mm" then
+			self.BulletVelCalc = 3500
+		elseif ammotype == "wac_base_30mm" then
+			self.BulletVelCalc = 3000
+		elseif ammotype == "wac_base_40mm" then
+			self.BulletVelCalc = 2000
+		else 
+			self.BulletVelCalc = 500 
+		end
+	end
+end
+
 function ENT:FireMortar(ply,ammo,muzzle)
 	
 	local pos = self:GetPos()
 	util.ScreenShake(pos,5,5,0.5,200)
+	
 	local effectdata = EffectData()
-	effectdata:SetOrigin(pos-Vector(0,0,10))
+	effectdata:SetOrigin(pos)
+	pos.z = pos.z - 10
 	effectdata:SetAngles(Angle(90,0,0))
 	effectdata:SetFlags(table.KeyFromValue(gred.Particles,"gred_mortar_explosion_smoke_ground"))
 	util.Effect("gred_particle_simple",effectdata)
@@ -300,13 +342,12 @@ function ENT:FireMortar(ply,ammo,muzzle)
 	trace.Mask = MASK_SOLID_BRUSHONLY
 	local tr = util.TraceLine(trace)
 	
-	local BPos = tr.HitPos + 
-	Vector(math.random(-self.Spread,self.Spread),math.random(-self.Spread,self.Spread),-1) -- Creates our spawn position
+	local BPos = tr.HitPos + Vector(math.random(-self.Spread,self.Spread),math.random(-self.Spread,self.Spread),-1) -- Creates our spawn position
 	while !util.IsInWorld(BPos) do
 		BPos = tr.HitPos + Vector(math.random(-self.Spread,self.Spread),math.random(-self.Spread,self.Spread),-1) -- re-ceates our spawn position
 	end
-	local HitBPos = Vector(0,0,
-	util.QuickTrace(BPos,BPos - reachSky,{self,self.turretBase,self.shootpos} ).HitPos.z) -- Defines the ground's pos
+	
+	local HitBPos = Vector(0,0,util.QuickTrace(BPos,BPos - reachSky,self.Entities).HitPos.z) -- Defines the ground's pos
 	local zpos = Vector(0,0,BPos.z) -- The exact spawn altitude
 	local dist = HitBPos:Distance(zpos) -- Calculates the distance between our spawn altitude and the ground
 	
@@ -373,44 +414,28 @@ function ENT:FireMortar(ply,ammo,muzzle)
 end
 
 function ENT:FireMG(ply,ammo,muzzle)
+	local rand = math.Rand
 	local pos = self:LocalToWorld(muzzle.Pos)
-	local ang = self:LocalToWorldAngles(muzzle.Ang) + self.ShootAngleOffset
+	local ang = self:LocalToWorldAngles(muzzle.Ang) + self.ShootAngleOffset + Angle(rand(self.GetSpread,-self.GetSpread),rand(self.GetSpread,-self.GetSpread)+90,rand(self.GetSpread,-self.GetSpread))
 	
 	local b = ents.Create("gred_base_bullet")
 	local ammotype = self.AmmunitionType or self.AmmunitionTypes[1][2]
-	local num
-	if self.Spread > 0 then
-		num = self.Spread
-	else
-		if ammotype == "wac_base_7mm" then
-			num = 0.3
-		elseif ammotype == "wac_base_12mm" then
-			num = 0.5
-		elseif ammotype == "wac_base_20mm" then
-			num = 1.4
-		elseif ammotype == "wac_base_30mm" then
-			num = 1.6
-		elseif ammotype == "wac_base_40mm" then
-			num = 2
-		end
-	end
+	
 	b:SetPos(pos)
-	b:SetAngles(ang + Angle((Angle(math.Rand(num,-num) - 0, math.Rand(num,-num)+90, math.Rand(num,-num)))))
-	b.Speed=1000
-	b.Damage=20
-	b.Radius=70
-	if self.AmmunitionTypes and self.AmmunitionTypes[self:GetAmmoType()][1] == "Time-fuzed" or false then 
-		b.FuzeTime = self:GetFuzeTime()
+	b:SetAngles(ang)
+	b.Speed = 1000
+	b.Damage = 20
+	b.Radius = 70
+	if self.AmmunitionTypes and self.AmmunitionTypes[self:GetAmmoType()][1] == "Time-fused" or false then 
+		b.FuseTime = self:GetFuseTime()
 	end
-	if self.Sequential then
-		b.sequential=1
-	else
-		b.sequential=0
-	end
-	b.gunRPM=self:GetRoundsPerMinute()
-	b.Caliber=ammotype
+	
+	b.sequential = self.Sequential and 1 or 0
+	
+	b.gunRPM = self:GetRoundsPerMinute()
+	b.Caliber = ammotype
 	b.col = self.TracerColor
-	b.Owner=ply
+	b.Owner = ply
 	b.Filter = self.Entities
 	b:Spawn()
 	b:Activate()
@@ -482,7 +507,8 @@ function ENT:FireCannon(ply,ammo,muzzle)
 		local mdlscale = b.ModelSize
 		timer.Simple(self.AnimPlayTime + (self.TimeToEjectShell or 0.2),function()
 			if !IsValid(self) then return end
-			shellEject = self.TurretEjects[1]
+			shellEject = self.TurretEjects[self:GetCurrentMuzzle()-1]
+			shellEject = shellEject or self.TurretEjects[1]
 			local shell = ents.Create("gred_prop_casing")
 			shell.Model = "models/gredwitch/bombs/75mm_shell.mdl"
 			shell:SetPos(self:LocalToWorld(shellEject.Pos))
@@ -589,8 +615,6 @@ function ENT:CheckHasWP()
 		end
 	end
 end
-
----------------------
 
 function ENT:GetStoredShellProperties(ammotype)
 	if not ammotype then ammotype = self.AmmunitionType or self.AmmunitionTypes[self:GetAmmoType()][2] end
@@ -768,6 +792,83 @@ function ENT:OnTakeDamage(dmg)
 	if self:GetHP() <= 0 then self:Explode(dmg:GetAttacker()) end
 end
 
+function ENT:GrabTurret(ply)
+	self:SetShooter(ply)
+	local botmode = self:GetBotMode()
+	if !botmode then
+		self.Owner = ply
+		local wep = ply:GetActiveWeapon()
+		if IsValid(wep) then
+			self:SetPrevPlayerWeapon(wep:GetClass())
+		end
+		if self.Seatable then
+			if self.MaxViewModes > 0 then
+				if self.NameToPrint then
+					net.Start("gred_net_message_ply")
+						net.WriteEntity(ply)
+						net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom or the Crouch key to toggle aimsights")
+					net.Send(ply)
+				else
+					net.Start("gred_net_message_ply")
+						net.WriteEntity(ply)
+						net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom or the Crouch key to toggle aimsights")
+					net.Send(ply)
+				end
+			end
+			self:CreateSeat(ply)
+		else
+			if self.MaxViewModes > 0 then
+				if self.NameToPrint then
+					net.Start("gred_net_message_ply")
+						net.WriteEntity(ply)
+						net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom key to toggle aimsights")
+					net.Send(ply)
+				else
+					net.Start("gred_net_message_ply")
+						net.WriteEntity(ply)
+						net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom key to toggle aimsights")
+					net.Send(ply)
+				end
+			end
+		end
+	end
+	self:OnGrabTurret(ply,botmode)
+end
+
+function ENT:OnGrabTurret(ply,botmode)
+	
+end
+
+function ENT:LeaveTurret(ply)
+	local isPlayer = ply:IsPlayer()
+	if isPlayer then
+		if ply.StripWeapon and not self.Seatable then
+			ply:StripWeapon("weapon_base")
+			ply:SelectWeapon(self:GetPrevPlayerWeapon())
+		end
+		if self.Seatable then
+			local seat = self:GetSeat()
+			if IsValid(seat) then
+				ply:ExitVehicle()
+				seat:Remove()
+				self:SetSeat(nil)
+			end
+			if self.YawModel then
+				local yaw = self:GetYaw()
+				local pos = IsValid(yaw) and yaw:BoundingRadius() or 10
+				ply:SetPos(self:LocalToWorld(Vector(pos,0,0)))
+			end
+		end
+	end
+	self:SetPrevShooter(ply)
+	self:SetShooter(nil)
+	self:OnLeaveTurret(ply,isPlayer)
+end
+
+function ENT:OnLeaveTurret(ply,isPlayer)
+	
+end
+
 function ENT:OnRemove()
 	for k,v in pairs(self.Entities) do
 		if IsValid(v) then
@@ -775,4 +876,23 @@ function ENT:OnRemove()
 		end
 	end
 	self:LeaveTurret(self:GetShooter())
+end
+
+function ENT:CalcSpread()
+	if self.Spread > 0 then
+		self.GetSpread = self.Spread
+	else
+		local ammotype = self.AmmunitionType or self.AmmunitionTypes[1][2]
+		if ammotype == "wac_base_7mm" then
+			self.GetSpread = 0.3
+		elseif ammotype == "wac_base_12mm" then
+			self.GetSpread = 0.5
+		elseif ammotype == "wac_base_20mm" then
+			self.GetSpread = 1.4
+		elseif ammotype == "wac_base_30mm" then
+			self.GetSpread = 1.6
+		elseif ammotype == "wac_base_40mm" then
+			self.GetSpread = 2
+		end
+	end
 end

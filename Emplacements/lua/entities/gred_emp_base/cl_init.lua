@@ -42,12 +42,12 @@ function ENT:ReloadSounds()
 	self.sounds = {}
 	if self.ShootSound then
 		self.sounds["shoot"] = CreateSound(self,self.ShootSound)
-		self.sounds.shoot:SetSoundLevel(100)
+		self.sounds.shoot:SetSoundLevel(140)
 		-- self.sounds.shoot:ChangeVolume(1)
 	end
 	if self.StopShootSound then
 		self.sounds["stop"] = CreateSound(self,self.StopShootSound)
-		self.sounds.stop:SetSoundLevel(100)
+		self.sounds.stop:SetSoundLevel(140)
 		-- self.sounds.stop:ChangeVolume(1)
 	end
 end
@@ -99,8 +99,8 @@ function ENT:Think()
 	if not self.Initialized then self:Initialize() return end
 	
 	local ply = self:GetShooter()
-	local ct = CurTime() -- Tickrate
-	print(self:GetAmmo())
+	local ct = CurTime()
+	
 	if IsValid(ply) then
 		ply.Gred_Emp_Ent = self
 		if ply:KeyDown(IN_ZOOM) then
@@ -113,7 +113,7 @@ function ENT:Think()
 		local IsShooting = self:GetIsShooting()
 		local IsReloading = self:GetIsReloading()
 		if IsShooting then
-			if self:CanShoot(ammo,ct,ply) then
+			if self:CanShoot(ammo,ct,ply,IsReloading) then
 				if self.EmplacementType != "MG" or self.OnlyShootSound then
 					self:SetNextShotCL(ct + self.ShotInterval)
 					self.sounds.shoot:Stop()
@@ -183,4 +183,8 @@ function ENT:UpdateViewMode()
 	if self:GetViewMode() > self.MaxViewModes then
 		self:SetViewMode(0)
 	end
+end
+
+function ENT:ViewCalc(ply, pos, angles, fov)
+
 end

@@ -1,0 +1,17 @@
+"VertexlitGeneric"
+{
+
+	"$basetexture" 			"models/gredwitch/flak40z/flak40_yaw1_c"
+	"$bumpmap" 				"models/gredwitch/flak40z/flak40_yaw1_n"
+	"$halflambert" 			1
+	"$nocull" 				1
+    "$alphatest" 			0
+
+	"$phong" 				1
+	"$phongexponenttexture" "models/gredwitch/flak40z/flak40_yaw1_n"
+	"$phongboost" 			"0.3"
+	"$phongfresnelranges"	"[2 2 2]"
+
+	"$PhongAlbedoTint" 		"1"
+
+}

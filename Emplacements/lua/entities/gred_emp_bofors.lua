@@ -11,13 +11,13 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Bofors L/60"
 
-ENT.MuzzleEffect		= "muzzleflash_bar_3p"
+ENT.MuzzleEffect		= "ins_weapon_rpg_frontblast"
 ENT.ShotInterval		= 0.5
 ENT.TracerColor			= "Red"
 ENT.Spread				= 0.7
 ENT.AmmunitionTypes		= {
 						{"Direct Hit","wac_base_40mm"},
-						{"Time-fuzed","wac_base_40mm"},
+						{"Time-fused","wac_base_40mm"},
 }
 
 ENT.ShootSound			= "gred_emp/bofors/shoot.wav"
@@ -33,7 +33,7 @@ ENT.SightPos			= Vector(37.65,18,15.85)
 ENT.ViewPos				= Vector(37.7,0,16)
 ENT.MaxRotation			= Angle(-10)
 ENT.MaxViewModes		= 1
-ENT.CanSwitchTimeFuze	= true
+ENT.CanSwitchTimeFuse	= true
 ENT.IsAAA				= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -57,41 +57,32 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
-local function CalcView(ply, pos, angles, fov)
-	if ply:GetViewEntity() != ply then return end
-	if ply.Gred_Emp_Ent then
-		local ent = ply.Gred_Emp_Ent
-		if IsValid(ent) then
-			if ent:GetClass() == "gred_emp_bofors" then
-				if ent:GetShooter() != ply then return end
-				seat = ent:GetSeat()
-				local seatValid = IsValid(seat)
-				if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
-				local a = ent:GetAngles()
-				local ang = Angle(-a.r+1,a.y+90,a.p)
-				ang:Normalize()
-				if (seatValid and seat:GetThirdPersonMode()) or ent:GetViewMode() == 1 then
-					local view = {}
-					
-					view.origin = ent:LocalToWorld(ent.SightPos)
-					view.angles = ang
-					view.fov = 35
-					view.drawviewer = true
+function ENT:ViewCalc(ply, pos, angles, fov)
+	if self:GetShooter() != ply then return end
+	seat = self:GetSeat()
+	local seatValid = IsValid(seat)
+	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
+	local a = self:GetAngles()
+	local ang = Angle(-a.r+1,a.y+90,a.p)
+	ang:Normalize()
+	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
+		local view = {}
+		
+		view.origin = self:LocalToWorld(self.SightPos)
+		view.angles = ang
+		view.fov = 35
+		view.drawviewer = true
 
-					return view
-				else
-					if seatValid then
-						local view = {}
-						view.origin =  ent:LocalToWorld(ent.ViewPos)
-						view.angles = ang
-						view.fov = fov
-						view.drawviewer = false
+		return view
+	else
+		if seatValid then
+			local view = {}
+			view.origin =  self:LocalToWorld(self.ViewPos)
+			view.angles = ang
+			view.fov = fov
+			view.drawviewer = false
 
-						return view
-					end
-				end
-			end
+			return view
 		end
 	end
 end
-hook.Add("CalcView", "gred_emp_bofors_view", CalcView)
