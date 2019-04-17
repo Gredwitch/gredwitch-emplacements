@@ -215,14 +215,116 @@ function ENT:Use(ply,caller,use,val)
 	local shooter = self:GetShooter()
 	if ply:IsPlayer() and self:GetBotMode() then
 		self:SetBotMode(false)
+		self:SetShouldSetAngles(true)
 		self:LeaveTurret(self)
-		self:GrabTurret(ply)
+		if self.EmplacementType == "Cannon" and ply:KeyDown(IN_RELOAD) then
+			local seat = self.Seatable
+			self.Seatable = false
+			self:GrabTurret(ply,true)
+			self:SetShouldSetAngles(false)
+			self:fire(self:GetAmmo(),ct,ply,self:GetIsReloading())
+			timer.Simple(0.5,function()
+				if !IsValid(self) then return end
+				self.Seatable = seat
+				self:LeaveTurret(ply)
+				self:SetShouldSetAngles(true)
+			end)
+		else
+			self:GrabTurret(ply)
+			if self.Seatable then
+				if self.MaxViewModes > 0 then
+					if self.NameToPrint then
+						net.Start("gred_net_message_ply")
+							net.WriteEntity(ply)
+							net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom or the Crouch key to toggle aimsights")
+						net.Send(ply)
+					else
+						net.Start("gred_net_message_ply")
+							net.WriteEntity(ply)
+							net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom or the Crouch key to toggle aimsights")
+						net.Send(ply)
+					end
+				end
+			else
+				if self.MaxViewModes > 0 then
+					if self.NameToPrint then
+						net.Start("gred_net_message_ply")
+							net.WriteEntity(ply)
+							net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom key to toggle aimsights")
+						net.Send(ply)
+					else
+						net.Start("gred_net_message_ply")
+							net.WriteEntity(ply)
+							net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom key to toggle aimsights")
+						net.Send(ply)
+					end
+				end
+			end
+		end
 	else
 		if shooter == ply then
 			self:LeaveTurret(ply)
 		else
 			if not IsValid(shooter) then
-				self:GrabTurret(ply)
+				self:SetShouldSetAngles(true)
+				if self.EmplacementType == "Cannon" and ply:KeyDown(IN_RELOAD) then
+					local seat = self.Seatable
+					self.Seatable = false
+					self:GrabTurret(ply,true)
+					self:SetShouldSetAngles(false)
+					
+					local ammo = self:GetAmmo()
+					local IsReloading = self:GetIsReloading()
+					local canShoot = self:CanShoot(ammo,ct,ply,IsReloading)
+					if canShoot then
+						self:fire(ammo,ct,ply,IsReloading)
+					end
+					timer.Simple(0.5,function()
+						if !IsValid(self) then return end
+						self.Seatable = seat
+						self:LeaveTurret(ply)
+						self:SetShouldSetAngles(true)
+					end)
+					timer.Simple(0,function()
+						if !IsValid(self) then return end
+						if canShoot then
+							local effectdata = EffectData()
+							effectdata:SetEntity(self)
+							util.Effect("gred_particle_emp_muzzle",effectdata)
+						end
+					end)
+				else
+					self:GrabTurret(ply)
+					if self.Seatable then
+						if self.MaxViewModes > 0 then
+							if self.NameToPrint then
+								net.Start("gred_net_message_ply")
+									net.WriteEntity(ply)
+									net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom or the Crouch key to toggle aimsights")
+								net.Send(ply)
+							else
+								net.Start("gred_net_message_ply")
+									net.WriteEntity(ply)
+									net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom or the Crouch key to toggle aimsights")
+								net.Send(ply)
+							end
+						end
+					else
+						if self.MaxViewModes > 0 then
+							if self.NameToPrint then
+								net.Start("gred_net_message_ply")
+									net.WriteEntity(ply)
+									net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom key to toggle aimsights")
+								net.Send(ply)
+							else
+								net.Start("gred_net_message_ply")
+									net.WriteEntity(ply)
+									net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom key to toggle aimsights")
+								net.Send(ply)
+							end
+						end
+					end
+				end
 			end
 		end
 	end
@@ -271,7 +373,7 @@ function ENT:CalcMortarCanShoot(ply,ct)
 			else
 				shootPos = util.TraceLine(util.GetPlayerTrace(ply)).HitPos
 			end
-			local tr = util.QuickTrace(shootPos,shootPos + reachSky,self.Entities)
+			local tr = self.CustomEyeTrace and self:GetViewMode() > 0 and self.CustomEyeTrace or util.QuickTrace(shootPos,shootPos + reachSky,self.Entities)
 			if tr.Hit and !tr.HitSky and !tr.Entity == self:GetTarget() then
 				canShoot = false
 				if !botmode and self.Time_Mortar <= ct then
@@ -337,8 +439,8 @@ function ENT:FireMortar(ply,ammo,muzzle)
 	local dir = ply:EyeAngles():Forward()*100000
 	
 	local trace = {}				
-	trace.start = shootPos
-	trace.endpos = shootPos + Vector(0,0,1000) -- This calculates the spawn altitude
+	trace.start = self.CustomEyeTrace and self:GetViewMode() > 0 and self.CustomEyeTrace.HitPos or shootPos
+	trace.endpos = self.CustomEyeTrace and self:GetViewMode() > 0 and self.CustomEyeTrace.HitPos + Vector(0,0,1000) or shootPos + Vector(0,0,1000) -- This calculates the spawn altitude
 	trace.Mask = MASK_SOLID_BRUSHONLY
 	local tr = util.TraceLine(trace)
 	
@@ -480,6 +582,7 @@ function ENT:FireCannon(ply,ammo,muzzle)
 	end
 	if ammotype == "AP" then
 		b.AP = true
+		b:SetBodygroup(1,0)
 	elseif ammotype == "Smoke" then
 		b.Smoke = true
 		if self.IsRocketLauncher then
@@ -792,71 +895,48 @@ function ENT:OnTakeDamage(dmg)
 	if self:GetHP() <= 0 then self:Explode(dmg:GetAttacker()) end
 end
 
-function ENT:GrabTurret(ply)
+function ENT:GrabTurret(ply,shootOnly)
 	self:SetShooter(ply)
 	local botmode = self:GetBotMode()
 	if !botmode then
 		self.Owner = ply
-		local wep = ply:GetActiveWeapon()
-		if IsValid(wep) then
-			self:SetPrevPlayerWeapon(wep:GetClass())
-		end
-		if self.Seatable then
-			if self.MaxViewModes > 0 then
-				if self.NameToPrint then
-					net.Start("gred_net_message_ply")
-						net.WriteEntity(ply)
-						net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom or the Crouch key to toggle aimsights")
-					net.Send(ply)
-				else
-					net.Start("gred_net_message_ply")
-						net.WriteEntity(ply)
-						net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom or the Crouch key to toggle aimsights")
-					net.Send(ply)
-				end
+		if !shootOnly then
+			local wep = ply:GetActiveWeapon()
+			if IsValid(wep) then
+				self:SetPrevPlayerWeapon(wep:GetClass())
 			end
-			self:CreateSeat(ply)
-		else
-			if self.MaxViewModes > 0 then
-				if self.NameToPrint then
-					net.Start("gred_net_message_ply")
-						net.WriteEntity(ply)
-						net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom key to toggle aimsights")
-					net.Send(ply)
-				else
-					net.Start("gred_net_message_ply")
-						net.WriteEntity(ply)
-						net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom key to toggle aimsights")
-					net.Send(ply)
-				end
+			if self.Seatable then
+				self:CreateSeat(ply)
 			end
 		end
 	end
-	self:OnGrabTurret(ply,botmode)
+	self:OnGrabTurret(ply,botmode,shootOnly)
 end
 
-function ENT:OnGrabTurret(ply,botmode)
+function ENT:OnGrabTurret(ply,botmode,shootOnly)
 	
 end
 
 function ENT:LeaveTurret(ply)
 	local isPlayer = ply:IsPlayer()
 	if isPlayer then
-		if ply.StripWeapon and not self.Seatable then
-			ply:StripWeapon("weapon_base")
-			ply:SelectWeapon(self:GetPrevPlayerWeapon())
-		end
-		if self.Seatable then
-			local seat = self:GetSeat()
-			if IsValid(seat) then
-				ply:ExitVehicle()
-				seat:Remove()
-				self:SetSeat(nil)
+		if self:GetShouldSetAngles() then
+			if ply.StripWeapon and not self.Seatable then
+				ply:StripWeapon("weapon_base")
+				ply:SelectWeapon(self:GetPrevPlayerWeapon())
 			end
-			if self.YawModel then
-				local yaw = self:GetYaw()
-				local pos = IsValid(yaw) and yaw:BoundingRadius() or 10
-				ply:SetPos(self:LocalToWorld(Vector(pos,0,0)))
+			if self.Seatable then
+				local seat = self:GetSeat()
+				if IsValid(seat) then
+					ply:ExitVehicle()
+					seat:Remove()
+					self:SetSeat(nil)
+				end
+				if self.YawModel then
+					local yaw = self:GetYaw()
+					local pos = IsValid(yaw) and yaw:BoundingRadius() or 10
+					ply:SetPos(self:LocalToWorld(Vector(pos,0,0)))
+				end
 			end
 		end
 	end

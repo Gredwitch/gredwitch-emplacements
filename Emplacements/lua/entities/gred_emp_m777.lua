@@ -19,7 +19,7 @@ ENT.AmmunitionTypes		= {
 ENT.AnimPauseTime		= 1
 ENT.AnimRestartTime		= 4.4
 ENT.ShellEjectTime		= 0.2
-ENT.AnimPlayTime		= 0
+ENT.AnimPlayTime		= 1
 ENT.ShootAnim			= "shoot"
 
 ENT.ShootSound			= "gred_emp/common/155mm.wav"

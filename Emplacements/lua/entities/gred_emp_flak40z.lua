@@ -26,6 +26,7 @@ ENT.TimeToEjectShell	= -0.8
 ENT.ATReloadSound		= "big"
 ENT.ShootAnim			= "shoot"
 ENT.ShootSound			= "gred_emp/common/88mm.wav"
+ENT.MaxUseDistance		= 150
 
 ENT.TurretPos			= Vector(0,-44,81)
 ENT.YawPos				= Vector(0,0,0)

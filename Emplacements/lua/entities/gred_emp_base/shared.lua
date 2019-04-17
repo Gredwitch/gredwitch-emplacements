@@ -133,9 +133,10 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Bool",6,"AttackPlayers", { KeyName = "AttackPlayers", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
 	self:NetworkVar("Bool",7,"ShouldNotCareAboutOwnersTeam", { KeyName = "ShouldNotCareAboutOwnersTeam", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
 	self:NetworkVar("Bool",8,"AttackNPCs", { KeyName = "AttackNPCs", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
+	self:NetworkVar("Bool",9,"ShouldSetAngles")
 	
 	
-	
+	self:SetShouldSetAngles(true)
 	self:SetAttackPlayers(true)
 	self:SetAttackNPCs(true)
 	self:SetShouldNotCareAboutOwnersTeam(false)
@@ -189,7 +190,6 @@ function ENT:CanShoot(ammo,ct,ply,IsReloading)
 				return (ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0)) and nextShot <= ct and !IsReloading and self:CalcMortarCanShoot(ply,ct)
 			end
 		else
-			print(ammo)
 			return (ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0)) and nextShot <= ct and !IsReloading
 		end
 	else
@@ -374,16 +374,21 @@ function ENT:GetShootAngles(ply,botmode,target)
 				ply:SetActiveWeapon("weapon_base")
 			end
 			local attpos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
-			-- local Ang
-			-- if self.AltShootAngles then
-				-- Ang = self:AltShootAngles(ply)
-			-- else
-			local Ang = ply:EyeAngles()
-			-- end
-			trace = util.QuickTrace(attpos,Ang:Forward()*100000,self.Entities)
-			
-			ang = (trace.StartPos - trace.HitPos):Angle()
-			ang:RotateAroundAxis(ang:Up(),90)
+			if self.CustomEyeTrace and self:GetViewMode() > 0 then
+				trace = util.QuickTrace(attpos,self.CustomEyeTrace.HitPos,self.Entities)
+				ang = (trace.StartPos - trace.HitPos):Angle()
+				ang:RotateAroundAxis(ang:Up(),90)
+			else
+				-- local Ang
+				-- if self.AltShootAngles then
+					-- Ang = self:AltShootAngles(ply)
+				-- else
+				local Ang = ply:EyeAngles()
+				-- end
+				trace = util.QuickTrace(attpos,Ang:Forward()*100000,self.Entities)
+				ang = (trace.StartPos - trace.HitPos):Angle()
+				ang:RotateAroundAxis(ang:Up(),90)
+			end
 			
 			-- debugoverlay.Line(trace.StartPos,trace.HitPos,FrameTime()+0.02,Color( 255, 255, 255 ),false )
 		end
@@ -458,7 +463,10 @@ function ENT:Think()
 	local ply = self:GetShooter()
 	local ammo = self:GetAmmo()
 	local seat
+	local canShoot
+	local IsShooting
 	local seatValid
+	local shouldSetAngles = self:GetShouldSetAngles()
 	local shouldProceed = true
 	local target = self:GetTarget()
 	local skin = self:GetSkin()
@@ -545,24 +553,24 @@ function ENT:Think()
 			self:LeaveTurret(ply)
 		else
 			-- Angle Stuff
-			
-			local ang = self:GetShootAngles(ply,botmode,target)
-			if ang then
-				if self.YawModel then
-					local yaw = self:GetYaw()
-					local yawang = yaw:GetAngles()
-					local hullAng = self:GetHull():GetAngles()
-					yawang = Angle(hullAng.p,ang.y,hullAng.r)
-					ang = Angle(ang.p - hullAng.p,ang.y,ang.r - hullAng.r)
-					yawang:Normalize()
-					yaw:SetAngles(yawang)
-					self:SetAngles(ang)
-					
-				else
-					self:SetAngles(ang)
+			if shouldSetAngles then
+				local ang = self:GetShootAngles(ply,botmode,target)
+				if ang then
+					if self.YawModel then
+						local yaw = self:GetYaw()
+						local yawang = yaw:GetAngles()
+						local hullAng = self:GetHull():GetAngles()
+						yawang = Angle(hullAng.p,ang.y,hullAng.r)
+						ang = Angle(ang.p - hullAng.p,ang.y,ang.r - hullAng.r)
+						yawang:Normalize()
+						yaw:SetAngles(yawang)
+						self:SetAngles(ang)
+						
+					else
+						self:SetAngles(ang)
+					end
 				end
 			end
-			
 			-- Seat checking
 			if self.Seatable then
 			
@@ -616,73 +624,13 @@ function ENT:Think()
 			
 			-- addRecoil = 0
 			-- Shooting stuff
-			local IsShooting = ply:KeyDown(IN_ATTACK)
+			IsShooting = shouldSetAngles and ply:KeyDown(IN_ATTACK) or !shouldSetAngles
 			
 			self:SetIsShooting(IsShooting)
 			if IsShooting then
-				if self:CanShoot(ammo,ct,ply,IsReloading) then
-					if self.Sequential then
-						self:CheckMuzzle()
-						local m = self:GetCurrentMuzzle()
-						local effectdata = EffectData()
-						effectdata:SetEntity(self)
-						util.Effect("gred_particle_emp_muzzle",effectdata)
-						
-						if self.EmplacementType == "MG" then
-							self:FireMG(ply,ammo,self.TurretMuzzles[m])
-						elseif self.EmplacementType == "Mortar" then
-							self:FireMortar(ply,ammo,self.TurretMuzzles[m])
-						elseif self.EmplacementType == "Cannon" then
-							self:FireCannon(ply,ammo,self.TurretMuzzles[m])
-						end
-						
-						self:SetCurrentMuzzle(m + 1)
-						if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then -- if MG or Nebelwerfer
-							self:SetAmmo(ammo - (self.EmplacementType == "MG" and GetConVar("gred_sv_limitedammo"):GetInt() or 1))
-						else
-							self:SetAmmo(ammo > 0 and ammo - 1 or 0)
-						end
-					else
-						for k,m in pairs(self.TurretMuzzles) do
-							if self.EmplacementType == "MG" then
-								self:FireMG(ply,ammo,m)
-							elseif self.EmplacementType == "Mortar" then
-								self:FireMortar(ply,ammo,m)
-							elseif self.EmplacementType == "Cannon" then
-								self:FireCannon(ply,ammo,m)
-							end
-							local effectdata = EffectData()
-							effectdata:SetEntity(self)
-							util.Effect("gred_particle_emp_muzzle",effectdata)
-							if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then -- if MG or Nebelwerfer
-								self:SetAmmo(ammo - (self.EmplacementType == "MG" and GetConVar("gred_sv_limitedammo"):GetInt() or 1))
-							else
-								self:SetAmmo(ammo > 0 and ammo - 1 or 0)
-							end
-						end
-					end
-					
-					-- addRecoil = 1
-					if self.CustomShootAnim then
-						self:CustomShootAnim(self:GetCurrentMuzzle()-1)
-					else
-						if self.ShootAnim then 
-							if self.AnimRestartTime and self.EmplacementType != "Cannon" then
-								if self:GetNextShootAnim() < ct then
-									self:ResetSequence(self.ShootAnim)
-									self:SetNextShootAnim(ct + self.AnimRestartTime)
-								end
-							else
-								self:ResetSequence(self.ShootAnim)
-							end
-						end
-					end
-					
-					if self.EmplacementType == "Cannon" and ammo-1 <= 0 then
-						self:PlayAnim()
-					end
-					
-					self:SetNextShot(ct + self.ShotInterval)
+				canShoot = self:CanShoot(ammo,ct,ply,IsReloading)
+				if canShoot then
+					self:fire(ammo,ct,ply,IsReloading)
 				end
 			end
 			
@@ -734,10 +682,79 @@ function ENT:Think()
 	self:ManualReload(ammo)
 	
 	if self:GetHP() <= 0 then self:Explode() end
-	self:OnTick(ct,ply,botmode)
+	self:OnTick(ct,ply,botmode,IsShooting,canShoot,ammo,IsReloading,shouldSetAngles)
 	
 	self:NextThink(ct)
 	return true
+end
+
+function ENT:fire(ammo,ct,ply)
+	if self.Sequential then
+		self:CheckMuzzle()
+		local m = self:GetCurrentMuzzle()
+		
+		if self.EmplacementType == "MG" then
+			self:FireMG(ply,ammo,self.TurretMuzzles[m])
+		elseif self.EmplacementType == "Mortar" then
+			self:FireMortar(ply,ammo,self.TurretMuzzles[m])
+		elseif self.EmplacementType == "Cannon" then
+			self:FireCannon(ply,ammo,self.TurretMuzzles[m])
+		end
+		
+		local effectdata = EffectData()
+		effectdata:SetEntity(self)
+		util.Effect("gred_particle_emp_muzzle",effectdata)
+		
+		self:SetCurrentMuzzle(m + 1)
+		if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then -- if MG or Nebelwerfer
+			self:SetAmmo(ammo - (self.EmplacementType == "MG" and GetConVar("gred_sv_limitedammo"):GetInt() or 1))
+		else
+			self:SetAmmo(ammo > 0 and ammo - 1 or 0)
+		end
+	else
+		for k,m in pairs(self.TurretMuzzles) do
+			
+			if self.EmplacementType == "MG" then
+				self:FireMG(ply,ammo,m)
+			elseif self.EmplacementType == "Mortar" then
+				self:FireMortar(ply,ammo,m)
+			elseif self.EmplacementType == "Cannon" then
+				self:FireCannon(ply,ammo,m)
+			end
+			
+			local effectdata = EffectData()
+			effectdata:SetEntity(self)
+			util.Effect("gred_particle_emp_muzzle",effectdata)
+			
+			if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then -- if MG or Nebelwerfer
+				self:SetAmmo(ammo - (self.EmplacementType == "MG" and GetConVar("gred_sv_limitedammo"):GetInt() or 1))
+			else
+				self:SetAmmo(ammo > 0 and ammo - 1 or 0)
+			end
+		end
+	end
+	
+	-- addRecoil = 1
+	if self.CustomShootAnim then
+		self:CustomShootAnim(self:GetCurrentMuzzle()-1)
+	else
+		if self.ShootAnim then 
+			if self.AnimRestartTime and self.EmplacementType != "Cannon" then
+				if self:GetNextShootAnim() < ct then
+					self:ResetSequence(self.ShootAnim)
+					self:SetNextShootAnim(ct + self.AnimRestartTime)
+				end
+			else
+				self:ResetSequence(self.ShootAnim)
+			end
+		end
+	end
+	
+	if self.EmplacementType == "Cannon" and ammo-1 <= 0 then
+		self:PlayAnim()
+	end
+	
+	self:SetNextShot(ct + self.ShotInterval)
 end
 
 -------------------------------------------- Bot stuff

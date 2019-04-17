@@ -41,6 +41,7 @@ ENT.SmokeExploSNDs[4]		=  "gred_emp/nebelwerfer/artillery_strike_smoke_close_04.
 function ENT:AddDataTables()
 	self:NetworkVar("Float",11,"MaxRange", { KeyName = "MaxRange", Edit = { type = "Float", order = 0,min = 0, max = 5, category = "Ammo"} } )
 	self:NetworkVar("Float",12,"ReloadTime", { KeyName = "ReloadTime", Edit = { type = "Float", order = 0,min = 0, max = 300, category = "Ammo"} } )
+	self:NetworkVar("Bool",10,"AutoFire", { KeyName = "AutoFire", Edit = {type = "Boolean", order = 0, category = "Ammo"} } )
 	self:SetMaxRange(2)
 	self:SetReloadTime(10)
 end
@@ -54,6 +55,20 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn()
 	ent:Activate()
 	return ent
+end
+
+function ENT:OnTick(ct,ply,botmode,IsShooting,canShoot,ammo,IsReloading,shouldSetAngles)
+	if canShoot or !shouldSetAngles then
+		if self:GetAutoFire() then
+			self.AutoFire = true
+		end
+	end
+	if !IsShooting and self.AutoFire then
+		if self:CanShoot(ammo,ct,ply,IsReloading) then
+			self:fire(ammo,ct,ply,IsReloading)
+		end
+		if self:GetAmmo() <= 0 then self.AutoFire = false end
+	end
 end
 
 function ENT:PlayAnim()

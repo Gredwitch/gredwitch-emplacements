@@ -56,8 +56,21 @@ if SERVER then
 		self.GredEMPBaseENT:TakeDamageInfo(dmg)
 	end
 end
+
 if CLIENT then
 	function ENT:Draw()
 		self:DrawModel()
+	end
+end
+
+function ENT:Think()
+	if SERVER then
+		if not self.SentToClient and self.GredEMPBaseENT then
+			net.Start("gred_net_emp_prop")
+				net.WriteEntity(self)
+				net.WriteEntity(self.GredEMPBaseENT)
+			net.Broadcast()
+			self.SentToClient = true
+		end
 	end
 end

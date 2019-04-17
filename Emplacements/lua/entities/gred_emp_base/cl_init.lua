@@ -85,7 +85,7 @@ function ENT:CalcMortarCanShootCL(ply)
 			canShoot = not (ang.y > self.MaxRotation.y or ang.y < -self.MaxRotation.y)
 			
 			if !ang then
-				local tr = util.QuickTrace(shootPos,shootPos + reachSky,self.Entities)
+				local tr = self.CustomEyeTrace and self:GetViewMode() > 0 and self.CustomEyeTrace or util.QuickTrace(shootPos,shootPos + reachSky,self.Entities)
 				if tr.Hit and !tr.HitSky and !tr.Entity == self:GetTarget() then
 					canShoot = false
 				end
@@ -97,6 +97,13 @@ end
 
 function ENT:Think()
 	if not self.Initialized then self:Initialize() return end
+	
+	if not self.Entities[1] then
+		local tableinsert = table.insert
+		tableinsert(self.Entities,self)
+		tableinsert(self.Entities,self:GetHull())
+		if IsValid(self:GetYaw()) then tableinsert(self.Entities,self:GetYaw()) end
+	end
 	
 	local ply = self:GetShooter()
 	local ct = CurTime()
@@ -180,9 +187,23 @@ end
 
 function ENT:UpdateViewMode()
 	self:SetViewMode(self:GetViewMode()+1)
-	if self:GetViewMode() > self.MaxViewModes then
+	local vm = self:GetViewMode()
+	if vm > self.MaxViewModes then
+		net.Start("gred_net_emp_viewmode")
+			net.WriteEntity(self)
+			net.WriteInt(0,8)
+		net.SendToServer()
 		self:SetViewMode(0)
+	else
+		net.Start("gred_net_emp_viewmode")
+			net.WriteEntity(self)
+			net.WriteInt(vm,8)
+		net.SendToServer()
 	end
+end
+
+function ENT:HUDPaint(ply)
+
 end
 
 function ENT:ViewCalc(ply, pos, angles, fov)

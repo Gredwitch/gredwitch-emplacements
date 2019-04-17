@@ -17,6 +17,13 @@ CreateConVar("gred_sv_shell_arrival_time"			,  "3"  , GRED_SVAR)
 
 if SERVER then
 	util.AddNetworkString("gred_net_emp_reloadsounds")
+	util.AddNetworkString("gred_net_emp_prop")
+	util.AddNetworkString("gred_net_emp_viewmode")
+	
+	net.Receive("gred_net_emp_viewmode",function()
+		self = net.ReadEntity()
+		self:SetViewMode(net.ReadInt(8))
+	end)
 end
 
 local tableinsert = table.insert
@@ -40,6 +47,10 @@ if CLIENT then
 		local self = net.ReadEntity()
 		self.ShotInterval = net.ReadFloat()
 	end)
+	net.Receive("gred_net_emp_prop",function()
+		local self = net.ReadEntity()
+		self.GredEMPBaseENT = net.ReadEntity()
+	end)
 	
 	hook.Add("AdjustMouseSensitivity", "gred_emp_mouse", function(s)
 		local ply = LocalPlayer()
@@ -60,6 +71,18 @@ if CLIENT then
 				return ent:ViewCalc(ply,pos,angles,fov)
 			end
 		end
+	end)
+	
+	hook.Add("HUDPaint","gred_emp_hudpaint",function()
+		local ply = LocalPlayer()
+		if not ply.Gred_Emp_Ent then return end
+		
+		local ent = ply.Gred_Emp_Ent
+		if !IsValid(ent) then return end
+		if ent.EmplacementType != "Mortar" then return end
+		-- if not ent.HUDPaint then return end
+		
+		return ent:HUDPaint(ply)
 	end)
 	
 	hook.Add("InputMouseApply", "gred_emp_move",function(cmd,x,y,angle)
