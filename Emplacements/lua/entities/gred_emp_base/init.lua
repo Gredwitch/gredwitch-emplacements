@@ -5,7 +5,7 @@ AddCSLuaFile("shared.lua")
 
 local IsValid = IsValid
 local reachSky = Vector(0,0,9999999999)
-
+local math = math
 function ENT:Initialize()
 	self:SetModel(self.TurretModel)
 	self:SetMoveType(MOVETYPE_VPHYSICS)
@@ -63,8 +63,10 @@ function ENT:Initialize()
 	if self.Seatable then
 		self.Seatable = GetConVar("gred_sv_enable_seats"):GetInt() == 1
 	end
-	
+	self.TracerColor = self.TracerColor and string.lower(self.TracerColor) or nil
 	self.IsRocketLauncher = string.StartWith(self.AmmunitionType or self.AmmunitionTypes[1][2],"gb_rocket")
+	self.OverrideHAB = GetConVar("gred_sv_override_hab")
+	self.TracerConVar = GetConVar("gred_sv_tracers")
 	self.Initialized = true
 end
 
@@ -235,12 +237,10 @@ function ENT:Use(ply,caller,use,val)
 				if self.MaxViewModes > 0 then
 					if self.NameToPrint then
 						net.Start("gred_net_message_ply")
-							net.WriteEntity(ply)
 							net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom or the Crouch key to toggle aimsights")
 						net.Send(ply)
 					else
 						net.Start("gred_net_message_ply")
-							net.WriteEntity(ply)
 							net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom or the Crouch key to toggle aimsights")
 						net.Send(ply)
 					end
@@ -249,12 +249,10 @@ function ENT:Use(ply,caller,use,val)
 				if self.MaxViewModes > 0 then
 					if self.NameToPrint then
 						net.Start("gred_net_message_ply")
-							net.WriteEntity(ply)
 							net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom key to toggle aimsights")
 						net.Send(ply)
 					else
 						net.Start("gred_net_message_ply")
-							net.WriteEntity(ply)
 							net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom key to toggle aimsights")
 						net.Send(ply)
 					end
@@ -299,12 +297,10 @@ function ENT:Use(ply,caller,use,val)
 						if self.MaxViewModes > 0 then
 							if self.NameToPrint then
 								net.Start("gred_net_message_ply")
-									net.WriteEntity(ply)
 									net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom or the Crouch key to toggle aimsights")
 								net.Send(ply)
 							else
 								net.Start("gred_net_message_ply")
-									net.WriteEntity(ply)
 									net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom or the Crouch key to toggle aimsights")
 								net.Send(ply)
 							end
@@ -313,12 +309,10 @@ function ENT:Use(ply,caller,use,val)
 						if self.MaxViewModes > 0 then
 							if self.NameToPrint then
 								net.Start("gred_net_message_ply")
-									net.WriteEntity(ply)
 									net.WriteString("["..self.NameToPrint.."] Press the Suit Zoom key to toggle aimsights")
 								net.Send(ply)
 							else
 								net.Start("gred_net_message_ply")
-									net.WriteEntity(ply)
 									net.WriteString("["..string.gsub(self.PrintName,"%[EMP]","").."] Press the Suit Zoom key to toggle aimsights")
 								net.Send(ply)
 							end
@@ -345,7 +339,6 @@ function ENT:CalcMortarCanShoot(ply,ct)
 		noHitSky = true
 		if !botmode and self.Time_Mortar <= ct then
 			net.Start("gred_net_message_ply")
-				net.WriteEntity(ply)
 				net.WriteString("["..self.NameToPrint.."] Nothing must block the mortar's muzzle!")
 			net.Send(ply)
 			self.Time_Mortar = ct + 1
@@ -360,7 +353,6 @@ function ENT:CalcMortarCanShoot(ply,ct)
 		if !canShoot then
 			if !botmode and self.Time_Mortar <= ct then
 				net.Start("gred_net_message_ply")
-					net.WriteEntity(ply)
 					net.WriteString("["..self.NameToPrint.."] You can't shoot there!")
 				net.Send(ply)
 				self.Time_Mortar = ct + 1
@@ -378,7 +370,6 @@ function ENT:CalcMortarCanShoot(ply,ct)
 				canShoot = false
 				if !botmode and self.Time_Mortar <= ct then
 					net.Start("gred_net_message_ply")
-						net.WriteEntity(ply)
 						net.WriteString("["..self.NameToPrint.."] You can't shoot in interiors!")
 					net.Send(ply)
 					self.Time_Mortar = ct + 1
@@ -389,11 +380,9 @@ function ENT:CalcMortarCanShoot(ply,ct)
 	return canShoot
 end
 
-local fuckHavok = GetConVar("gred_sv_override_hab"):GetInt() == 1
-
 function ENT:BulletCalcVel(ammotype)
 	ammotype = ammotype or (self.AmmunitionType or self.AmmunitionTypes[1][2])
-	if hab and hab.Module.PhysBullet and not fuckHavok then
+	if hab and hab.Module.PhysBullet and not self.OverrideHAB:GetInt() == 1 then
 		if ammotype == "wac_base_7mm" then
 			self.BulletVelCalc = 100
 		elseif ammotype == "wac_base_12mm" then
@@ -516,33 +505,15 @@ function ENT:FireMortar(ply,ammo,muzzle)
 end
 
 function ENT:FireMG(ply,ammo,muzzle)
-	local rand = math.Rand
-	local pos = self:LocalToWorld(muzzle.Pos)
-	local ang = self:LocalToWorldAngles(muzzle.Ang) + self.ShootAngleOffset + Angle(rand(self.GetSpread,-self.GetSpread),rand(self.GetSpread,-self.GetSpread)+90,rand(self.GetSpread,-self.GetSpread))
-	
-	local b = ents.Create("gred_base_bullet")
-	local ammotype = self.AmmunitionType or self.AmmunitionTypes[1][2]
-	
-	b:SetPos(pos)
-	b:SetAngles(ang)
-	b.Speed = 1000
-	b.Damage = 20
-	b.Radius = 70
-	if self.AmmunitionTypes and self.AmmunitionTypes[self:GetAmmoType()][1] == "Time-fused" or false then 
-		b.FuseTime = self:GetFuseTime()
-	end
-	
-	b.sequential = self.Sequential and 1 or 0
-	
-	b.gunRPM = self:GetRoundsPerMinute()
-	b.Caliber = ammotype
-	b.col = self.TracerColor
-	b.Owner = ply
-	b.Filter = self.Entities
-	b:Spawn()
-	b:Activate()
-	
-	self:UpdateTracers(b)
+	local rand = math["Rand"]
+	local spread  = self["GetSpread"]
+	local pos = self:LocalToWorld(muzzle["Pos"])
+	local ang = self:LocalToWorldAngles(muzzle["Ang"]) + self["ShootAngleOffset"] + Angle(rand(spread,-spread),rand(spread,-spread)+90,rand(spread,-spread))
+	local ammotype = self["AmmunitionType"]
+	local ammotypes = self["AmmunitionTypes"]
+	local cal = ammotype or ammotypes[1][2]
+	local fusetime = (ammotypes and ammotypes[self:GetAmmoType()][1] == "Time-fused" or false) and self:GetFuseTime() or nil
+	gred.CreateBullet(ply,pos,ang,cal,self["Entities"],fusetime,self.ClassName == "gred_emp_phalanx",self:UpdateTracers())
 	
 end
 
@@ -625,21 +596,13 @@ function ENT:FireCannon(ply,ammo,muzzle)
 	end
 end
 
-function ENT:UpdateTracers(ent)
+function ENT:UpdateTracers()
 	self:SetCurrentTracer(self:GetCurrentTracer() + 1)
-	local tracerConvar = GetConVar("gred_sv_tracers"):GetInt()
-	if self:GetCurrentTracer() >= tracerConvar then
-		if self.TracerColor == "Red" then
-			ent:SetSkin(1)
-		elseif self.TracerColor == "Green" then
-			ent:SetSkin(3)
-		elseif self.TracerColor == "Yellow" then
-			ent:SetSkin(0)
-		end
-		ent:SetModelScale(7)
+	if self:GetCurrentTracer() >= self.TracerConVar:GetInt() then
 		self:SetCurrentTracer(0)
-	else 
-		ent.noTracer = true
+		return self.TracerColor
+	else
+		return false
 	end
 end
 

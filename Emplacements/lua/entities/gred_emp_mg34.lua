@@ -15,7 +15,7 @@ ENT.ShotInterval		= 0.067
 ENT.TracerColor			= "Green"
 
 ENT.OnlyShootSound		= true
-ENT.ShootSound			= "gred_emp/mg34/shoot.wav"
+ENT.ShootSound			= "^gred_emp/mg34/shoot.wav"
 ENT.ReloadSound			= "gred_emp/mg34/mg34_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/mg34/mg34_reloadend.wav"
 

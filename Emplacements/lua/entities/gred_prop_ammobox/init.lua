@@ -57,9 +57,8 @@ function ENT:Use(ply,cal)
 		self:ResetSequence("open")
 	end
 	net.Start("gred_net_ammobox_cl_gui")
-			net.WriteEntity(ply)
 			net.WriteEntity(self)
-	net.Broadcast()
+	net.Send(ply)
 	self.CantBeOpened = true
 	self.NextUse = CurTime()+0.5
 end
@@ -93,21 +92,7 @@ function ENT:Explode()
 	ent.trace=self.TraceLength
 	ent.decal=self.Decal
 	
-	local ent = ents.Create("shockwave_sound_lowsh")
-	ent:SetPos( pos ) 
-	ent:Spawn()
-	ent:Activate()
-	ent:SetVar("GBOWNER", self.Attacker)
-	ent:SetVar("MAX_RANGE",self.ExplosionDamage*self.ExplosionRadius)
-	ent:SetVar("NOFARSOUND",0)
-	ent:SetVar("SHOCKWAVE_INCREMENT",200)
-	
-	ent:SetVar("DELAY",0.01)
-	ent:SetVar("SOUNDCLOSE", self.ExplosionSound)
-	ent:SetVar("SOUND", self.FarExplosionSound)
-	ent:SetVar("SOUNDFAR", self.DistExplosionSound)
-	ent:SetVar("Shocktime", 0)
-	 
+	gred.CreateSound(pos,false,self.ExplosionSound,self.FarExplosionSound,self.DistExplosionSound)
 	self:Remove()
 	end
 end

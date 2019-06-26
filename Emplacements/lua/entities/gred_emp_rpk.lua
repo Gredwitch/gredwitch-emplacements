@@ -16,7 +16,7 @@ ENT.TracerColor			= "Green"
 ENT.AmmunitionType		= "wac_base_7mm"
 
 ENT.OnlyShootSound		= true
-ENT.ShootSound			= "gred_emp/rpk/shoot.wav"
+ENT.ShootSound			= "^gred_emp/rpk/shoot.wav"
 ENT.ReloadSound			= "gred_emp/rpk/rpk_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/mg34/mg34_reloadend.wav"
 ENT.EmplacementType		= "MG"

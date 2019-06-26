@@ -19,7 +19,7 @@ ENT.AmmunitionTypes		= {
 }
 
 ENT.OnlyShootSound		= true
-ENT.ShootSound			= "gred_emp/bar/shoot.wav"
+ENT.ShootSound			= "^gred_emp/bar/shoot.wav"
 ENT.ReloadSound			= "gred_emp/bar/bar_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/bar/bar_reloadend.wav"
 ENT.EmplacementType		= "MG"
@@ -49,7 +49,6 @@ function ENT:SwitchAmmoType(ply)
 	
 	local t = self.AmmunitionTypes[self:GetAmmoType()]
 	net.Start("gred_net_message_ply")
-		net.WriteEntity(ply)
 		net.WriteString("["..self.NameToPrint.."] "..t[1].." mode selected")
 	net.Send(ply)
 	if t[1] == self.AmmunitionTypes[1][1] then

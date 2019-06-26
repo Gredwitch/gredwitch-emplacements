@@ -209,7 +209,6 @@ function ENT:SwitchAmmoType(ply)
 	local ammotype = self:GetAmmoType()
 	if ammotype <= 0 or ammotype > table.Count(self.AmmunitionTypes) then self:SetAmmoType(1) end
 	net.Start("gred_net_message_ply")
-		net.WriteEntity(ply)
 		local t = self.AmmunitionTypes[self:GetAmmoType()]
 		net.WriteString("["..self.NameToPrint.."] "..t[1].." shells selected")
 	net.Send(ply)
@@ -222,9 +221,8 @@ function ENT:SetNewFuseTime(ply,minus)
 		self:SetFuseTime(self:GetFuseTime()+0.01)
 	end
 	local fusetime = self:GetFuseTime()
-	if fusetime <= 0 or fusetime > 0.5 then self:SetFuseTime(0.01) end
+	if fusetime > 0.5 then self:SetFuseTime(0.01) elseif fusetime <= 0 then self:SetFuseTime(0.5) end
 	net.Start("gred_net_message_ply")
-		net.WriteEntity(ply)
 		net.WriteString("["..self.NameToPrint.."] Time fuse set to "..math.Round(self:GetFuseTime(),2).." seconds")
 	net.Send(ply)
 end
