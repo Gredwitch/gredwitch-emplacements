@@ -39,7 +39,7 @@ ENT.MaxRotation			= Angle(-20)
 ENT.Seatable			= true
 ENT.Ammo				= -1
 ENT.SightPos			= Vector(-1.3,30,23)
-ENT.AddShootAngle		= 2
+ENT.AddShootAngle		= 0
 ENT.ViewPos				= Vector(6,6,30)
 ENT.MaxViewModes		= 1
 

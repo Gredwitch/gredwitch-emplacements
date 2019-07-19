@@ -14,6 +14,7 @@ CreateConVar("gred_sv_enable_explosions"			,  "1"  , GRED_SVAR)
 CreateConVar("gred_sv_manual_reload"				,  "0"  , GRED_SVAR)
 CreateConVar("gred_sv_manual_reload_mgs"			,  "0"  , GRED_SVAR)
 CreateConVar("gred_sv_shell_arrival_time"			,  "3"  , GRED_SVAR)
+CreateConVar("gred_sv_canusemultipleemplacements"	,  "1"  , GRED_SVAR)
 
 if SERVER then
 	util.AddNetworkString("gred_net_emp_reloadsounds")
@@ -116,46 +117,82 @@ if CLIENT then
 		Panel:ClearControls()
 		
 		Created = true;
-		local ded = game.IsDedicated()
-		if !ded then
 		
-		Panel:AddControl( "CheckBox", { Label = "Should the cannons' carriage collide?", Command = "gred_sv_carriage_collision" } );
-		
-		Panel:AddControl( "CheckBox", { Label = "Should the MGs have limited ammo?", Command = "gred_sv_limitedammo" } );
-		
-		Panel:AddControl( "CheckBox", { Label = "Should the players be able to take the MGs' tripods?", Command = "gred_sv_cantakemgbase" } );
-		
-		Panel:AddControl( "CheckBox", { Label = "Enable seats?", Command = "gred_sv_enable_seats" } );
-		
-		-- Panel:AddControl( "CheckBox", { Label = "Reset the emplacement's angle after leaving it?", Command = "gred_sv_reset_angles" } );
-		
+		local this = CPanel:CheckBox("Should the cannons' carriage collide?","gred_sv_carriage_collision");
+		this.OnChange = function(this,val)
+			val = val and 1 or 0
+			LocalPlayer():ConCommand("gred_changesetting","gred_sv_carriage_collision",val)
 		end
 		
-		Panel:AddControl( "CheckBox", { Label = "Should you be able to see the MGs' shells?", Command = "gred_cl_shelleject" } );
-		
-		if !ded then
-		
-		Panel:AddControl( "CheckBox", { Label = "Use a manual shell reload system?", Command = "gred_sv_manual_reload" } );
-		
-		Panel:AddControl( "CheckBox", { Label = "Use a manual reload system for the MGs?", Command = "gred_sv_manual_reload_mgs" } );
-		
-		Panel:AddControl( "CheckBox", { Label = "Should the emplacements explode?", Command = "gred_sv_enable_explosions" } );
-		
-		Panel:NumSlider( "Shell arrival time (for mortars)", "gred_sv_shell_arrival_time", 0, 10, 2 );
-		
-		Panel:NumSlider( "Shell casing remove time", "gred_sv_shell_remove_time", 0, 120, 0 );
-		
-		Panel:NumSlider( "Shell speed multiplier", "gred_sv_shellspeed_multiplier", 0, 4, 2 );
-		
+		local this = CPanel:CheckBox("Should the players be able to use multiple emplacements at once?","gred_sv_canusemultipleemplacements");
+		this.OnChange = function(this,val)
+			val = val and 1 or 0
+			LocalPlayer():ConCommand("gred_changesetting","gred_sv_carriage_collision",val)
 		end
 		
-		Panel:NumSlider( "Mouse sensitivity on emplacements with seats", "gred_cl_emp_mouse_sensitivity", 0, 0.99, 2 );
+		local this = CPanel:CheckBox("Should the MGs have limited ammo?","gred_sv_limitedammo");
+		this.OnChange = function(this,val)
+			val = val and 1 or 0
+			LocalPlayer():ConCommand("gred_changesetting","gred_sv_limitedammo",val)
+		end
 		
-		-- Panel:NumSlider( "Shoot sound volume", "gred_cl_emp_volume", 0, 1, 2 );
+		local this = CPanel:CheckBox("Should the players be able to take the MGs' tripods?","gred_sv_cantakemgbase");
+		this.OnChange = function(this,val)
+			val = val and 1 or 0
+			LocalPlayer():ConCommand("gred_changesetting","gred_sv_cantakemgbase",val)
+		end
 		
-		Panel:AddControl( "CheckBox", { Label = "Invert X axis in seats?", Command = "gred_cl_emp_mouse_invert_x" } );
+		local this = CPanel:CheckBox("Enable seats?","gred_sv_enable_seats");
+		this.OnChange = function(this,val)
+			val = val and 1 or 0
+			LocalPlayer():ConCommand("gred_changesetting","gred_sv_enable_seats",val)
+		end
 		
-		Panel:AddControl( "CheckBox", { Label = "Invert Y axis in seats?", Command = "gred_cl_emp_mouse_invert_y" } );
+		
+		local this = CPanel:CheckBox("Should you be able to see the MGs' shells?","gred_cl_shelleject");
+		
+		-- if !ded then
+		
+		local this = CPanel:CheckBox("Use a manual shell reload system?","gred_sv_manual_reload");
+		this.OnChange = function(this,val)
+			val = val and 1 or 0
+			LocalPlayer():ConCommand("gred_changesetting","gred_sv_manual_reload",val)
+		end
+		
+		local this = CPanel:CheckBox("Use a manual reload system for the MGs?","gred_sv_manual_reload_mgs");
+		this.OnChange = function(this,val)
+			val = val and 1 or 0
+			LocalPlayer():ConCommand("gred_changesetting","gred_sv_manual_reload_mgs",val)
+		end
+		
+		local this = CPanel:CheckBox("Should the emplacements explode?","gred_sv_enable_explosions");
+		this.OnChange = function(this,val)
+			val = val and 1 or 0
+			LocalPlayer():ConCommand("gred_changesetting","gred_sv_enable_explosions",val)
+		end
+		
+		local this = Panel:NumSlider( "Shell arrival time (for mortars)", "gred_sv_shell_arrival_time", 0, 10, 2 );
+		this.ValueChanged = function(this,val)
+			LocalPlayer():ConCommand("gred_changesetting","gred_sv_shell_arrival_time",val)
+		end
+		
+		local this = Panel:NumSlider( "Shell casing remove time", "gred_sv_shell_remove_time", 0, 120, 0 );
+		this.ValueChanged = function(this,val)
+			LocalPlayer():ConCommand("gred_changesetting","gred_sv_shell_remove_time",val)
+		end
+		
+		-- end
+		
+		local this = Panel:NumSlider( "Mouse sensitivity on emplacements with seats", "gred_cl_emp_mouse_sensitivity", 0, 0.99, 2 );
+		this.ValueChanged = function(this,val)
+			LocalPlayer():ConCommand("gred_changesetting","gred_cl_emp_mouse_sensitivity",val)
+		end
+		
+		-- local this = Panel:NumSlider( "Shoot sound volume", "gred_cl_emp_volume", 0, 1, 2 );
+		
+		local this = CPanel:CheckBox("Invert X axis in seats?","gred_cl_emp_mouse_invert_x");
+		
+		local this = CPanel:CheckBox("Invert Y axis in seats?","gred_cl_emp_mouse_invert_y");
 		
 	end
 	

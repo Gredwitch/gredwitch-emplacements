@@ -36,6 +36,7 @@ ENT.SightPos			= Vector(0.5,15,10)
 ENT.IsAAA				= true
 ENT.CanSwitchTimeFuse	= true
 ENT.MaxViewModes		= 1
+ENT.BotAngleOffset		= Angle(2.5,0,0)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

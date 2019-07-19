@@ -2,30 +2,6 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include("shared.lua")
 
-ENT.Type 							= "anim"
-ENT.Spawnable		            	=	true
-ENT.AdminSpawnable		            =	true
-
-ENT.PrintName		                =	"[OTHERS]Ammo box"
-ENT.Author			                =	"Gredwitch"
-ENT.Contact			                =	"qhamitouche@gmail.com"
-ENT.Category                        =	"Gredwitch's Stuff"
-ENT.Model                         	=	"models/Items/ammocrate_smg1.mdl"
-ENT.AutomaticFrameAdvance			= 	true
-
-ENT.Opened							= 	false
-ENT.NextUse							=	0
-ENT.Life							=	300
-ENT.CurLife							=	ENT.Life
-ENT.Attacker						=	nil
-
-ENT.ExplosionDamage					=	1000
-ENT.ExplosionRadius					=	1000
-
-ENT.ExplosionSound 					=	"explosions/cache_explode.wav"
-ENT.FarExplosionSound 				=	"explosions/cache_explode_distant.wav"
-ENT.DistExplosionSound 				=	"explosions/cache_explode_far_distant.wav"
-
 if SERVER then
 	util.AddNetworkString("gred_net_ammobox_cl_gui") 
 	util.AddNetworkString("gred_net_ammobox_sv_createshell") 
@@ -73,27 +49,20 @@ function ENT:OnTakeDamage(dmg)
 end
 
 function ENT:Explode()
+	if self:GetInvincible() then return end
 	if SERVER then
-	local pos = self:GetPos()
-	local effectdata = EffectData()
-	effectdata:SetOrigin(pos+Vector(0,0,100))
-	effectdata:SetFlags(table.KeyFromValue(gred.Particles,"ins_ammo_explosionOLD"))
-	effectdata:SetAngles(Angle(0,90,0))
-	util.Effect("gred_particle_simple",effectdata)
-	local ent = ents.Create("shockwave_ent")
-	ent:SetPos( pos ) 
-	ent:Spawn()
-	ent:Activate()
-	ent:SetVar("GBOWNER", self.Attacker)
-	ent:SetVar("SHOCKWAVEDAMAGE",self.ExplosionDamage)
-	ent:SetVar("MAX_RANGE",self.ExplosionRadius)
-	ent:SetVar("SHOCKWAVE_INCREMENT",100)
-	ent:SetVar("DELAY",0.01)
-	ent.trace=self.TraceLength
-	ent.decal=self.Decal
-	
-	gred.CreateSound(pos,false,self.ExplosionSound,self.FarExplosionSound,self.DistExplosionSound)
-	self:Remove()
+		local pos = self:GetPos()
+		
+		local effectdata = EffectData()
+		effectdata:SetOrigin(pos+Vector(0,0,100))
+		effectdata:SetFlags(table.KeyFromValue(gred.Particles,"ins_ammo_explosionOLD"))
+		effectdata:SetAngles(Angle(0,90,0))
+		util.Effect("gred_particle_simple",effectdata)
+		
+		gred.CreateExplosion(pos,self.ExplosionRadius,self.ExplosionDamage,self.Decal,self.TraceLength,self.Attacker,self,self.DEFAULT_PHYSFORCE,self.DEFAULT_PHYSFORCE_PLYGROUND,self.DEFAULT_PHYSFORCE_PLYAIR)
+		
+		gred.CreateSound(pos,false,self.ExplosionSound,self.FarExplosionSound,self.DistExplosionSound)
+		self:Remove()
 	end
 end
 

@@ -13,6 +13,8 @@ function ENT:Initialize()
 	self:PhysicsInit(SOLID_VPHYSICS)
 	self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 	self:AddEntity(self)
+	self.OverrideHAB = GetConVar("gred_sv_override_hab")
+	self.TracerConVar = GetConVar("gred_sv_tracers")
 	
 	local pos = self:GetPos()
 	local ang = self:GetAngles()
@@ -63,10 +65,10 @@ function ENT:Initialize()
 	if self.Seatable then
 		self.Seatable = GetConVar("gred_sv_enable_seats"):GetInt() == 1
 	end
+	self.CanTakeMultipleEmplacements = GetConVar("gred_sv_canusemultipleemplacements")
+	self.MaxUseDistance = self.MaxUseDistance*self.MaxUseDistance
 	self.TracerColor = self.TracerColor and string.lower(self.TracerColor) or nil
 	self.IsRocketLauncher = string.StartWith(self.AmmunitionType or self.AmmunitionTypes[1][2],"gb_rocket")
-	self.OverrideHAB = GetConVar("gred_sv_override_hab")
-	self.TracerConVar = GetConVar("gred_sv_tracers")
 	self.Initialized = true
 end
 
@@ -411,6 +413,7 @@ function ENT:BulletCalcVel(ammotype)
 			self.BulletVelCalc = 500 
 		end
 	end
+	self.BulletVelCalc = self.BulletVelCalc*self.BulletVelCalc
 end
 
 function ENT:FireMortar(ply,ammo,muzzle)
@@ -537,10 +540,6 @@ function ENT:FireCannon(ply,ammo,muzzle)
 	ang:Sub(Angle(self:GetBotMode() and (self.AddShootAngle or 2) + 2 or (self.AddShootAngle or 2),-90,0)) -- + Angle(math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter), math.Rand(-self.Scatter,self.Scatter))
 	b:SetPos(pos)
 	b:SetAngles(ang)
-	b:Spawn()
-	b:SetBodygroup(0,1)
-	b.IsOnPlane = true
-	b:SetBodygroup(1,1)
 	b.Parent = self
 	b.AddOnThink = function(self)
 		-- print(self:GetAngles().p,self.Parent.AddShootAngle or 2)
@@ -571,6 +570,10 @@ function ENT:FireCannon(ply,ammo,muzzle)
 			b.WaterExplosionSound = table.Random(self.SmokeExploSNDs)
 		end
 	end
+	b.IsOnPlane = true
+	b:Spawn()
+	b:SetBodygroup(0,1)
+	b:SetBodygroup(1,1)
 	b:SetOwner(ply)
 	b:Activate()
 	for k,v in pairs(self.Entities) do
@@ -686,10 +689,12 @@ function ENT:GetStoredShellProperties(ammotype)
 	if not ammotype then ammotype = self.AmmunitionType or self.AmmunitionTypes[self:GetAmmoType()][2] end
 	if not self.ShellProps then
 		local getBase = scripted_ents.Get(ammotype)
+		local vel = getBase.EnginePower*GetConVar("gred_sv_shellspeed_multiplier"):GetFloat()
 		self.ShellProps = {
-			getBase.EnginePower*GetConVar("gred_sv_shellspeed_multiplier"):GetFloat(),
-			getBase.FuelBurnoutTime,
-			getBase.Mass
+			["vel"] = vel,
+			["hevel"] = vel - getBase.Mass*30,
+			-- ["burntime"] = getBase.FuelBurnoutTime,
+			["mass"] = getBase.Mass
 		}
 	end
 	return self.ShellProps
@@ -852,7 +857,7 @@ function ENT:Explode(ply)
 end
 
 function ENT:OnTakeDamage(dmg)
-	if dmg:IsFallDamage() or self:GetHP() <= 0 or (dmg:IsBulletDamage() and dmg:GetDamage() < 7) then return end
+	if dmg:IsFallDamage() or (dmg:IsBulletDamage() and dmg:GetDamage() < 7) then return end
 	self:SetHP(self:GetHP()-dmg:GetDamage())
 	
 	if self:GetHP() <= 0 then self:Explode(dmg:GetAttacker()) end
@@ -863,6 +868,13 @@ function ENT:GrabTurret(ply,shootOnly)
 	local botmode = self:GetBotMode()
 	if !botmode then
 		self.Owner = ply
+		if self.CanTakeMultipleEmplacements:GetInt() == 0 then
+			if IsValid(ply.ActiveEmplacement) then
+				self:SetShooter(nil)
+				return
+			end
+		end
+		ply.ActiveEmplacement = self
 		if !shootOnly then
 			local wep = ply:GetActiveWeapon()
 			if IsValid(wep) then
@@ -883,6 +895,7 @@ end
 function ENT:LeaveTurret(ply)
 	local isPlayer = ply:IsPlayer()
 	if isPlayer then
+		ply.ActiveEmplacement = nil
 		if self:GetShouldSetAngles() then
 			if ply.StripWeapon and not self.Seatable then
 				ply:StripWeapon("weapon_base")

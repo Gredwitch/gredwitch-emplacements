@@ -32,6 +32,7 @@ ENT.Ammo					= 100 -- set to -1 if you want infinite ammo
 ENT.Spread					= 0
 ENT.Recoil					= 100
 ENT.ShootAnim				= nil -- string / int
+ENT.BotAngleOffset			= Angle(0,0,0)
 
 ---------------------
 
@@ -71,21 +72,6 @@ ENT.HP						= 200 --+ (ENT.HullModel and 75 or 0) + (ENT.YawModel and 75 or 0)
 --------------------------------------------
 
 local IsValid = IsValid
-local InVehicle = InVehicle
-local GetVehicle = GetVehicle
-local Team = Team
-local IsPlayer = IsPlayer
-local IsNPC = IsNPC
-local GetPos = GetPos
-local Distance = Distance
-local LocalToWorld = LocalToWorld
-local GetVelocity = GetVelocity
-local Length = Length
-
-
-local METERS_IN_UNIT = 0.01905
-local G_UNITS = GetConVar("sv_gravity"):GetInt()
-local G_METERS = G_UNITS * METERS_IN_UNIT
 
 function ENT:SetupDataTables()
 	self:NetworkVar("Entity",0,"Hull")
@@ -170,7 +156,7 @@ function ENT:ShooterStillValid(ply,botmode)
 		if botmode then 
 			return true 
 		else 
-			return ply:GetPos():Distance(self:GetPos()) <= self.MaxUseDistance 
+			return ply:GetPos():DistToSqr(self:GetPos()) <= self.MaxUseDistance
 		end
 	end
 end
@@ -227,6 +213,22 @@ function ENT:SetNewFuseTime(ply,minus)
 	net.Send(ply)
 end
 
+local g = GetConVar("sv_gravity"):GetFloat()
+
+local math = math
+local util = util
+
+local atan = math.atan
+local acos = math.acos
+local sqrt = math.sqrt
+---------------------
+local deg = math.deg
+					-- FUCK GARRY, FUCK BREXIT LAND, FUCK RADIANS.
+local rad = math.rad
+---------------------
+local function CALC_ANGLE(g,X,V,H) 
+	return (deg(acos((g*X^2/V^2-H)/sqrt(H^2+X^2)))+deg(atan(X/H)))/2
+end
 function ENT:GetShootAngles(ply,botmode,target)
 	local ang
 	if botmode then
@@ -237,13 +239,14 @@ function ENT:GetShootAngles(ply,botmode,target)
 				local attpos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
 				
 				local vel = target:GetVelocity()/10 
-				local dist = attpos:Distance(pos)
+				local dist = attpos:DistToSqr(pos)
 				self:BulletCalcVel()
 				local calcPos = pos+vel*(dist/self.BulletVelCalc)
 				local trace = util.QuickTrace(attpos,(pos-attpos)*100000,self.Entities)
 				if (((trace.Entity == target or target:GetParent() == trace.Entity) or trace.Entity:IsPlayer() or trace.Entity:IsNPC()) or trace.HitSky) and dist > 0.015 then
 					ang = (calcPos - attpos):Angle()
 					ang = Angle(-ang.p,ang.y+180,ang.r)
+					ang:Add(self.BotAngleOffset)
 					ang:RotateAroundAxis(ang:Up(),90)
 					self:SetTargetValid(true)
 				else
@@ -261,85 +264,43 @@ function ENT:GetShootAngles(ply,botmode,target)
 			end
 		elseif self.EmplacementType == "Cannon" then
 			if IsValid(target) then
-				--[[
 				-- Don't look at this, pretty much everything here is wrong
 				
+				local ft = FrameTime()
 				local pos = target:LocalToWorld(target:OBBCenter())
 				local attpos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
-				local ft = FrameTime()
-				attpos.z = attpos.z - 15
-				-- local selfpos = self:GetPos()
-				local vel = target:GetVelocity()/10
-				local dist = attpos:Distance(pos)
-				
+				local attang = self:LocalToWorldAngles(self.TurretMuzzles[1].Ang)
+				local vel = target:GetVelocity()
+				local dist = attpos:Distance(pos) -- need to square it
 				
 				local ammotype = self:GetAmmoType()
 				local properties = self:GetStoredShellProperties(ammotype)
+				local SHELL_VEL = self.AmmunitionTypes[ammotype][1] == "AP" and properties.vel or properties.hevel
 				
 				-------------------------------------------
 				
-				local SHELL_TIME_BEFORE_DROP = properties[2]*1.5
-				local SHELL_MASS = properties[3]
-				local SHELL_ACCELERATION = properties[1]*GetConVar("gred_sv_shellspeed_multiplier"):GetFloat()
+				ang = (attpos-pos):Angle()
+				ang.y = ang.y + 90
 				
-				local CALC_VELOCITY_HORIZONTAL = -self:GetRight() * SHELL_ACCELERATION*G_METERS * SHELL_TIME_BEFORE_DROP / properties[2]
+				local H = self:WorldToLocal(pos).z
+				print(
+					H
+				)
+				ang.r = CALC_ANGLE(g,dist,SHELL_VEL,H)
+				print("ang = "..ang.r,"    g = "..g,"    X = "..dist,"    V = "..SHELL_VEL,"    h = "..H)
+				ang.p = 0
 				
-				local shell_pos_burnt = attpos + CALC_VELOCITY_HORIZONTAL -- The shell starts losing altitude from this position
+				-------------------------------------------
+				-- print(ang)
 				
+				-- print(SHELL_MAX_Z)
+				-- local TARGET_TOGROUND = util.QuickTrace(pos,Vector(pos.x,pos.y,-9999999),{target}).HitPos
+				-- local MUZZLE_TOGROUND = util.QuickTrace(attpos,Vector(attpos.x,attpos.y,-9999999),self.Entities).HitPos
 				
-				local CALC_H_TRACE = util.QuickTrace(shell_pos_burnt,Vector(0,0,-99999))
-				local CALC_H = CALC_H_TRACE
-				CALC_H = -(CALC_H.HitPos.z - CALC_H.StartPos.z)
+				local endpos = util.QuickTrace(attpos,self:GetRight()*-dist,self.Entities).HitPos
 				
-				local _,CALC_VAL = math.modf(G_METERS) ; CALC_VAL = CALC_VAL*2.029 -- I don't know how I found that but this works
-				local SHELL_VEL_AFTER_DROP = 1/ft * properties[2] * SHELL_ACCELERATION * CALC_VAL -- This works too
-				
-				--------------------------------------------------------
-				
-				local CALC_ANG_PITCH = math.Round(self:GetAngles().r + (self.AddShootAngle or 2) + 2,2)
-				
-				local CALC_Vy = math.abs(SHELL_VEL_AFTER_DROP*math.sin(CALC_ANG_PITCH)) -- Vertical speed of the shell
-				local CALC_Vx = math.abs(SHELL_VEL_AFTER_DROP*math.cos(CALC_ANG_PITCH)) -- Horizontal speed of the shell
-				
-				-- local CALC_TIME_MAX_H = CALC_Vy / G_UNITS -- Time it takes for the shell to reach maximum height
-				
-				local CALC_TIME = CALC_Vy / G_UNITS - CALC_Vx / G_UNITS + SHELL_TIME_BEFORE_DROP
-				print(CALC_TIME)
-				
-				
-				debugoverlay.Line(attpos,CALC_H_TRACE.HitPos,ft+0.02,Color( 0, 255, 0 ),false )
-				debugoverlay.Line(attpos,shell_pos_burnt,ft+0.02,Color( 255, 0, 0 ),false )
-				debugoverlay.Line(CALC_H_TRACE.StartPos,CALC_H_TRACE.HitPos,ft+0.02,Color( 255, 0, 255 ),false )
-				debugoverlay.Line(shell_pos_burnt,shell_pos_burnt+self:GetRight()*-(CALC_TIME),ft+0.02,Color( 0, 0, 255 ),false )
-				
-				ang = Angle(0,0,3)
-				
-				------------------------------------------- 
-				
-				self.Value = SHELL_DIST_BEFORE_STOP
-				local force = g / properties[3]
-				
-				local calcHeight = (0.5 * g * t_distance^2)*0.0154 -- Another distance
-				local _,mass = math.modf(properties[3]/100)
-				calcHeight = calcHeight + (calcHeight/v_t*g)*fueloutTime  -- Don't question it, that actually works
-				local calcPos = (pos+vel*(dist/velocity*mass)) -- Calcs the offset based on the target's velocity
-				calcPos.z = calcPos.z + calcHeight*10 -- applies the Z offset
-				
-				local trace = util.QuickTrace(attpos,(pos-attpos)*100000,self.Entities)
-				if ((trace.Entity == target or target:GetParent() == trace.Entity or trace.Entity:IsPlayer() or trace.Entity:IsNPC()) or trace.HitSky) and dist > 0.015 then
-					ang = (calcPos - attpos):Angle()
-					ang = Angle(-ang.p,ang.y+180,ang.r)
-					ang:RotateAroundAxis(ang:Up(),90)
-					self:SetTargetValid(true)
-				else
-					self:SetTargetValid(false)
-				end
-				if self:GetIsAntiAircraft() then
-					if ammotype != 2 then self:SetAmmoType(2) end
-				end
-				debugoverlay.Line(trace.StartPos,calcPos,FrameTime()+0.02,Color( 255, 255, 255 ),false )
-				]]
-				
+				debugoverlay.Line(attpos,endpos,FrameTime()+0.03,Color(0,0,255),false )
+				-- debugoverlay.Line(SHELL_STOPTHRUST_POS,SHELL_STOPTHRUST_POS_TOGROUND,FrameTime()+0.03,Color(255,0,255),false )
 			else
 				self:SetTarget(nil)
 				self:SetTargetValid(false)
@@ -476,30 +437,6 @@ function ENT:Think()
 		end
 	end
 	
-	-- if self.EmplacementType == "Cannon" then
-			-- self:SetBotMode(false)
-			-- botmode = false
-		-- else
-			-- if ply != self then
-				-- self:GrabTurret(self)
-			-- end
-			-- local validTarget = self.IsValidTarget
-			-- if not IsValid(target) then
-				-- if simfphys.LFS then
-					-- for k,v in pairs(simfphys.LFS:PlanesGetAll()) do
-						-- if self:IsValidTarget(v) then
-							-- self:SetTarget(v)
-							-- target = target
-							-- break
-						-- end
-					-- end
-				-- end
-				-- if not target then
-					-- for k,v in pairs(
-				-- end
-			-- end
-		-- end
-	
 	-- If bot mode is on, find a target
 	if botmode then
 		if self.EmplacementType == "Cannon" then
@@ -511,7 +448,7 @@ function ENT:Think()
 			end
 			if not IsValid(target) then
 				target = nil
-				if istable(simfphys.LFS) then
+				if simfphys and istable(simfphys.LFS) then
 					for k,v in pairs(simfphys.LFS:PlanesGetAll()) do
 						if self:IsValidTarget(v) then
 							self:SetTarget(v)
@@ -773,7 +710,7 @@ function ENT:IsValidGroundTarget(ply)
 	if IsValid(ent) then
 		local car = ent:GetParent()
 		local driver = ent.GetDriver and ent:GetDriver() or nil
-		return (simfphys.IsCar and IsValid(car) and simfphys.IsCar(car) and (driver != self.Owner and (self.Owner:IsPlayer() and driver:Team() != self.Owner:Team())) or self:GetShouldNotCareAboutOwnersTeam())
+		return (simfphys and simfphys.IsCar and IsValid(car) and simfphys.IsCar(car) and (driver != self.Owner and (self.Owner:IsPlayer() and driver:Team() != self.Owner:Team())) or self:GetShouldNotCareAboutOwnersTeam())
 	end
 end 
 
