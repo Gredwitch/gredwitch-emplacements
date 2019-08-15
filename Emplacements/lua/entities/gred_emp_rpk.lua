@@ -15,6 +15,8 @@ ENT.ShotInterval		= 0.1
 ENT.TracerColor			= "Green"
 ENT.AmmunitionType		= "wac_base_7mm"
 
+ENT.HullFly				= true
+ENT.RecoilRate			= 0.1
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "^gred_emp/rpk/shoot.wav"
 ENT.ReloadSound			= "gred_emp/rpk/rpk_reload.wav"

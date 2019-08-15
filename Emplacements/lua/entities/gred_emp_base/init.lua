@@ -66,6 +66,7 @@ function ENT:Initialize()
 		self.Seatable = GetConVar("gred_sv_enable_seats"):GetInt() == 1
 	end
 	self.CanTakeMultipleEmplacements = GetConVar("gred_sv_canusemultipleemplacements")
+	self.EnableRecoil = GetConVar("gred_sv_enable_recoil")
 	self.MaxUseDistance = self.MaxUseDistance*self.MaxUseDistance
 	self.TracerColor = self.TracerColor and string.lower(self.TracerColor) or nil
 	self.IsRocketLauncher = string.StartWith(self.AmmunitionType or self.AmmunitionTypes[1][2],"gb_rocket")
@@ -133,11 +134,12 @@ function ENT:InitHull(pos,ang)
 	hull:SetModel(self.HullModel)
 	hull:SetAngles(ang)
 	hull:SetPos(pos)
+	hull.HullFly = self.HullFly
 	hull:Spawn()
 	hull:Activate()
 	hull.canPickUp = self.EmplacementType == "MG" and GetConVar("gred_sv_cantakemgbase"):GetInt() == 1 and not self.YawModel
 	
-	if self.EmplacementType == "Mortar" then hull:SetMoveType(MOVETYPE_FLY) end
+	if self.EmplacementType == "Mortar" or self.HullFly then hull:SetMoveType(MOVETYPE_FLY) end
 	local phy = hull:GetPhysicsObject()
 	if IsValid(phy) then
 		phy:SetMass(self.HullMass)
@@ -950,5 +952,15 @@ function ENT:CalcSpread()
 		elseif ammotype == "wac_base_40mm" then
 			self.GetSpread = 2
 		end
+	end
+end
+
+function ENT:HandleRecoil(ang)
+	if self.EmplacementType == "MG" and !self.Seatable and self.EnableRecoil:GetInt() == 1 then
+		if self.ShouldDoRecoil then
+			self.CurRecoil = self.Recoil
+		end
+		self.CurRecoil = self.CurRecoil and self.CurRecoil + math.Clamp(0 - self.CurRecoil,-self.RecoilRate,self.RecoilRate) or 0
+		ang.r = ang.r + self.CurRecoil
 	end
 end

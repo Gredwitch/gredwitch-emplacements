@@ -17,6 +17,8 @@ ENT.TracerColor			= "Green"
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/kord/shoot.wav"
 
+ENT.Recoil				= 2
+ENT.RecoilRate			= 0.2
 ENT.EmplacementType		= "MG"
 ENT.HullModel			= "models/gredwitch/kord/kord_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/kord/kord_gun.mdl"

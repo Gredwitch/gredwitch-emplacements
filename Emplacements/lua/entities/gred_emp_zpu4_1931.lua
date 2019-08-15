@@ -14,6 +14,7 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.1
 ENT.TracerColor			= "Green"
 
+ENT.RecoilRate			= 0.15
 ENT.ShootSound			= "gred_emp/m1910/shoot.wav"
 ENT.StopShootSound		= "gred_emp/m1910/stop.wav"
 

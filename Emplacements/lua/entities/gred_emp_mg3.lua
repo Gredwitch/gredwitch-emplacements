@@ -15,6 +15,9 @@ ENT.ShotInterval		= 0.067
 ENT.TracerColor			= "Red"
 ENT.AmmunitionType		= "wac_base_7mm"
 
+ENT.HullFly				= true
+ENT.RecoilRate			= 1.3
+ENT.RecoilRate			= 0.15
 ENT.ShootSound			= "gred_emp/mg3/mg3_loop.wav"
 ENT.StopShootSound		= "gred_emp/mg3/shoot.wav"
 ENT.ReloadSound			= "gred_emp/mg3/mg3_reload.wav"

@@ -11,7 +11,7 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Flak 37"
 
-ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
+ENT.MuzzleEffect		= "gred_arti_muzzle_blast_alt"
 ENT.ShotInterval		= 4.5
 ENT.AmmunitionTypes		= {
 						{"HE","gb_shell_88mm"},
@@ -39,7 +39,7 @@ ENT.MaxRotation			= Angle(-20)
 ENT.Seatable			= true
 ENT.Ammo				= -1
 ENT.SightPos			= Vector(-1.3,30,23)
-ENT.AddShootAngle		= 0
+ENT.AddShootAngle		= 2
 ENT.ViewPos				= Vector(6,6,30)
 ENT.MaxViewModes		= 1
 

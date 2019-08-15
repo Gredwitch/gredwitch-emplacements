@@ -11,7 +11,7 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Flakzwilling 40/2"
 
-ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
+ENT.MuzzleEffect		= "gred_arti_muzzle_blast_alt"
 ENT.ShotInterval		= 2.25
 ENT.AmmunitionTypes		= {
 						{"HE","gb_shell_128mm"},

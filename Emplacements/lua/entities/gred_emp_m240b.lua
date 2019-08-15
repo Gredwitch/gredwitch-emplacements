@@ -14,6 +14,8 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.092
 ENT.TracerColor			= "Red"
 
+ENT.Recoil				= 0.8
+ENT.RecoilRate			= 0.1
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "^gred_emp/m240b/shoot.wav"
 ENT.ReloadSound			= "gred_emp/m240b/m240_reload.wav"

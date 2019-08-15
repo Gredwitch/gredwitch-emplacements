@@ -17,7 +17,7 @@ ENT.AmmunitionTypes		= {
 						{"Slow fire","wac_base_7mm"},
 						{"Fast fire","wac_base_7mm"},
 }
-
+ENT.HullFly				= true
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "^gred_emp/bar/shoot.wav"
 ENT.ReloadSound			= "gred_emp/bar/bar_reload.wav"

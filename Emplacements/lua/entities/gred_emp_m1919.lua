@@ -14,6 +14,7 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.1
 ENT.TracerColor			= "Red"
 
+ENT.HullFly				= true
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "^gred_emp/m1919/shoot.wav"
 ENT.ReloadSound			= "gred_emp/mg42/mg42_reload.wav"

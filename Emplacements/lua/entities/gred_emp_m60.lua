@@ -14,6 +14,7 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.092
 ENT.TracerColor			= "Red"
 
+ENT.HullFly				= true
 ENT.ShootSound			= "gred_emp/m60/shoot.wav"
 ENT.StopShootSound		= "gred_emp/m60/stop.wav"
 ENT.ReloadSound			= "gred_emp/m60/m60_reload.wav"

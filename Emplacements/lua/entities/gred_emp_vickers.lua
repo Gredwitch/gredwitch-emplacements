@@ -15,6 +15,7 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.12
 ENT.TracerColor			= "Red"
 
+ENT.RecoilRate			= 0.1
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "^gred_emp/vickers/shoot.wav"
 ENT.ReloadSound			= "gred_emp/vickers/vickers_reload.wav"

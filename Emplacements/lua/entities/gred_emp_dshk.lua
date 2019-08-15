@@ -17,6 +17,8 @@ ENT.TracerColor			= "Green"
 ENT.ShootSound			= "gred_emp/dshk/shoot.wav"
 ENT.StopShootSound		= "gred_emp/dshk/stop.wav"
 
+ENT.Recoil				= 1.5
+ENT.RecoilRate			= 0.3
 ENT.EmplacementType		= "MG"
 ENT.HullModel			= "models/gredwitch/dhsk/dhsk_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/dhsk/dhsk_gun.mdl"

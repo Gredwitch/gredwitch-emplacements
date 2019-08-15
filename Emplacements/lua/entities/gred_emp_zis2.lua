@@ -10,7 +10,7 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= true
 ENT.NameToPrint			= "ZiS-2"
 
-ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
+ENT.MuzzleEffect		= "gred_arti_muzzle_blast_alt"
 ENT.ShotInterval		= 5.5
 ENT.AmmunitionTypes		= {
 						{"HE","gb_shell_57mm"},

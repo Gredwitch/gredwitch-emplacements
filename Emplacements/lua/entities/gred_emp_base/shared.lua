@@ -17,6 +17,7 @@ ENT.TurretModel				= nil
 ENT.YawModel				= nil -- if any
 ENT.WheelsModel				= nil -- if any
 ENT.HullModel				= nil
+ENT.HullFly					= false
 
 ---------------------
 
@@ -30,7 +31,9 @@ ENT.ExtractAngle			= Angle(0,-90,0)
 ENT.TurretMass				= 100
 ENT.Ammo					= 100 -- set to -1 if you want infinite ammo
 ENT.Spread					= 0
-ENT.Recoil					= 100
+ENT.Recoil					= 1
+ENT.CurRecoil				= 0
+ENT.RecoilRate				= 0.05
 ENT.ShootAnim				= nil -- string / int
 ENT.BotAngleOffset			= Angle(0,0,0)
 
@@ -243,9 +246,14 @@ function ENT:GetShootAngles(ply,botmode,target)
 				self:BulletCalcVel()
 				local calcPos = pos+vel*(dist/self.BulletVelCalc)
 				local trace = util.QuickTrace(attpos,(pos-attpos)*100000,self.Entities)
-				if (((trace.Entity == target or target:GetParent() == trace.Entity) or trace.Entity:IsPlayer() or trace.Entity:IsNPC()) or trace.HitSky) and dist > 0.015 then
+				local tv = target.GetVehicle and target:GetVehicle() or false
+				if tv and IsValid(tv) then
+					local p = tv:GetParent()
+					tv = IsValid(p) and p or tv
+				end
+				if (((trace.Entity == target or target:GetParent() == trace.Entity) or trace.Entity:IsPlayer() or trace.Entity:IsNPC()) or trace.HitSky or (tv and trace.Entity == tv and (((tv.LFS and tv:GetHP() > 0 or tv.isWacAircraft) and self:GetIsAntiAircraft()) or self:GetIsAntiGroundVehicles()))) and dist > 0.015 then
 					ang = (calcPos - attpos):Angle()
-					ang = Angle(-ang.p,ang.y+180,ang.r)
+					ang = Angle(!self.Seatable and -ang.p - self.CurRecoil or -ang.p,ang.y+180,ang.r)
 					ang:Add(self.BotAngleOffset)
 					ang:RotateAroundAxis(ang:Up(),90)
 					self:SetTargetValid(true)
@@ -336,15 +344,9 @@ function ENT:GetShootAngles(ply,botmode,target)
 			if self.CustomEyeTrace and self:GetViewMode() > 0 then
 				trace = util.QuickTrace(attpos,self.CustomEyeTrace.HitPos,self.Entities)
 				ang = (trace.StartPos - trace.HitPos):Angle()
-				ang:RotateAroundAxis(ang:Up(),90)
+				-- ang:RotateAroundAxis(ang:Up(),90)
 			else
-				-- local Ang
-				-- if self.AltShootAngles then
-					-- Ang = self:AltShootAngles(ply)
-				-- else
-				local Ang = ply:EyeAngles()
-				-- end
-				trace = util.QuickTrace(attpos,Ang:Forward()*100000,self.Entities)
+				trace = util.QuickTrace(attpos,ply:EyeAngles():Forward()*100000,self.Entities)
 				ang = (trace.StartPos - trace.HitPos):Angle()
 				ang:RotateAroundAxis(ang:Up(),90)
 			end
@@ -407,10 +409,6 @@ function ENT:GetShootAngles(ply,botmode,target)
 			end
 		end
 	end
-	-- local ft = FrameTime()
-	-- self:SetRecoil((self:GetRecoil() + math.Clamp((addRecoil - self:GetRecoil()),-ft,ft)))
-	-- ang.r = ang.r + (self:GetRecoil() * self.Recoil)
-	-- print(self:GetRecoil() * self.Recoil)
 	return ang
 end
 
@@ -466,6 +464,15 @@ function ENT:Think()
 						end
 					end
 				end
+				if not target then
+					for k,v in pairs(gred.AllNPCs) do
+						if self:IsValidTarget(v) then
+							self:SetTarget(v)
+							target = v
+							break
+						end
+					end
+				end
 			end
 		end
 	else
@@ -491,6 +498,7 @@ function ENT:Think()
 			if shouldSetAngles then
 				local ang = self:GetShootAngles(ply,botmode,target)
 				if ang then
+					self:HandleRecoil(ang)
 					if self.YawModel then
 						local yaw = self:GetYaw()
 						local yawang = yaw:GetAngles()
@@ -539,10 +547,12 @@ function ENT:Think()
 						target = nil
 					else
 						if self:GetIsAntiAircraft() and self.EmplacementType == "MG" then
-							if isValidAirTarget then
-								self:SetAmmoType(2)
-							else
-								self:SetAmmoType(1)
+							if self.AmmunitionTypes then
+								if isValidAirTarget then
+									self:SetAmmoType(2)
+								else
+									self:SetAmmoType(1)
+								end
 							end
 						elseif self.EmplacementType == "Cannon" then
 							if target:IsPlayer() or target:IsNPC() then
@@ -557,14 +567,14 @@ function ENT:Think()
 				end
 			end
 			
-			-- addRecoil = 0
 			-- Shooting stuff
 			IsShooting = shouldSetAngles and ply:KeyDown(IN_ATTACK) or !shouldSetAngles
-			
 			self:SetIsShooting(IsShooting)
+			self.ShouldDoRecoil = false
 			if IsShooting then
 				canShoot = self:CanShoot(ammo,ct,ply,IsReloading)
 				if canShoot then
+					self.ShouldDoRecoil = true
 					self:fire(ammo,ct,ply,IsReloading)
 				end
 			end
@@ -669,7 +679,6 @@ function ENT:fire(ammo,ct,ply)
 		end
 	end
 	
-	-- addRecoil = 1
 	if self.CustomShootAnim then
 		self:CustomShootAnim(self:GetCurrentMuzzle()-1)
 	else
@@ -701,8 +710,8 @@ end
 
 function ENT:IsValidBot(ent,b)
 	self.Owner = self.Owner or self
-	
-	return (ent:IsNPC() and self:GetAttackNPCs() and (!self.Owner:IsPlayer() or ent:Disposition(self.Owner) == 1)) or (ent.LFS and ent:GetAI() and self:GetIsAntiAircraft() and (ent:GetAITEAM() != (self.Owner.lfsGetAITeam and self.Owner:lfsGetAITeam() or nil) or self:GetShouldNotCareAboutOwnersTeam()))
+	return (ent:IsNPC() and self:GetAttackNPCs() and (!self.Owner:IsPlayer() or ent:Disposition(self.Owner) == 1 or self:GetShouldNotCareAboutOwnersTeam())) 
+	or (ent.LFS and ent:GetAI() and self:GetIsAntiAircraft() and (ent:GetAITEAM() != (self.Owner.lfsGetAITeam and self.Owner:lfsGetAITeam() or nil) or self:GetShouldNotCareAboutOwnersTeam()))
 end
 
 function ENT:IsValidGroundTarget(ply)

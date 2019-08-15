@@ -16,6 +16,7 @@ ENT.ShotInterval		= 0.015
 ENT.TracerColor			= "Red"
 ENT.ShootAnim			= "spin"
 
+ENT.Recoil				= 0
 ENT.EmplacementType		= "MG"
 ENT.ShootSound			= "gred_emp/m134/shoot.wav"
 ENT.StopShootSound		= "gred_emp/m134/stop.wav"

@@ -14,6 +14,8 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.046
 ENT.TracerColor			= "Green"
 
+ENT.RecoilRate			= 1.3
+ENT.RecoilRate			= 0.15
 ENT.ShootSound			= "gred_emp/mg42/shoot.wav"
 ENT.ReloadSound			= "gred_emp/mg42/mg42_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/mg42/mg42_reloadend.wav"

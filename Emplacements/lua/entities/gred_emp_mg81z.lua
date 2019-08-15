@@ -17,6 +17,8 @@ ENT.ExtractAngle		= Angle(110,0,0)
 
 ENT.ShootSound			= "gred_emp/mg81z/shoot.wav"
 
+ENT.RecoilRate			= 1.3
+ENT.RecoilRate			= 0.3
 ENT.HullModel			= "models/gredwitch/mg81z/mg81z_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/mg81z/mg81z_gun.mdl"
 ENT.Sequential			= false

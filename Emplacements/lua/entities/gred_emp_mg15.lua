@@ -14,6 +14,8 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.057
 ENT.TracerColor			= "Green"
 
+ENT.RecoilRate			= 1.3
+ENT.RecoilRate			= 0.15
 ENT.ShootSound			= "gred_emp/mg15/shoot.wav"
 ENT.StopShootSound		= "gred_emp/mg15/stop.wav"
 ENT.ReloadSound			= "gred_emp/mg15/mg15_reload.wav"

@@ -14,6 +14,8 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.067
 ENT.TracerColor			= "Green"
 
+ENT.RecoilRate			= 1.3
+ENT.RecoilRate			= 0.15
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "^gred_emp/mg34/shoot.wav"
 ENT.ReloadSound			= "gred_emp/mg34/mg34_reload.wav"

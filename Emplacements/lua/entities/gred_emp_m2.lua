@@ -14,6 +14,8 @@ ENT.AmmunitionType		= "wac_base_12mm"
 ENT.ShotInterval		= 0.12
 ENT.TracerColor			= "Red"
 
+ENT.Recoil				= 1.5
+ENT.RecoilRate			= 0.3
 ENT.ShootSound			= "gred_emp/m2/shoot.wav"
 ENT.StopShootSound		= "gred_emp/m2/stop.wav"
 ENT.ReloadSound			= "gred_emp/m2/m2_reload.wav"
