@@ -25,8 +25,20 @@ ENT.EmplacementType     = "Mortar"
 ENT.Ammo				= -1
 
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_81mm"},
-						{"Smoke","gb_shell_81mm"}
+	{
+		Caliber = 81,
+		ShellType = "HE",
+		MuzzleVelocity = 100,
+		Mass = 4,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 81,
+		ShellType = "Smoke",
+		MuzzleVelocity = 100,
+		Mass = 4,
+		TracerColor = "white",
+	},
 }
 
 function ENT:SpawnFunction( ply, tr, ClassName )

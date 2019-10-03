@@ -23,6 +23,8 @@ ENT.AmmunitionTypes		= {
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/common/20mm_01.wav"
 
+ENT.PitchRate			= 40
+ENT.YawRate				= 40
 ENT.TurretPos			= Vector(0,0,64)
 ENT.Ammo				= -1
 ENT.HullModel			= "models/gredwitch/artemis30/artemis30_base.mdl"
@@ -54,14 +56,13 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	seat = self:GetSeat()
 	local seatValid = IsValid(seat)
 	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
-	local a = self:GetAngles()
-	local ang = Angle(-a.r,a.y+90,a.p)
-	ang:Normalize()
+	angles = ply:EyeAngles()
+	angles.p = angles.p - (self:GetRecoil())*0.2
 	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
 		local view = {}
 		
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = ang
+		view.angles = angles
 		view.fov = 35
 		view.drawviewer = true
 	
@@ -70,7 +71,7 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 		if seatValid then
 			local view = {}
 			view.origin = pos
-			view.angles = ang
+			view.angles = angles
 			view.fov = fov
 			view.drawviewer = false
 	

@@ -15,17 +15,37 @@ ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 5.5
 ENT.Spread				= 0.2
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_50mm"},
-						{"AP","gb_shell_50mm"},
-						{"Smoke","gb_shell_50mm"}
+	{
+		Caliber = 50,
+		ShellType = "HE",
+		MuzzleVelocity = 835,
+		Mass = 1,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 50,
+		ShellType = "AP",
+		MuzzleVelocity = 1180,
+		Mass = 2.06,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 50,
+		ShellType = "Smoke",
+		MuzzleVelocity = 835,
+		Mass = 1,
+		TracerColor = "white",
+	},
 }
 
+ENT.PitchRate			= 50
+ENT.YawRate				= 50
 ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 4.6
 ENT.ShellLoadTime		= 1.5
 ENT.AnimPlayTime		= 1.3
 
-ENT.ShootSound			= "gred_emp/common/50mm.wav"
+ENT.ShootSound			= "^gred_emp/common/50mm.wav"
 
 ENT.MaxRotation			= Angle(27,65)
 ENT.HullModel			= "models/gredwitch/pak38/pak38_carriage.mdl"

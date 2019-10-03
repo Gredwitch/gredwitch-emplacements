@@ -22,7 +22,7 @@ ENT.StopShootSound		= "gred_emp/phalanx/gun_sotp.wav"
 
 ENT.HullModel			= "models/gredwitch/m61/m61_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/m61/m61_gun.mdl"
-
+ENT.Recoil				= 0
 ENT.Ammo				= -1
 ENT.TurretPos			= Vector(0,4.4,18.5)
 
@@ -43,10 +43,10 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
+		angles = ply:EyeAngles()
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = Angle(-ang.r,ang.y+90,ang.p+1)
+		view.angles = angles
 		view.fov = 35
 		view.drawviewer = false
 

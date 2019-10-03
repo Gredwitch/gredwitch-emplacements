@@ -13,16 +13,36 @@ ENT.NameToPrint			= "PaK 40"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 5.9
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_75mm"},
-						{"AP","gb_shell_75mm"},
-						{"Smoke","gb_shell_75mm"}
+	{
+		Caliber = 75,
+		ShellType = "HE",
+		MuzzleVelocity = 450,
+		Mass = 4.57,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 75,
+		ShellType = "AP",
+		MuzzleVelocity = 990,
+		Mass = 2.06,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 75,
+		ShellType = "Smoke",
+		MuzzleVelocity = 450,
+		Mass = 4.57,
+		TracerColor = "white",
+	},
 }
+ENT.PitchRate			= 40
+ENT.YawRate				= 40
 ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 3.5
 ENT.ShellLoadTime		= 1.5
 ENT.AnimPlayTime		= 1.3
 
-ENT.ShootSound			= "gred_emp/common/75mm_axis.wav"
+ENT.ShootSound			= "^gred_emp/common/75mm_axis.wav"
 
 ENT.MaxRotation			= Angle(27,65)
 ENT.TurretPos			= Vector(0,7,1)

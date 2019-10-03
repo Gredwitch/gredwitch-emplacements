@@ -110,11 +110,13 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
+		angles = ply:EyeAngles()
+		angles.y = angles.y - 0.8
+		angles.p = angles.p - (self:GetRecoil())*0.8
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = Angle(-ang.r,ang.y+89.8,ang.p)
-		view.fov = 35
+		view.angles = angles
+		view.fov = 40
 		view.drawviewer = false
 
 		return view

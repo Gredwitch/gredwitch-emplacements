@@ -20,6 +20,8 @@ ENT.AmmunitionTypes		= {
 						{"Direct Hit","wac_base_20mm"},
 						{"Time-fused","wac_base_20mm"},
 }
+ENT.PitchRate			= 60
+ENT.YawRate				= 60
 ENT.TracerColor			= "Yellow"
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/breda35/shoot.wav"
@@ -83,15 +85,15 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	seat = self:GetSeat()
 	local seatValid = IsValid(seat)
-	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
-	local a = self:GetAngles()
-	local ang = Angle(-a.r,a.y+90,a.p)
-	ang:Normalize()
+	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
+	angles = ply:EyeAngles()
+	angles.p = angles.p - (self:GetRecoil())*0.2
 	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
 		local view = {}
 		
 		view.origin = self:GetAimSight():LocalToWorld(Vector(-2.35,-10,2.59))
-		view.angles = ang
+		angles.p = angles.p - 0.7
+		view.angles = angles
 		view.fov = 35
 		view.drawviewer = false
 
@@ -101,7 +103,7 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 			local view = {}
 			local yaw = self:GetYaw()
 			view.origin = yaw:GetPos() + yaw:GetForward()*self.ViewPos.y + yaw:GetRight()*self.ViewPos.x + yaw:GetUp()*self.ViewPos.z --seat:LocalToWorld(self.ViewPos)
-			view.angles = ang
+			view.angles = angles
 			view.fov = fov
 			view.drawviewer = false
 	 

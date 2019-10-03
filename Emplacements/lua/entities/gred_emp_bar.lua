@@ -27,6 +27,7 @@ ENT.EmplacementType		= "MG"
 ENT.HullModel			= "models/gredwitch/bar/bar_bipod.mdl"
 ENT.TurretModel			= "models/gredwitch/bar/bar.mdl"
 
+ENT.Recoil				= 0.8
 ENT.Ammo				= 20
 ENT.ReloadTime			= 1.9
 ENT.CycleRate			= 0.6
@@ -144,12 +145,12 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
+		angles = ply:EyeAngles()
+		angles.p = angles.p - (self:GetRecoil())*0.2
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		local a = game.SinglePlayer() and 0.1 or 0
-		view.angles = Angle(-ang.r,ang.y+90 + a,ang.p)
-		view.fov = 35
+		view.angles = angles
+		view.fov = 45
 		view.drawviewer = false
 
 		return view

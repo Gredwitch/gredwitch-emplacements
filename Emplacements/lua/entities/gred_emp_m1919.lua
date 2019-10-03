@@ -110,11 +110,11 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
+		angles = ply:EyeAngles()
+		angles.p = angles.p - (self:GetRecoil())*0.8
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		local a = game.SinglePlayer() and 0.1 or 0
-		view.angles = Angle(-ang.r,ang.y+90 + a,ang.p)
+		view.angles = angles
 		view.fov = 35
 		view.drawviewer = false
 

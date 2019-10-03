@@ -17,8 +17,8 @@ ENT.TracerColor			= "Green"
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/kord/shoot.wav"
 
-ENT.Recoil				= 2
-ENT.RecoilRate			= 0.2
+ENT.Recoil				= 1
+ENT.RecoilRate			= 0.3
 ENT.EmplacementType		= "MG"
 ENT.HullModel			= "models/gredwitch/kord/kord_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/kord/kord_gun.mdl"
@@ -112,10 +112,11 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
+		angles = ply:EyeAngles()
+		angles.p = angles.p - (self:GetRecoil())*0.8
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = Angle(-ang.r,ang.y+90,ang.p)
+		view.angles = angles
 		view.fov = 35
 		view.drawviewer = false
 

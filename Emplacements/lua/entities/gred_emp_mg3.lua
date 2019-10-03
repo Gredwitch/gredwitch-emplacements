@@ -16,7 +16,7 @@ ENT.TracerColor			= "Red"
 ENT.AmmunitionType		= "wac_base_7mm"
 
 ENT.HullFly				= true
-ENT.RecoilRate			= 1.3
+ENT.Recoil				= 0.5
 ENT.RecoilRate			= 0.15
 ENT.ShootSound			= "gred_emp/mg3/mg3_loop.wav"
 ENT.StopShootSound		= "gred_emp/mg3/shoot.wav"
@@ -35,9 +35,9 @@ ENT.ExtractAngle		= Angle(0,0,0)
 ENT.MaxRotation			= Angle(30,45)
 
 if game.SinglePlayer() then
-	ENT.SightPos		= Vector(0.02,-25,3.65)
+	ENT.SightPos		= Vector(0.02,-30,3.65)
 else
-	ENT.SightPos		= Vector(0,-25,3.65)
+	ENT.SightPos		= Vector(0,-30,3.65)
 end
 ENT.MaxViewModes		= 1
 
@@ -123,12 +123,12 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
+		angles = ply:EyeAngles()
+		angles.p = angles.p - (self:GetRecoil())*0.5
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		local a = game.SinglePlayer() and 0.1 or 0
-		view.angles = Angle(-ang.r,ang.y+90 + a,ang.p)
-		view.fov = 35
+		view.angles = angles
+		view.fov = 41
 		view.drawviewer = false
 				
 		return view

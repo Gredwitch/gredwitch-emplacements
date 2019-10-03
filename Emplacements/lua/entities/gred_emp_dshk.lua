@@ -31,7 +31,7 @@ ENT.ReloadTime			= 1.73 - 0.7
 ------------------------
 
 ENT.TurretPos			= Vector(0,0,43)
-ENT.SightPos			= Vector(0.03,-35,16.25)
+ENT.SightPos			= Vector(0.03,-28,16.25)
 ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -110,11 +110,12 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
+		angles = ply:EyeAngles()
+		angles.p = angles.p - (self:GetRecoil())*0.1
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = Angle(-ang.r,ang.y+90,ang.p)
-		view.fov = 35
+		view.angles = angles
+		view.fov = 60
 		view.drawviewer = false
 
 		return view

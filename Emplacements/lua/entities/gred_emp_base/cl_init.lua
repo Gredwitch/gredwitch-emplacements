@@ -4,7 +4,6 @@ local reachSky = Vector(0,0,9999999999)
 
 function ENT:Initialize()
 	self:ReloadSounds()
-	self:SetNextShotCL(0)
 	self:InitAttachmentsCL()
 	
 	self.Initialized = true
@@ -118,36 +117,64 @@ function ENT:Think()
 		end
 		local ammo = self:GetAmmo()
 		local IsShooting = self:GetIsShooting()
-		local IsReloading = self:GetIsReloading()
-		if IsShooting then
-			if self:CanShoot(ammo,ct,ply,IsReloading) then
-				if self.EmplacementType != "MG" or self.OnlyShootSound then
-					self:SetNextShotCL(ct + self.ShotInterval)
-					self.sounds.shoot:Stop()
-					self.sounds.shoot:Play()
-				else
-					self.sounds.shoot:Play()
-					if self.sounds.stop then
-						self.sounds.stop:Stop()
-						self.PlayStopSound = true
-					end
-				end
-			else
-				if self.EmplacementType == "MG" and not self.OnlyShootSound then
-					self.sounds.shoot:Stop()
-					self:StopSoundStuff(ply,ammo,IsReloading,IsShooting)
-				end
-			end
+		if (!self.OnlyShootSound and self.EmplacementType == "MG") and self:GetIsAttacking() and (ammo > 0 or self.Ammo < 0) and !self:GetIsReloading() then
+			if self.sounds.stop then self.sounds.stop:Stop() end
+			self.sounds.shoot:Play()
 		else
-			if self.EmplacementType == "MG" and not self.OnlyShootSound then
-				self.sounds.shoot:Stop()
-				self:StopSoundStuff(ply,ammo,IsReloading,IsShooting)
+			if not (self.EmplacementType != "MG" or self.OnlyShootSound) then
+				self:StopSoundStuff(ply,ammo,self:GetIsReloading(),IsShooting)
 			end
 		end
 	else
 		self:SetViewMode(0)
 		ply.Gred_Emp_Ent = nil
-		self:StopSoundStuff(ply,ammo,IsReloading,IsShooting)
+		self:StopSoundStuff(ply,ammo,self:GetIsReloading(),IsShooting)
+	end
+	self:GetPrevShooter().Gred_Emp_Ent = nil
+	
+	self:OnThinkCL(ct,ply)
+end
+
+local Z_CANNON = Vector(0,0,10)
+local vector_zero = vector_zero
+local soundSpeed = 18005.25*18005.25 -- 343m/s
+function ENT:OnShoot()
+	-- timer.Simple(LocalPlayer():GetViewEntity():GetPos():DistToSqr(self:GetPos())/soundSpeed,function()
+		-- if !IsValid(self) then return end
+		self.PlayStopSound = true
+		if (self.EmplacementType != "MG" or self.OnlyShootSound) then
+			self.sounds.shoot:Stop()
+			self.sounds.shoot:Play()
+		end
+	-- end)
+	local effectdata
+	if self.Sequential then
+		effectdata = EffectData()
+		effectdata:SetEntity(self)
+		util.Effect("gred_particle_emp_muzzle",effectdata)
+	else
+		for k,v in pairs(self.TurretMuzzles) do
+			effectdata = EffectData()
+			effectdata:SetEntity(self)
+			util.Effect("gred_particle_emp_muzzle",effectdata)
+		end
+	end
+	if self.EmplacementType != "MG" then
+		effectdata = EffectData()
+		effectdata:SetOrigin(self:GetPos() - (self.EmplacementType == "Mortar" and vector_zero or Z_CANNON))
+		effectdata:SetAngles(Angle(90,0,0))
+		effectdata:SetFlags(table.KeyFromValue(gred.Particles,"gred_mortar_explosion_smoke_ground"))
+		util.Effect("gred_particle_simple",effectdata)
+	end
+end
+
+function ENT:OnThinkCL(ct,ply)
+
+end
+
+function ENT:StopSoundStuff(ply,ammo,IsReloading,IsShooting)
+	-- timer.Simple(LocalPlayer():GetViewEntity():GetPos():DistToSqr(self:GetPos())/soundSpeed,function()
+		-- if !IsValid(self) then return end
 		if self.EmplacementType == "MG" and not self.OnlyShootSound then
 			self.sounds.shoot:Stop()
 			if self.PlayStopSound and self.sounds.stop then
@@ -156,26 +183,16 @@ function ENT:Think()
 				self.PlayStopSound = false
 			end
 		end
-	end
-	self:GetPrevShooter().Gred_Emp_Ent = nil
-	
-	self:OnThinkCL(ct,ply)
-end
-
-function ENT:OnThinkCL(ct,ply)
-
-end
-
-function ENT:StopSoundStuff(ply,ammo,IsReloading,IsShooting)
-	if self.PlayStopSound and self.sounds.stop then
-		self.sounds.stop:Stop()
-		self.sounds.stop:Play()
-		self.PlayStopSound = false
-	end
-	if self.sounds.empty and (IsValid(ply) and IsShooting) and !IsReloading and ammo <= 0 then
-		self.sounds.empty:Stop()
-		self.sounds.empty:Play()
-	end
+		if self.PlayStopSound and self.sounds.stop then
+			self.sounds.stop:Stop()
+			self.sounds.stop:Play()
+			self.PlayStopSound = false
+		end
+		if self.sounds.empty and (IsValid(ply) and IsShooting) and !IsReloading and ammo <= 0 then
+			self.sounds.empty:Stop()
+			self.sounds.empty:Play()
+		end
+	-- end)
 end
 
 function ENT:OnRemove()

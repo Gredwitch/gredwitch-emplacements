@@ -13,18 +13,38 @@ ENT.NameToPrint			= "PaK 43"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_88mm"},
-						{"AP","gb_shell_88mm"},
-						{"Smoke","gb_shell_88mm"}
+	{
+		Caliber = 88,
+		ShellType = "HE",
+		MuzzleVelocity = 820,
+		Mass = 9.4,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 88,
+		ShellType = "AP",
+		MuzzleVelocity = 820,
+		Mass = 9.4,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 88,
+		ShellType = "Smoke",
+		MuzzleVelocity = 820,
+		Mass = 9.4,
+		TracerColor = "white",
+	},
 }
 ENT.ShootAnim			= "shoot"
 
+ENT.PitchRate			= 10
+ENT.YawRate				= 20
 ENT.AnimRestartTime		= 4.6
 ENT.ShellLoadTime		= 1.5
 ENT.AnimPlayTime		= 1.3
 ENT.ATReloadSound		= "big"
 
-ENT.ShootSound			= "gred_emp/common/88mm.wav"
+ENT.ShootSound			= "^gred_emp/common/88mm.wav"
 
 ENT.MaxRotation			= Angle(27,65)
 ENT.HullModel			= "models/gredwitch/pak43/pak43_carriage.mdl"

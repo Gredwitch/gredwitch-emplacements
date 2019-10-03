@@ -2,19 +2,15 @@
 {
 	$basetexture			"models/gredwitch/dhsk/mg_c"
 	$bumpmap				"models/gredwitch/dhsk/mg_b"
-	$halflambert			1
-	$nocull 				1
-	$alphatest 				0
 
-	$phong 					1
-	$phongexponenttexture 	"models/gredwitch/dhsk/mg_s"
-	$phongboost 			0.5
-	$phongfresnelranges		"[2 2 2]"
+    // $envmap 					"env_cubemap"
+    $normalmapalphaenvmapmask 	1
+    $envmaptint 				"[0.20 0.20 0.20]"
 
-	$PhongAlbedoTint 		1
-
-	$rimlight     			0
-	$rimlightexponent   	1
-	$rimlightboost   		0.3
-	$rimmask      			1
+    $phong 						1
+    $phongfresnelranges 		"[0.25 0.58 8]"
+    $phongtint 					"[1 0.99 0.79]"
+    $phongexponent 				31
+    $phongboost 				8
+    $phongalbedoboost 			1
 }

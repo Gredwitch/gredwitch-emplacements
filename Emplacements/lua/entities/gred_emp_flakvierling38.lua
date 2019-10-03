@@ -20,6 +20,8 @@ ENT.AmmunitionTypes		= {
 						{"Time-fused","wac_base_20mm"},
 }
 
+ENT.PitchRate			= 30
+ENT.YawRate				= 60
 ENT.Sequential			= true
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/common/20mm_02.wav"
@@ -61,13 +63,12 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	seat = self:GetSeat()
 	local seatValid = IsValid(seat)
 	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
-	local a = self:GetAngles()
-	local ang = Angle(-a.r,a.y+90,a.p)
+	angles = ply:EyeAngles()
 	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
 		local view = {}
 
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = ang
+		view.angles = angles
 		view.fov = 35
 		view.drawviewer = true
 
@@ -76,7 +77,7 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 		if seatValid then
 			local view = {}
 			view.origin = pos
-			view.angles = ang
+			view.angles = angles
 			view.fov = fov
 			view.drawviewer = false
 

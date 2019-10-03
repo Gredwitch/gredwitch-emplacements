@@ -13,16 +13,36 @@ ENT.NameToPrint			= "M2A1"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast_alt"
 ENT.ShotInterval		= 5.3
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_105mm"},
-						{"WP","gb_shell_105mmWP"},
-						{"Smoke","gb_shell_105mm"}
+	{
+		Caliber = 105,
+		ShellType = "HE",
+		MuzzleVelocity = 472,
+		Mass = 18.3,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 105,
+		ShellType = "WP",
+		MuzzleVelocity = 472,
+		Mass = 18.3,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 105,
+		ShellType = "Smoke",
+		MuzzleVelocity = 472,
+		Mass = 18.3,
+		TracerColor = "white",
+	},
 }
+ENT.PitchRate			= 30
+ENT.YawRate				= 30
 ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 4.4
 ENT.AnimPlayTime		= 1.6
 ENT.ShellLoadTime		= 1.3
 
-ENT.ShootSound			= "gred_emp/common/105mm.wav"
+ENT.ShootSound			= "^gred_emp/common/105mm.wav"
 ENT.ATReloadSound		= "big"
 
 ENT.MaxRotation			= Angle(27,65)
@@ -34,7 +54,6 @@ ENT.Spread				= 0.4
 ENT.WheelsModel			= "models/gredwitch/M2A1/M2A1_wheels.mdl"
 ENT.WheelsPos			= Vector(0,0,0)
 ENT.Ammo				= -1
-ENT.AddShootAngle		= 4
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

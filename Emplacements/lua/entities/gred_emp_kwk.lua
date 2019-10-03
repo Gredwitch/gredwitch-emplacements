@@ -14,17 +14,37 @@ ENT.NameToPrint			= "KwK"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_50mm"},
-						{"AP","gb_shell_50mm"},
-						{"Smoke","gb_shell_50mm"}
+	{
+		Caliber = 50,
+		ShellType = "HE",
+		MuzzleVelocity = 685,
+		Mass = 2.07,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 50,
+		ShellType = "AP",
+		MuzzleVelocity = 685,
+		Mass = 2.07,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 50,
+		ShellType = "Smoke",
+		MuzzleVelocity = 685,
+		Mass = 2.07,
+		TracerColor = "white",
+	},
 }
+ENT.PitchRate			= 50
+ENT.YawRate				= 50
 ENT.ShootAnim			= "shoot"
 
 ENT.ShellLoadTime		= 1.3
 ENT.AnimPlayTime		= 1.3
 ENT.AnimPauseTime		= 0.3
 
-ENT.ShootSound			= "gred_emp/common/50mm.wav"
+ENT.ShootSound			= "^gred_emp/common/50mm.wav"
 
 ENT.TurretPos			= Vector(0,0,49.8)
 ENT.HullModel			= "models/gredwitch/kwk/kwk_base.mdl"
@@ -56,15 +76,13 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	-- seat = self:GetSeat()
 	-- local seatValid = IsValid(seat)
 	-- if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
-	local a = self:GetAngles()
-	local ang = Angle(-a.r,a.y+90,a.p)
-	ang:Normalize()
+	angles = ply:EyeAngles()
 	if --[[(seatValid and seat:GetThirdPersonMode()) or]] self:GetViewMode() == 1 then
 		local view = {}
 		
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = ang
-		view.fov = 35
+		view.angles = angles
+		view.fov = 50
 		view.drawviewer = true
 
 		return view
@@ -72,7 +90,7 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 		-- if seatValid then
 			-- local view = {}
 			-- view.origin = seat:LocalToWorld(self.ViewPos)
-			-- view.angles = ang
+			-- view.angles = angles
 			-- view.fov = fov
 			-- view.drawviewer = false
 

@@ -13,15 +13,29 @@ ENT.NameToPrint			= "LeFH18"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast_alt"
 ENT.ShotInterval		= 5
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_105mm"},
-						{"Smoke","gb_shell_105mm"}
+	{
+		Caliber = 105,
+		ShellType = "HE",
+		MuzzleVelocity = 470,
+		Mass = 14.81,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 105,
+		ShellType = "Smoke",
+		MuzzleVelocity = 470,
+		Mass = 14.81,
+		TracerColor = "white",
+	},
 }
+ENT.PitchRate			= 30
+ENT.YawRate				= 30
 ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 4.4
 ENT.AnimPlayTime		= 1
 ENT.ShellLoadTime		= 1.5
 
-ENT.ShootSound			= "gred_emp/common/105mm_axis.wav"
+ENT.ShootSound			= "^gred_emp/common/105mm_axis.wav"
 ENT.ATReloadSound		= "big"
 
 ENT.MaxRotation			= Angle(27,65)
@@ -33,7 +47,6 @@ ENT.Spread				= 0.4
 ENT.WheelsModel			= "models/gredwitch/lefh18/lefh18_wheels.mdl"
 ENT.WheelsPos			= Vector(0,0,10)
 ENT.Ammo				= -1
-ENT.AddShootAngle		= 3.5
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

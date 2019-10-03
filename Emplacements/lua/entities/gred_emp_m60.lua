@@ -14,6 +14,7 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.092
 ENT.TracerColor			= "Red"
 
+ENT.Recoil				= 0.8
 ENT.HullFly				= true
 ENT.ShootSound			= "gred_emp/m60/shoot.wav"
 ENT.StopShootSound		= "gred_emp/m60/stop.wav"
@@ -113,10 +114,11 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
+		angles = ply:EyeAngles()
+		angles.p = angles.p - (self:GetRecoil())*0.8
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = Angle(-ang.r,ang.y+90,ang.p)
+		view.angles = angles
 		view.fov = 35
 		view.drawviewer = false
 

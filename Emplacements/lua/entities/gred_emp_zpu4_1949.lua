@@ -20,6 +20,8 @@ ENT.AmmunitionType		= "wac_base_12mm"
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/common/20mm_02.wav"
 
+ENT.PitchRate			= 120
+ENT.YawRate				= 120
 ENT.Seatable			= true
 ENT.Ammo				= -1
 ENT.HullModel			= "models/gredwitch/zpu4_1949/zpu4_base.mdl"
@@ -50,15 +52,13 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	seat = self:GetSeat()
 	local seatValid = IsValid(seat)
-	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
-	local a = self:GetAngles()
-	local ang = Angle(-a.r,a.y+90,a.p)
-	ang:Normalize()
+	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
+	angles = ply:EyeAngles()
 	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
 		local view = {}
 		
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = ang
+		view.angles = angles
 		view.fov = 35
 		view.drawviewer = true
 
@@ -67,7 +67,7 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 		if seatValid then
 			local view = {}
 			view.origin = pos
-			view.angles = ang
+			view.angles = angles
 			view.fov = fov
 			view.drawviewer = false
 

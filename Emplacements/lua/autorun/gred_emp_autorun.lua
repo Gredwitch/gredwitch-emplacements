@@ -4,23 +4,27 @@ local GRED_SVAR = { FCVAR_REPLICATED, FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE, F
 local CreateConVar = CreateConVar
 
 gred = gred or {}
-
-CreateConVar("gred_sv_carriage_collision"			,  "1"  , GRED_SVAR)
-CreateConVar("gred_sv_shell_remove_time"			,  "10" , GRED_SVAR)
-CreateConVar("gred_sv_limitedammo"					,  "1"  , GRED_SVAR)
-CreateConVar("gred_sv_cantakemgbase"				,  "1"  , GRED_SVAR)
-CreateConVar("gred_sv_enable_seats"					,  "1"  , GRED_SVAR)
-CreateConVar("gred_sv_enable_explosions"			,  "1"  , GRED_SVAR)
-CreateConVar("gred_sv_manual_reload"				,  "0"  , GRED_SVAR)
-CreateConVar("gred_sv_manual_reload_mgs"			,  "0"  , GRED_SVAR)
-CreateConVar("gred_sv_shell_arrival_time"			,  "3"  , GRED_SVAR)
-CreateConVar("gred_sv_canusemultipleemplacements"	,  "1"  , GRED_SVAR)
-CreateConVar("gred_sv_enable_recoil"				,  "1"  , GRED_SVAR)
+gred.CVars = gred.CVars or {}
+gred.CVars["gred_sv_carriage_collision"] 			= CreateConVar("gred_sv_carriage_collision"			,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_shell_remove_time"] 			= CreateConVar("gred_sv_shell_remove_time"			,  "10" , GRED_SVAR)
+gred.CVars["gred_sv_limitedammo"] 					= CreateConVar("gred_sv_limitedammo"				,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_cantakemgbase"] 				= CreateConVar("gred_sv_cantakemgbase"				,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_enable_seats"] 					= CreateConVar("gred_sv_enable_seats"				,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_enable_explosions"] 			= CreateConVar("gred_sv_enable_explosions"			,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_manual_reload"] 				= CreateConVar("gred_sv_manual_reload"				,  "0"  , GRED_SVAR)
+gred.CVars["gred_sv_manual_reload_mgs"] 			= CreateConVar("gred_sv_manual_reload_mgs"			,  "0"  , GRED_SVAR)
+gred.CVars["gred_sv_shell_arrival_time"] 			= CreateConVar("gred_sv_shell_arrival_time"			,  "3"  , GRED_SVAR)
+gred.CVars["gred_sv_canusemultipleemplacements"] 	= CreateConVar("gred_sv_canusemultipleemplacements"	,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_enable_recoil"] 				= CreateConVar("gred_sv_enable_recoil"				,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_progressiveturn"] 				= CreateConVar("gred_sv_progressiveturn"			,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_progressiveturn_mg"] 			= CreateConVar("gred_sv_progressiveturn_mg"			,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_progressiveturn_cannon"] 		= CreateConVar("gred_sv_progressiveturn_cannon"		,  "1"  , GRED_SVAR)
 
 if SERVER then
 	util.AddNetworkString("gred_net_emp_reloadsounds")
 	util.AddNetworkString("gred_net_emp_prop")
 	util.AddNetworkString("gred_net_emp_viewmode")
+	util.AddNetworkString("gred_net_emp_onshoot")
 	
 	net.Receive("gred_net_emp_viewmode",function()
 		self = net.ReadEntity()
@@ -46,12 +50,15 @@ if CLIENT then
 	
 	
 	net.Receive("gred_net_emp_reloadsounds",function()
-		local self = net.ReadEntity()
-		self.ShotInterval = net.ReadFloat()
+		net.ReadEntity().ShotInterval = net.ReadFloat()
 	end)
+	
 	net.Receive("gred_net_emp_prop",function()
-		local self = net.ReadEntity()
-		self.GredEMPBaseENT = net.ReadEntity()
+		net.ReadEntity().GredEMPBaseENT = net.ReadEntity()
+	end)
+	
+	net.Receive("gred_net_emp_onshoot",function()
+		net.ReadEntity():OnShoot()
 	end)
 	
 	hook.Add("AdjustMouseSensitivity", "gred_emp_mouse", function(s)
@@ -67,7 +74,7 @@ if CLIENT then
 	
 	hook.Add("CalcView","gred_emp_calcview",function(ply, pos, angles, fov)
 		if ply:GetViewEntity() != ply then return end
-		if ply.Gred_Emp_Ent then
+		if ply.Gred_Emp_Ent and ply:Alive() then
 			local ent = ply.Gred_Emp_Ent
 			if IsValid(ent) then
 				return ent:ViewCalc(ply,pos,angles,fov)
@@ -128,7 +135,7 @@ if CLIENT then
 		local this = Panel:CheckBox("Should the players be able to use multiple emplacements at once?","gred_sv_canusemultipleemplacements");
 		this.OnChange = function(this,val)
 			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_carriage_collision",val)
+			gred.CheckConCommand("gred_sv_canusemultipleemplacements",val)
 		end
 		
 		local this = Panel:CheckBox("Should the MGs have limited ammo?","gred_sv_limitedammo");
@@ -178,19 +185,43 @@ if CLIENT then
 			gred.CheckConCommand("gred_sv_enable_recoil",val)
 		end
 		
+		local this = Panel:CheckBox("Enable progressive rotation?","gred_sv_progressiveturn");
+		this.OnChange = function(this,val)
+			val = val and 1 or 0
+			gred.CheckConCommand("gred_sv_progressiveturn",val)
+		end
+		
+		local this = Panel:NumSlider( "Progressive rotation multiplier (MGs)", "gred_sv_progressiveturn_mg", 0, 10, 2 );
+		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
+		this.OnValueChanged = function(this,val)
+			if this.ConVarChanging then return end
+			gred.CheckConCommand("gred_sv_progressiveturn_mg",val)
+		end
+		
+		local this = Panel:NumSlider( "Progressive rotation multiplier (Cannons)", "gred_sv_progressiveturn_cannon", 0, 10, 2 );
+		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
+		this.OnValueChanged = function(this,val)
+			if this.ConVarChanging then return end
+			gred.CheckConCommand("gred_sv_progressiveturn_cannon",val)
+		end
+		
 		local this = Panel:NumSlider( "Shell arrival time (for mortars)", "gred_sv_shell_arrival_time", 0, 10, 2 );
-		this.ValueChanged = function(this,val)
+		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
+		this.OnValueChanged = function(this,val)
+			if this.ConVarChanging then return end
 			gred.CheckConCommand("gred_sv_shell_arrival_time",val)
 		end
 		
 		local this = Panel:NumSlider( "Shell casing remove time", "gred_sv_shell_remove_time", 0, 120, 0 );
-		this.ValueChanged = function(this,val)
+		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
+		this.OnValueChanged = function(this,val)
+			if this.ConVarChanging then return end
 			gred.CheckConCommand("gred_sv_shell_remove_time",val)
 		end
 		
 		-- end
 		
-		local this = Panel:NumSlider( "Mouse sensitivity on emplacements with seats", "gred_cl_emp_mouse_sensitivity", 0, 0.99, 2 );
+		local this = Panel:NumSlider( "Mouse sensitivity", "gred_cl_emp_mouse_sensitivity", 0, 0.99, 2 );
 		
 		-- local this = Panel:NumSlider( "Shoot sound volume", "gred_cl_emp_volume", 0, 1, 2 );
 		

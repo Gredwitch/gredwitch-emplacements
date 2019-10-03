@@ -13,16 +13,36 @@ ENT.NameToPrint			= "ZiS-3"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_75mm"},
-						{"AP","gb_shell_75mm"},
-						{"Smoke","gb_shell_75mm"}
+	{
+		Caliber = 76,
+		ShellType = "HE",
+		MuzzleVelocity = 680,
+		Mass = 6.21,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 76,
+		ShellType = "AP",
+		MuzzleVelocity = 680,
+		Mass = 6.21,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 76,
+		ShellType = "Smoke",
+		MuzzleVelocity = 680,
+		Mass = 6.21,
+		TracerColor = "white",
+	},
 }
+ENT.PitchRate			= 40
+ENT.YawRate				= 40
 ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 4.6
 ENT.AnimPlayTime		= 1
 ENT.ShellLoadTime		= 1.1
 
-ENT.ShootSound			= "gred_emp/common/76mm.wav"
+ENT.ShootSound			= "^gred_emp/common/76mm.wav"
 
 
 ENT.MaxRotation			= Angle(27,65)

@@ -13,9 +13,18 @@ ENT.AdminSpawnable		= false
 ENT.NameToPrint			= "Nebelwerfer"
 ENT.MuzzleEffect		= "ins_weapon_at4_frontblast"
 ENT.AmmunitionTypes		= {
-						{"HE","gb_rocket_nebel"},
-						{"Smoke","gb_rocket_nebel"}
+	{
+		Caliber = 150,
+		ShellType = "HE",
+		Entity = "gb_rocket_nebel",
+	},
+	{
+		Caliber = 150,
+		ShellType = "Smoke",
+		Entity = "gb_rocket_nebel",
+	},
 }
+ENT.IsRocketLauncher	= true
 ENT.ShotInterval		= 1
 
 ENT.ShootSound			= "gred_emp/common/empty.wav"
@@ -24,6 +33,8 @@ ENT.HullModel			= "models/gredwitch/nebelwerfer/nebelwerfer_base.mdl"
 ENT.TurretModel			= "models/gredwitch/nebelwerfer/nebelwerfer_tubes.mdl"
 ENT.Sequential			= true
 
+ENT.PitchRate			= 30
+ENT.YawRate				= 30
 ENT.EmplacementType		= "Cannon"
 ENT.Ammo				= 6
 ENT.TurretPos			= Vector(0,0,43.8)
@@ -65,7 +76,7 @@ function ENT:OnTick(ct,ply,botmode,IsShooting,canShoot,ammo,IsReloading,shouldSe
 	end
 	if !IsShooting and self.AutoFire then
 		if self:CanShoot(ammo,ct,ply,IsReloading) then
-			self:fire(ammo,ct,ply,IsReloading)
+			self:PreFire(ammo,ct,ply)
 		end
 		if self:GetAmmo() <= 0 then self.AutoFire = false end
 	end

@@ -13,17 +13,37 @@ ENT.NameToPrint			= "ZiS-2"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast_alt"
 ENT.ShotInterval		= 5.5
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_57mm"},
-						{"AP","gb_shell_57mm"},
-						{"Smoke","gb_shell_57mm"}
+	{
+		Caliber = 57,
+		ShellType = "HE",
+		MuzzleVelocity = 700,
+		Mass = 3.75,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 57,
+		ShellType = "AP",
+		MuzzleVelocity = 990,
+		Mass = 3.14,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 57,
+		ShellType = "Smoke",
+		MuzzleVelocity = 700,
+		Mass = 3.75,
+		TracerColor = "white",
+	},
 }
+ENT.PitchRate			= 45
+ENT.YawRate				= 45
 ENT.ShootAnim			= "shoot"
 
 ENT.AnimRestartTime		= 4.5
 ENT.AnimPlayTime		= 1.1
 ENT.ShellLoadTime		= 1.7
 
-ENT.ShootSound			= "gred_emp/common/50mm.wav"
+ENT.ShootSound			= "^gred_emp/common/50mm.wav"
 
 ENT.MaxRotation			= Angle(27,65)
 ENT.HullModel			= "models/gredwitch/zis2/zis2_carriage.mdl"

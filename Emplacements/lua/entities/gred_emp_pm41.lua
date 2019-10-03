@@ -25,10 +25,21 @@ ENT.EmplacementType     = "Mortar"
 ENT.Ammo				= -1
 
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_82mm"},
-						{"Smoke","gb_shell_82mm"}
+	{
+		Caliber = 82,
+		ShellType = "HE",
+		MuzzleVelocity = 100,
+		Mass = 4,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 82,
+		ShellType = "Smoke",
+		MuzzleVelocity = 100,
+		Mass = 4,
+		TracerColor = "white",
+	},
 }
-
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 28

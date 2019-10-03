@@ -14,8 +14,7 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.046
 ENT.TracerColor			= "Green"
 
-ENT.RecoilRate			= 1.3
-ENT.RecoilRate			= 0.15
+ENT.RecoilRate			= 0.25
 ENT.ShootSound			= "gred_emp/mg42/shoot.wav"
 ENT.ReloadSound			= "gred_emp/mg42/mg42_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/mg42/mg42_reloadend.wav"
@@ -26,7 +25,7 @@ ENT.TurretModel			= "models/gredwitch/mg42/mg42_gun.mdl"
 
 ENT.Ammo				= 250
 ENT.TurretPos			= Vector(0,0,43.5)
-ENT.SightPos			= Vector(-0.38,-15,3.8)
+ENT.SightPos			= Vector(-0.38,-20,3.8)
 ENT.MaxViewModes		= 1
 ENT.ReloadTime			= 1.2
 ENT.CycleRate			= 0.6
@@ -102,11 +101,12 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
 		local view = {}
+		angles = ply:EyeAngles()
+		angles.p = angles.p - (self:GetRecoil())*0.2
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = Angle(-ang.r,ang.y+90,ang.p)
-		view.fov = 35
+		view.angles = angles
+		view.fov = 40
 		view.drawviewer = false
 
 		return view

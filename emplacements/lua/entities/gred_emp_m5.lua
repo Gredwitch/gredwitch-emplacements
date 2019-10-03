@@ -13,15 +13,35 @@ ENT.NameToPrint			= "M5"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast_alt"
 ENT.ShotInterval		= 5.6
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_76mm"},
-						{"AP","gb_shell_76mm"},
-						{"Smoke","gb_shell_76mm"}
+	{
+		Caliber = 76,
+		ShellType = "HE",
+		MuzzleVelocity = 792,
+		Mass = 6.5,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 76,
+		ShellType = "AP",
+		MuzzleVelocity = 792,
+		Mass = 6.5,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 76,
+		ShellType = "Smoke",
+		MuzzleVelocity = 792,
+		Mass = 6.5,
+		TracerColor = "white",
+	},
 }
+ENT.PitchRate			= 40
+ENT.YawRate				= 40
 ENT.ShootAnim			= "shoot"
 ENT.AnimRestartTime		= 4
 ENT.AnimPlayTime		= 1
 
-ENT.ShootSound			= "gred_emp/common/76mm.wav"
+ENT.ShootSound			= "^gred_emp/common/76mm.wav"
 
 ENT.MaxRotation			= Angle(27,65)
 ENT.TurretTurnMax		= 0.7

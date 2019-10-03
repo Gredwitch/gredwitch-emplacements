@@ -13,17 +13,37 @@ ENT.NameToPrint			= "6pdr"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast_alt"
 ENT.ShotInterval		= 4.5
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_57mm"},
-						{"AP","gb_shell_57mm"},
-						{"Smoke","gb_shell_57mm"}
+	{
+		Caliber = 57,
+		ShellType = "HE",
+		MuzzleVelocity = 820,
+		Mass = 2.86,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 57,
+		ShellType = "AP",
+		MuzzleVelocity = 853,
+		Mass = 3,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 57,
+		ShellType = "Smoke",
+		MuzzleVelocity = 820,
+		Mass = 3,
+		TracerColor = "white",
+	},
 }
+ENT.PitchRate			= 50
+ENT.YawRate				= 50
 ENT.ShootAnim			= "shoot"
 
 ENT.AnimRestartTime		= 2
 ENT.ShellLoadTime		= 1.9
 ENT.AnimPlayTime		= 1
 
-ENT.ShootSound			= "gred_emp/common/6pdr.wav"
+ENT.ShootSound			= "^gred_emp/common/6pdr.wav"
 
 ENT.MaxRotation			= Angle(27,65)
 ENT.HullModel			= "models/gredwitch/6pdr/6pdr_carriage.mdl"
@@ -36,7 +56,7 @@ ENT.TurretPos			= Vector(0,50,20)
 ENT.WheelsPos			= Vector(0,5,-5)
 ENT.WheelsModel			= "models/gredwitch/6pdr/6pdr_wheels.mdl"
 ENT.Ammo				= -1
-ENT.AddShootAngle		= 1
+ENT.AddShootAngle		= 0
 
 
 function ENT:SpawnFunction( ply, tr, ClassName )

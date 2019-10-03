@@ -13,14 +13,28 @@ ENT.NameToPrint			= "2A65"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_152mm"},
-						{"Smoke","gb_shell_152mm"}
+	{
+		Caliber = 152,
+		ShellType = "HE",
+		MuzzleVelocity = 300, -- actually 810
+		Mass = 43.56,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 152,
+		ShellType = "Smoke",
+		MuzzleVelocity = 300,
+		Mass = 100,
+		TracerColor = "white",
+	},
 }
+ENT.PitchRate			= 20
+ENT.YawRate				= 20
 ENT.ShootAnim			= "shoot"
 ENT.ShellLoadTime		= 1.5
 ENT.AnimRestartTime		= 4.4
 ENT.AnimPlayTime		= 1.6
-ENT.ShootSound			= "gred_emp/common/152mm.wav"
+ENT.ShootSound			= "^gred_emp/common/152mm.wav"
 ENT.ATReloadSound		= "big"
 
 ENT.HullModel			= "models/gredwitch/2A65/2A65_carriage.mdl"
@@ -31,7 +45,7 @@ ENT.Spread				= 0.4
 ENT.Ammo				= -1
 ENT.WheelsModel			= "models/gredwitch/2A65/2A65_wheels.mdl"
 ENT.WheelsPos			= Vector(1,12,25)
-ENT.AddShootAngle		= 3.5
+ENT.AddShootAngle		= 0
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end

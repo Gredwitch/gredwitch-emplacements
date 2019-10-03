@@ -14,18 +14,38 @@ ENT.NameToPrint			= "Flakzwilling 40/2"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast_alt"
 ENT.ShotInterval		= 2.25
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_128mm"},
-						{"AP","gb_shell_128mm"},
-						{"Smoke","gb_shell_128mm"}
+	{
+		Caliber = 128,
+		ShellType = "HE",
+		MuzzleVelocity = 880,
+		Mass = 26,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 128,
+		ShellType = "AP",
+		MuzzleVelocity = 880,
+		Mass = 26,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 128,
+		ShellType = "Smoke",
+		MuzzleVelocity = 880,
+		Mass = 26,
+		TracerColor = "white",
+	},
 }
 
+ENT.PitchRate			= 10
+ENT.YawRate				= 15
 ENT.ShellLoadTime		= 0.3
 ENT.AnimPlayTime		= 0.6
 ENT.AnimPauseTime		= 0.3
 ENT.TimeToEjectShell	= -0.8
 ENT.ATReloadSound		= "big"
 ENT.ShootAnim			= "shoot"
-ENT.ShootSound			= "gred_emp/common/88mm.wav"
+ENT.ShootSound			= "^gred_emp/common/88mm.wav"
 ENT.MaxUseDistance		= 150
 
 ENT.TurretPos			= Vector(0,-44,81)
@@ -41,7 +61,7 @@ ENT.Spread				= 0.1
 ENT.MaxRotation			= Angle(-20)
 ENT.Seatable			= true
 ENT.SightPos			= Vector(0,30,0)
-ENT.AddShootAngle		= 3
+ENT.AddShootAngle		= 0
 ENT.ViewPos				= Vector(0,0,60)
 ENT.MaxViewModes		= 1
 ENT.Ammo				= 2
@@ -122,14 +142,12 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	seat = self:GetSeat()
 	local seatValid = IsValid(seat)
 	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
-	local a = self:GetAngles()
-	local ang = Angle(-a.r,a.y+90,a.p)
-	ang:Normalize()
+	angles = ply:EyeAngles()
 	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
 		local view = {}
 		
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = ang
+		view.angles = angles
 		view.fov = 35
 		view.drawviewer = true
 
@@ -138,7 +156,7 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 		if seatValid then
 			local view = {}
 			view.origin = seat:LocalToWorld(self.ViewPos)
-			view.angles = ang
+			view.angles = angles
 			view.fov = fov
 			view.drawviewer = false
 	 

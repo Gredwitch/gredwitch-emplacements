@@ -13,16 +13,30 @@ ENT.NameToPrint			= "M777"
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4
 ENT.AmmunitionTypes		= {
-						{"HE","gb_shell_155mm"},
-						{"Smoke","gb_shell_155mm"}
+	{
+		Caliber = 155,
+		ShellType = "HE",
+		MuzzleVelocity = 300, -- actually 827
+		Mass = 43.2,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 155,
+		ShellType = "Smoke",
+		MuzzleVelocity = 300,
+		Mass = 43.2,
+		TracerColor = "white",
+	},
 }
+ENT.PitchRate			= 20
+ENT.YawRate				= 20
 ENT.AnimPauseTime		= 1
 ENT.AnimRestartTime		= 4.4
 ENT.ShellEjectTime		= 0.2
 ENT.AnimPlayTime		= 1
 ENT.ShootAnim			= "shoot"
 
-ENT.ShootSound			= "gred_emp/common/155mm.wav"
+ENT.ShootSound			= "^gred_emp/common/155mm.wav"
 ENT.ATReloadSound		= "big"
 
 ENT.TurretPos			= Vector(0,-10,20)
@@ -33,7 +47,6 @@ ENT.YawModel			= "models/gredwitch/M777/M777_shield.mdl"
 ENT.Ammo				= -1
 ENT.EmplacementType     = "Cannon"
 ENT.Spread				= 0.4
-ENT.AddShootAngle		= 4
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
