@@ -36,11 +36,11 @@ ENT.Seatable			= true
 ENT.Ammo				= -1
 ENT.ViewPos				= Vector(45,25,40)
 ENT.TurretPos			= Vector(0,-2,24.6584)
-ENT.SightPos			= Vector(0,-37,39)
 ENT.MaxRotation			= Angle(-10)
 ENT.MaxViewModes		= 1
 ENT.CanSwitchTimeFuse	= true
 ENT.IsAAA				= true
+ENT.SightPos			= Vector(21.941112518311,-28.728733062744,19.752820968628)
 ENT.AimSightPos			= Vector(22,6,4.7)
 
 -- function ENT:AltShootAngles(ply)
@@ -86,7 +86,7 @@ function ENT:OnInit()
 	local aimsight = ents.Create("gred_prop_emp")
 	aimsight.GredEMPBaseENT = self
 	aimsight:SetAngles(yaw:GetAngles())
-	aimsight:SetPos(yaw:LocalToWorld(self.SightPos))
+	aimsight:SetPos(yaw:LocalToWorld(Vector(0,-37,39)))
 	aimsight:Spawn()
 	
 	aimsight:Activate()
@@ -110,8 +110,13 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	local seatValid = IsValid(seat)
 	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
 	angles = ply:EyeAngles()
-	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
+	if self:GetViewMode() == 1 then
 		local view = {}
+		
+		local ang = self:GetAngles()
+		angles.p = -ang.r
+		angles.y = ang.y + 90
+		angles.r = -ang.p
 		
 		view.origin = self:GetAimSight():LocalToWorld(self.AimSightPos)
 		view.angles = angles
@@ -130,5 +135,14 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 
 			return view
 		end
+	end
+end
+function ENT:HUDPaint(ply,viewmode)
+	if viewmode == 1 then
+		local ScrW,ScrH = ScrW(),ScrH()
+		-- surface.SetDrawColor(255,255,255,255)
+		-- surface.SetTexture(surface.GetTextureID(self.SightTexture))
+		-- surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+		return ScrW,ScrH
 	end
 end

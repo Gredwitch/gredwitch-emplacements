@@ -58,42 +58,6 @@ function ENT:CheckExtractor()
 	end
 end
 
-function ENT:CalcMortarCanShootCL(ply)
-	local tr = util.QuickTrace(self:LocalToWorld(self.TurretMuzzles[1].Pos),reachSky,self.Entities)
-	local botmode = self:GetBotMode()
-	local canShoot
-	if botmode then
-		canShoot = IsValid(self:GetTarget())
-	else
-		canShoot = true
-	end
-	if tr.Hit and !tr.HitSky then
-		canShoot = false
-		noHitSky = true
-	else
-		noHitSky = false
-		if canShoot then
-			local shootPos
-			if botmode then
-				shootPos = self:GetTarget():GetPos()
-			else
-				shootPos = util.TraceLine(util.GetPlayerTrace(ply)).HitPos
-			end
-			local ang = self:GetAngles() - self:GetHull():GetAngles()
-			ang:Normalize()
-			canShoot = not (ang.y > self.MaxRotation.y or ang.y < -self.MaxRotation.y)
-			
-			if !ang then
-				local tr = self.CustomEyeTrace and self:GetViewMode() > 0 and self.CustomEyeTrace or util.QuickTrace(shootPos,shootPos + reachSky,self.Entities)
-				if tr.Hit and !tr.HitSky and !tr.Entity == self:GetTarget() then
-					canShoot = false
-				end
-			end
-		end
-	end
-	return canShoot
-end
-
 function ENT:Think()
 	if not self.Initialized then self:Initialize() return end
 	
@@ -219,8 +183,8 @@ function ENT:UpdateViewMode()
 	end
 end
 
-function ENT:HUDPaint(ply)
-
+function ENT:HUDPaint(ply,viewmode,scrW,scrH)
+	
 end
 
 function ENT:ViewCalc(ply, pos, angles, fov)

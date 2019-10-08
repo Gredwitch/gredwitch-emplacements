@@ -65,6 +65,8 @@ ENT.AddShootAngle		= 0
 ENT.ViewPos				= Vector(0,0,60)
 ENT.MaxViewModes		= 1
 ENT.Ammo				= 2
+ENT.SightTexture		= "gredwitch/overlay_german_canonsight_01"
+ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -143,12 +145,16 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	local seatValid = IsValid(seat)
 	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
 	angles = ply:EyeAngles()
-	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
+	if self:GetViewMode() == 1 then
 		local view = {}
+		local ang = self:GetAngles()
+		angles.p = -ang.r - 1
+		angles.y = ang.y + 90
+		angles.r = -ang.p
 		
 		view.origin = self:LocalToWorld(self.SightPos)
 		view.angles = angles
-		view.fov = 35
+		view.fov = 20
 		view.drawviewer = true
 
 		return view
@@ -162,5 +168,15 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	 
 			return view
 		end
+	end
+end
+
+function ENT:HUDPaint(ply,viewmode)
+	if viewmode == 1 then
+		local ScrW,ScrH = ScrW(),ScrH()
+		surface.SetDrawColor(255,255,255,255)
+		surface.SetTexture(surface.GetTextureID(self.SightTexture))
+		surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+		return ScrW,ScrH
 	end
 end

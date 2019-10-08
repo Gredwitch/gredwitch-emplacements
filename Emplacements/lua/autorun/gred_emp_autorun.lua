@@ -20,6 +20,13 @@ gred.CVars["gred_sv_progressiveturn"] 				= CreateConVar("gred_sv_progressivetur
 gred.CVars["gred_sv_progressiveturn_mg"] 			= CreateConVar("gred_sv_progressiveturn_mg"			,  "1"  , GRED_SVAR)
 gred.CVars["gred_sv_progressiveturn_cannon"] 		= CreateConVar("gred_sv_progressiveturn_cannon"		,  "1"  , GRED_SVAR)
 
+local tableinsert = table.insert
+gred.AddonList = gred.AddonList or {}
+tableinsert(gred.AddonList,1554003672) -- Emplacements materials 2
+tableinsert(gred.AddonList,1484100983) -- Emplacements materials
+tableinsert(gred.AddonList,1391460275) -- Emplacements
+tableinsert(gred.AddonList,1131455085) -- Base addon
+
 if SERVER then
 	util.AddNetworkString("gred_net_emp_reloadsounds")
 	util.AddNetworkString("gred_net_emp_prop")
@@ -30,16 +37,7 @@ if SERVER then
 		self = net.ReadEntity()
 		self:SetViewMode(net.ReadInt(8))
 	end)
-end
-
-local tableinsert = table.insert
-gred.AddonList = gred.AddonList or {}
-tableinsert(gred.AddonList,1554003672) -- Emplacements materials 2
-tableinsert(gred.AddonList,1484100983) -- Emplacements materials
-tableinsert(gred.AddonList,1391460275) -- Emplacements
-tableinsert(gred.AddonList,1131455085) -- Base addon
-
-if CLIENT then
+else
 	
 	local CreateClientConVar = CreateClientConVar
 	CreateClientConVar("gred_cl_shelleject","1", true,false)
@@ -58,7 +56,9 @@ if CLIENT then
 	end)
 	
 	net.Receive("gred_net_emp_onshoot",function()
-		net.ReadEntity():OnShoot()
+		local self = net.ReadEntity()
+		if !IsValid(self) or !self.OnShoot then return end
+		self:OnShoot()
 	end)
 	
 	hook.Add("AdjustMouseSensitivity", "gred_emp_mouse", function(s)
@@ -82,16 +82,39 @@ if CLIENT then
 		end
 	end)
 	
+	local function DrawCircle( X, Y, radius )
+		local segmentdist = 360 / ( 2 * math.pi * radius / 2 )
+		
+		for a = 0, 360 - segmentdist, segmentdist do
+			surface.DrawLine( X + math.cos( math.rad( a ) ) * radius, Y - math.sin( math.rad( a ) ) * radius, X + math.cos( math.rad( a + segmentdist ) ) * radius, Y - math.sin( math.rad( a + segmentdist ) ) * radius )
+		end
+	end
+	
 	hook.Add("HUDPaint","gred_emp_hudpaint",function()
 		local ply = LocalPlayer()
 		if not ply.Gred_Emp_Ent then return end
 		
 		local ent = ply.Gred_Emp_Ent
 		if !IsValid(ent) then return end
-		if ent.EmplacementType != "Mortar" then return end
-		-- if not ent.HUDPaint then return end
+		if ent:GetShooter() != ply then return end
 		
-		return ent:HUDPaint(ply)
+		local ScrW,ScrH = ent:HUDPaint(ply,ent:GetViewMode())
+		if ScrW and ScrH then
+			local startpos = ent:LocalToWorld(ent.SightPos)
+			local scr = util.TraceLine({
+				start = startpos,
+				endpos = (startpos + ply:EyeAngles():Forward() * 1000),
+				filter = ent.Entities
+			}).HitPos:ToScreen()
+			scr.x = scr.x > ScrW and ScrW or (scr.x < 0 and 0 or scr.x)
+			scr.y = scr.y > ScrH and ScrH or (scr.y < 0 and 0 or scr.y)
+			
+			
+			surface.SetDrawColor(255,255,255)
+			DrawCircle(scr.x,scr.y,19)
+			surface.SetDrawColor(0,0,0)
+			DrawCircle(scr.x,scr.y,20)
+		end
 	end)
 	
 	hook.Add("InputMouseApply", "gred_emp_move",function(cmd,x,y,angle)

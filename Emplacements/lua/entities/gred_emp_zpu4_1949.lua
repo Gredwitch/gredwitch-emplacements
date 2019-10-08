@@ -54,8 +54,12 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	local seatValid = IsValid(seat)
 	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
 	angles = ply:EyeAngles()
-	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
+	if self:GetViewMode() == 1 then
 		local view = {}
+		local ang = self:GetAngles()
+		angles.p = -ang.r
+		angles.y = ang.y + 90
+		angles.r = -ang.p
 		
 		view.origin = self:LocalToWorld(self.SightPos)
 		view.angles = angles
@@ -73,5 +77,14 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 
 			return view
 		end
+	end
+end
+function ENT:HUDPaint(ply,viewmode)
+	if viewmode == 1 then
+		local ScrW,ScrH = ScrW(),ScrH()
+		-- surface.SetDrawColor(255,255,255,255)
+		-- surface.SetTexture(surface.GetTextureID(self.SightTexture))
+		-- surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+		return ScrW,ScrH
 	end
 end

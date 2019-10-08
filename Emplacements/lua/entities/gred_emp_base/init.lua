@@ -645,7 +645,7 @@ function ENT:GetShootAngles(ply,botmode,target)
 			end
 		end
 	end
-	if gred.CVars.gred_sv_progressiveturn:GetInt() >= 1 and self.EmplacementType != "Mortar" then
+	if ang and self.EmplacementType != "Mortar" and gred.CVars.gred_sv_progressiveturn:GetInt() >= 1 then
 		ft = ft or FrameTime()
 		self.CurYaw = self.CurYaw and math.ApproachAngle(self.CurYaw,ang.y,self.YawRate*ft) or 0
 		self.CurPitch = self.CurPitch and math.ApproachAngle(self.CurPitch,ang.r,self.PitchRate*ft) or 0
@@ -1280,7 +1280,7 @@ function ENT:SwitchAmmoType(ply,ct)
 	if ammotype <= 0 or ammotype > table.Count(self.AmmunitionTypes) then self:SetAmmoType(1) end
 	net.Start("gred_net_message_ply")
 		local t = self.AmmunitionTypes[self:GetAmmoType()]
-		net.WriteString("["..self.NameToPrint.."] "..t.ShellType.." shells selected")
+		net.WriteString("["..self.NameToPrint.."] "..(t.ShellType or t[1]).." shells selected")
 	net.Send(ply)
 end
 

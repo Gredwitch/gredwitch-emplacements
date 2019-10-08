@@ -37,6 +37,7 @@ ENT.TurretModel			= "models/gredwitch/breda35/breda35_gun.mdl"
 ENT.TurretPos			= Vector(0,3.63057,24)
 ENT.MaxRotation			= Angle(-20)
 ENT.ViewPos				= Vector(32,0,35)
+ENT.SightPos			= Vector(-1.233542,-31.303225,17.839169)
 ENT.IsAAA				= true
 ENT.CanSwitchTimeFuse	= true
 ENT.MaxViewModes		= 1
@@ -88,11 +89,14 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
 	angles = ply:EyeAngles()
 	angles.p = angles.p - (self:GetRecoil())*0.2
-	if (seatValid and seat:GetThirdPersonMode()) or self:GetViewMode() == 1 then
+	if self:GetViewMode() == 1 then
 		local view = {}
 		
+		local ang = self:GetAngles()
+		angles.p = -ang.r
+		angles.y = ang.y + 90
+		angles.r = -ang.p
 		view.origin = self:GetAimSight():LocalToWorld(Vector(-2.35,-10,2.59))
-		angles.p = angles.p - 0.7
 		view.angles = angles
 		view.fov = 35
 		view.drawviewer = false
@@ -109,5 +113,14 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	 
 			return view
 		end
+	end
+end
+function ENT:HUDPaint(ply,viewmode)
+	if viewmode == 1 then
+		local ScrW,ScrH = ScrW(),ScrH()
+		-- surface.SetDrawColor(255,255,255,255)
+		-- surface.SetTexture(surface.GetTextureID(self.SightTexture))
+		-- surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+		return ScrW,ScrH
 	end
 end
