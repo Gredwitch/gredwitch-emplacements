@@ -45,10 +45,7 @@ elseif (CLIENT) then
 end
 
 function ENT:PhysicsCollide( data, physobj )
-	timer.Simple(0,function()
-		if !IsValid(self) then return end
-		if data.Speed > 100 then
-			self:EmitSound("gred_emp/common/cannon_shell_drop_0"..math.random(1,7)..".wav",self.audioparams)
-		end
-	end)
+	if data.Speed > 200 then
+		self:EmitSound("gred_emp/common/cannon_shell_drop_0"..math.random(1,7)..".wav",self.audioparams)
+	end
 end

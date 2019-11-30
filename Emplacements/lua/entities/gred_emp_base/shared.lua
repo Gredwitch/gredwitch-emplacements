@@ -199,13 +199,13 @@ end
 
 function ENT:IsValidTarget(ent)
 	self.Owner = self.Owner or self
-	return IsValid(ent) and (self:IsValidBot(ent) or self:IsValidHuman(ent))
+	return IsValid(ent) and (self:IsValidBot(ent) or self:IsValidHuman(ent)) and ent:GetClass() != "prop_physics" 
 end
 
 function ENT:IsValidBot(ent,b)
 	self.Owner = self.Owner or self
-	return (ent:IsNPC() and self:GetAttackNPCs() and (!self.Owner:IsPlayer() or ent:Disposition(self.Owner) == 1 or self:GetShouldNotCareAboutOwnersTeam())) 
-	or (ent.LFS and ent:GetAI() and self:GetIsAntiAircraft() and (ent:GetAITEAM() != (self.Owner.lfsGetAITeam and self.Owner:lfsGetAITeam() or nil) or self:GetShouldNotCareAboutOwnersTeam()))
+	return ((ent:IsNPC() and self:GetAttackNPCs() and (!self.Owner:IsPlayer() or ent:Disposition(self.Owner) == 1 or self:GetShouldNotCareAboutOwnersTeam())) 
+	or (ent.LFS and ent:GetAI() and self:GetIsAntiAircraft() and (ent:GetAITEAM() != (self.Owner.lfsGetAITeam and self.Owner:lfsGetAITeam() or nil) or self:GetShouldNotCareAboutOwnersTeam()))) and ent:GetClass() != "prop_physics" and IsValid(ent)
 end
 
 function ENT:IsValidGroundTarget(ply)
@@ -218,7 +218,7 @@ function ENT:IsValidGroundTarget(ply)
 end 
 
 function ENT:IsValidHuman(ent)
-	return ((ent:IsPlayer() and self:GetAttackPlayers() and ent:Alive()) and ((ent != self.Owner and (self.Owner:IsPlayer() and ent:Team() != self.Owner:Team())) or self:GetShouldNotCareAboutOwnersTeam()) or (self:IsValidGroundTarget(ent) and self:GetIsAntiGroundVehicles()) or self:IsValidAirTarget(ent) and self:GetIsAntiAircraft() and self.EmplacementType != "Mortar")
+	return ((ent:IsPlayer() and self:GetAttackPlayers() and ent:Alive()) and ((ent != self.Owner and (self.Owner:IsPlayer() and ent:Team() != self.Owner:Team())) or self:GetShouldNotCareAboutOwnersTeam()) or (self:IsValidGroundTarget(ent) and self:GetIsAntiGroundVehicles()) or self:IsValidAirTarget(ent) and self:GetIsAntiAircraft() and self.EmplacementType != "Mortar") and ent:GetClass() != "prop_physics" and IsValid(ent)
 end
 
 function ENT:IsValidAirTarget(ent)

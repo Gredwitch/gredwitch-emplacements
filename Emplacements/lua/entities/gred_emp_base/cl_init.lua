@@ -5,8 +5,12 @@ local reachSky = Vector(0,0,9999999999)
 function ENT:Initialize()
 	self:ReloadSounds()
 	self:InitAttachmentsCL()
-	
+	self:OnInitializeCL()
 	self.Initialized = true
+end
+
+function ENT:OnInitializeCL()
+
 end
 
 function ENT:InitAttachmentsCL()

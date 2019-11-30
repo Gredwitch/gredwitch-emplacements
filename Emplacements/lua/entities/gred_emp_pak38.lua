@@ -25,7 +25,7 @@ ENT.AmmunitionTypes		= {
 	{
 		Caliber = 50,
 		ShellType = "AP",
-		MuzzleVelocity = 1180,
+		MuzzleVelocity = 835,
 		Mass = 2.06,
 		TracerColor = "white",
 	},

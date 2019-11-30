@@ -458,7 +458,9 @@ function ENT:CheckSeat(ply,seat,seatValid)
 		return seat,seatValid
 	end
 end
-
+local ok = {
+	["gred_prop_part"] = true,
+}
 function ENT:GetShootAngles(ply,botmode,target)
 	local ang
 	local ft
@@ -479,7 +481,8 @@ function ENT:GetShootAngles(ply,botmode,target)
 					local p = tv:GetParent()
 					tv = IsValid(p) and p or tv
 				end
-				if (((trace.Entity == target or target:GetParent() == trace.Entity) or trace.Entity:IsPlayer() or trace.Entity:IsNPC()) or trace.HitSky or (tv and trace.Entity == tv and (((tv.LFS and tv:GetHP() > 0 or tv.isWacAircraft) and self:GetIsAntiAircraft()) or self:GetIsAntiGroundVehicles()))) and dist > 0.015 then
+				
+				if (((trace.Entity == target or target:GetParent() == trace.Entity) or trace.Entity:IsPlayer() or trace.Entity:IsNPC()) or ok[trace.Entity:GetClass()] or trace.HitSky or (tv and trace.Entity == tv and (((tv.LFS and tv:GetHP() > 0 or tv.isWacAircraft) and self:GetIsAntiAircraft()) or self:GetIsAntiGroundVehicles()))) and dist > 0.015 then
 					ang = (calcPos - attpos):Angle()
 					ang = Angle(!self.Seatable and -ang.p - self.CurRecoil or -ang.p,ang.y+180,ang.r)
 					ang:Add(self.BotAngleOffset)
@@ -572,7 +575,7 @@ function ENT:GetShootAngles(ply,botmode,target)
 		if ply:IsPlayer() then
 			if not self.Seatable then
 				ply:DrawViewModel(false)
-				ply:SetActiveWeapon("weapon_base")
+				ply:SetActiveWeapon(ply:Give("weapon_base"))
 			end
 			local attpos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
 			if self.CustomEyeTrace and self:GetViewMode() > 0 then
@@ -645,10 +648,15 @@ function ENT:GetShootAngles(ply,botmode,target)
 			end
 		end
 	end
+	self.RightPitch = 0
+	self.RightYaw = 0
 	if ang and self.EmplacementType != "Mortar" and gred.CVars.gred_sv_progressiveturn:GetInt() >= 1 then
 		ft = ft or FrameTime()
 		self.CurYaw = self.CurYaw and math.ApproachAngle(self.CurYaw,ang.y,self.YawRate*ft) or 0
 		self.CurPitch = self.CurPitch and math.ApproachAngle(self.CurPitch,ang.r,self.PitchRate*ft) or 0
+		self.RightPitch = math.abs(math.Round(ang.r,1) - math.Round(self.CurPitch,1)) == 0 and 0 or 1
+		self.RightYaw = math.abs(math.Round(ang.y,1) - math.Round(self.CurYaw,1))
+		self.RightYaw = (self.RightYaw <= 0.3 or (self.RightYaw >= 359.7 and self.RightYaw <= 360)) and 0 or 1
 		ang.y = self.CurYaw
 		ang.r = self.CurPitch
 	end
@@ -955,7 +963,7 @@ end
 
 function ENT:BulletCalcVel(ammotype)
 	ammotype = ammotype or (self.AmmunitionType or self.AmmunitionTypes[1][2])
-	if hab and hab.Module.PhysBullet and not gred.CVars.gred_sv_override_hab:GetInt() == 1 then
+	if hab and hab.Module.PhysBullet and not gred.CVars.gred_sv_override_hab:GetInt() == 0 then
 		if ammotype == "wac_base_7mm" then
 			self.BulletVelCalc = 100
 		elseif ammotype == "wac_base_12mm" then
@@ -971,17 +979,17 @@ function ENT:BulletCalcVel(ammotype)
 		end
 	else
 		if ammotype == "wac_base_7mm" then
-			self.BulletVelCalc = 7000
+			self.BulletVelCalc = 15000
 		elseif ammotype == "wac_base_12mm" then
-			self.BulletVelCalc = 5000
+			self.BulletVelCalc = 12000
 		elseif ammotype == "wac_base_20mm" then
-			self.BulletVelCalc = 3500
+			self.BulletVelCalc = 8000
 		elseif ammotype == "wac_base_30mm" then
-			self.BulletVelCalc = 3000
+			self.BulletVelCalc = 5000
 		elseif ammotype == "wac_base_40mm" then
 			self.BulletVelCalc = 2000
 		else 
-			self.BulletVelCalc = 500 
+			self.BulletVelCalc = 10000
 		end
 	end
 	self.BulletVelCalc = self.BulletVelCalc*self.BulletVelCalc
