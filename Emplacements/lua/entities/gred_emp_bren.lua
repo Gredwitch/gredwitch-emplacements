@@ -30,7 +30,7 @@ ENT.CycleRate			= 0.6
 ENT.ExtractAngle		= Angle(0,0,0)
 ENT.MaxRotation			= Angle(30,45)
 ENT.MaxViewModes		= 1
-ENT.SightPos			= Vector(-0.9,-25,2.7)
+ENT.SightPos			= Vector(-0.95,-25,2.8)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -40,7 +40,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
  	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
-	ent:SetModelScale(1.1)
+	ent:SetModelScale(1.15)
 	return ent
 end
 
@@ -58,6 +58,7 @@ function ENT:Reload(ply)
 		prop:SetModel("models/gredwitch/bren/bren_mag.mdl")
 		prop:SetPos(att.Pos + self.TurretPos)
 		prop:SetAngles(att.Ang + Angle(0,180,0))
+		prop:SetModelScale(1.15)
 		prop:Spawn()
 		prop:Activate()
 		if self:GetAmmo() < 1 then prop:SetBodygroup(1,1) end
@@ -77,12 +78,14 @@ function ENT:Reload(ply)
 			self:SetBodygroup(1,0)
 			self:SetBodygroup(2,0)
 			self.MagIn = true
+			self.NewMagIn = true
 		end)
 		timer.Simple(self:SequenceDuration(),function()
 			if !IsValid(self) then return end
 			self:SetAmmo(self.Ammo)
 			self:SetIsReloading(false)
 			self:SetCurrentTracer(0)
+			self.NewMagIn = false
 		end)
 	else
 		timer.Simple(1.3,function() 
@@ -93,16 +96,18 @@ function ENT:Reload(ply)
 	end
 end
 
-function ENT:OnTick()
-	if SERVER then
-		if (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
+if SERVER then
+	function ENT:OnTick()
+		if self.MagIn then
 			self:SetBodygroup(1,0)
-			local ammo = self:GetAmmo()
-			if ammo <= 0 then
+			if (self:GetAmmo() < 1 and !self.NewMagIn) or !self.MagIn then
 				self:SetBodygroup(2,1)
-			elseif ammo >= 1 then
+			else
 				self:SetBodygroup(2,0)
 			end
+		else
+			self:SetBodygroup(1,1)
+			self:SetBodygroup(2,1)
 		end
 	end
 end
@@ -111,7 +116,7 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
 		angles = ply:EyeAngles()
-		angles.y = angles.y - 0.8
+		angles.y = angles.y - 0.25
 		angles.p = angles.p - (self:GetRecoil())*0.8
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)

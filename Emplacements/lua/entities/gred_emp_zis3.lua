@@ -17,21 +17,51 @@ ENT.AmmunitionTypes		= {
 		Caliber = 76,
 		ShellType = "HE",
 		MuzzleVelocity = 680,
-		Mass = 6.21,
+		Mass = 6.2,
+		TNTEquivalent = 0.621,
+		LinearPenetration = 10,
 		TracerColor = "white",
 	},
 	{
 		Caliber = 76,
-		ShellType = "AP",
-		MuzzleVelocity = 680,
-		Mass = 6.21,
+		ShellType = "APBC",
+		MuzzleVelocity = 655,
+		Mass = 6.78,
+		Normalization = 4,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 76,
+		ShellType = "HEAT",
+		MuzzleVelocity = 355,
+		Mass = 5.3,
+		TNTEquivalent = 0.9594,
+		LinearPenetration = 80,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 76,
+		ShellType = "APHEBC",
+		MuzzleVelocity = 662,
+		Mass = 6.3,
+		TNTEquivalent = 0.15,
+		Normalization = 4,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 76,
+		ShellType = "APCR",
+		MuzzleVelocity = 950,
+		Mass = 3.02,
+		CoreMass = 8.55,
+		Normalization = 1.5,
 		TracerColor = "white",
 	},
 	{
 		Caliber = 76,
 		ShellType = "Smoke",
 		MuzzleVelocity = 680,
-		Mass = 6.21,
+		Mass = 6.45,
 		TracerColor = "white",
 	},
 }
@@ -54,6 +84,9 @@ ENT.Spread				= 0.1
 ENT.WheelsModel			= "models/gredwitch/zis3/zis3_wheels.mdl"
 ENT.WheelsPos			= Vector(0,2,17)
 ENT.Ammo				= -1
+ENT.MaxViewModes		= 1
+ENT.SightTexture		= "gredwitch/overlay_russian_tanksight_02"
+ENT.SightPos			= Vector(-12,-15,55)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -63,5 +96,33 @@ function ENT:SpawnFunction( ply, tr, ClassName )
  	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
+	ent:SetBodygroup(1,1)
 	return ent
+end
+
+function ENT:ViewCalc(ply, pos, angles, fov)
+	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
+	if self:GetViewMode() == 1 then
+		local ang = self:GetAngles()
+		angles.p = -ang.r
+		angles.y = ang.y + 90
+		angles.r = -ang.p
+		local view = {}
+		view.origin = self:LocalToWorld(self.SightPos)
+		view.angles = angles
+		view.fov = 20
+		view.drawviewer = false
+
+		return view
+	end
+end
+
+function ENT:HUDPaint(ply,viewmode)
+	if viewmode == 1 then
+		local ScrW,ScrH = ScrW(),ScrH()
+		surface.SetDrawColor(255,255,255,255)
+		surface.SetTexture(surface.GetTextureID(self.SightTexture))
+		surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+		return ScrW,ScrH
+	end
 end

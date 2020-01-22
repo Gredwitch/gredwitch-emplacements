@@ -18,21 +18,25 @@ ENT.AmmunitionTypes		= {
 		Caliber = 88,
 		ShellType = "HE",
 		MuzzleVelocity = 820,
-		Mass = 9.4,
+		Mass = 11,
+		LinearPenetration = 13,
+		TNTEquivalent = 0.935,
 		TracerColor = "white",
 	},
 	{
 		Caliber = 88,
-		ShellType = "AP",
+		ShellType = "APCBC",
 		MuzzleVelocity = 820,
-		Mass = 9.4,
+		Mass = 9.5,
+		TNTEquivalent = 1.6,
+		Normalization = 4,
 		TracerColor = "white",
 	},
 	{
 		Caliber = 88,
 		ShellType = "Smoke",
 		MuzzleVelocity = 820,
-		Mass = 9.4,
+		Mass = 11,
 		TracerColor = "white",
 	},
 }
@@ -58,7 +62,6 @@ ENT.Spread				= 0.1
 ENT.MaxRotation			= Angle(-20)
 ENT.Seatable			= true
 ENT.Ammo				= -1
--- ENT.SightPos			= Vector(-1.3,60,23)
 ENT.SightPos			= Vector(30,55,-13)
 ENT.AddShootAngle		= 0
 ENT.ViewPos				= Vector(-4,0,40)
@@ -85,15 +88,15 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 end
 
 function ENT:ViewCalc(ply, pos, angles, fov)
-	debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
+	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
 	local seat = self:GetSeat()
 	local seatValid = IsValid(seat)
 	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
 	angles = ply:EyeAngles()
 	if self:GetViewMode() == 1 then
 		local ang = self:GetAngles()
-		angles.p = -ang.r - 0.5
-		angles.y = ang.y + 90.5
+		angles.p = -ang.r
+		angles.y = ang.y + 90
 		angles.r = -ang.p
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
@@ -105,8 +108,8 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	else
 		if seatValid then
 			local view = {}
-			angles.y = angles.y + 0.5
-			angles.p = angles.p - 0.5
+			angles.y = angles.y
+			angles.p = angles.p
 			view.origin = seat:LocalToWorld(self.ViewPos)
 			view.angles = angles
 			view.fov = fov

@@ -23,9 +23,7 @@ function ENT:Initialize()
 	local ang = self:GetAngles()
 	
 	self:InitAttachments()
-	self:InitHull(pos,ang)
-	self:InitYaw(pos,ang)
-	self:InitWheels(ang)
+	self:InitParts(pos,ang)
 	
 	self:BulletCalcVel()
 	self:CalcSpread()
@@ -79,6 +77,10 @@ function ENT:Initialize()
 	
 	self.YawRate = self.YawRate * gred.CVars[self.EmplacementType == "MG" and "gred_sv_progressiveturn_mg" or "gred_sv_progressiveturn_cannon"]:GetFloat()
 	self.PitchRate = self.PitchRate * gred.CVars[self.EmplacementType == "MG" and "gred_sv_progressiveturn_mg" or "gred_sv_progressiveturn_cannon"]:GetFloat()
+	
+	duplicator.CopyEnts(self.Entities)
+	
+	self.AirDensity = physenv.GetAirDensity()
 	self.Initialized = true
 end
 
@@ -112,7 +114,6 @@ function ENT:ReloadSounds()
 end
 
 function ENT:OnInit()
-
 end
 
 function ENT:InitAttachments()
@@ -135,6 +136,12 @@ function ENT:InitAttachments()
 			tableinsert(self.TurretEjects,t)
 		end
 	end
+end
+
+function ENT:InitParts(pos,ang)
+	self:InitHull(pos,ang)
+	self:InitYaw(pos,ang)
+	self:InitWheels(ang)
 end
 
 function ENT:InitHull(pos,ang)
@@ -242,7 +249,7 @@ function ENT:Use(ply,caller,use,val)
 			self.Seatable = false
 			self:GrabTurret(ply,true)
 			self:SetShouldSetAngles(false)
-			self:fire(self:GetAmmo(),ct,ply,self:GetIsReloading())
+			self:PreFire(self:GetAmmo(),ct,ply)
 			timer.Simple(0.5,function()
 				if !IsValid(self) then return end
 				self.Seatable = seat
@@ -405,7 +412,7 @@ function ENT:LeaveTurret(ply)
 		ply.ActiveEmplacement = nil
 		if self:GetShouldSetAngles() then
 			if ply.StripWeapon and not self.Seatable then
-				ply:StripWeapon("weapon_base")
+				ply:StripWeapon("gred_emp_empty")
 				ply:SelectWeapon(self:GetPrevPlayerWeapon())
 			end
 			if self.Seatable then
@@ -423,6 +430,7 @@ function ENT:LeaveTurret(ply)
 			end
 		end
 	end
+	self.CustomEyeTrace = nil
 	self:SetPrevShooter(ply)
 	self:SetShooter(nil)
 	self:OnLeaveTurret(ply,isPlayer)
@@ -458,11 +466,31 @@ function ENT:CheckSeat(ply,seat,seatValid)
 		return seat,seatValid
 	end
 end
-local ok = {
-	["gred_prop_part"] = true,
-}
+
+
+local g = GetConVar("sv_gravity"):GetFloat()
+local MortarNum = -1*10^(-6)
+local math = math
+local util = util
+
+local atan = math.atan
+local acos = math.acos
+local sqrt = math.sqrt
+
+local deg = math.deg
+					-- FUCK GARRY, FUCK BREXIT LAND, FUCK RADIANS.
+local rad = math.rad
+
+local function CALC_ANGLE(g,X,V,H) 
+	return (deg(acos((g*X^2/V^2-H)/sqrt(H^2+X^2)))+deg(atan(X/H)))/2
+end
+
+local METERS_TO_UNITS = 0.01905
+
 function ENT:GetShootAngles(ply,botmode,target)
-	local ang
+	local hull = self:GetHull()
+	local hullAng = hull:GetAngles()
+	local ang = Angle() + hullAng
 	local ft
 	if botmode then
 		local target = self:GetTarget()
@@ -475,14 +503,8 @@ function ENT:GetShootAngles(ply,botmode,target)
 				local dist = attpos:DistToSqr(pos)
 				self:BulletCalcVel()
 				local calcPos = pos+vel*(dist/self.BulletVelCalc)
-				local trace = util.QuickTrace(attpos,(pos-attpos)*100000,self.Entities)
-				local tv = target.GetVehicle and target:GetVehicle() or false
-				if tv and IsValid(tv) then
-					local p = tv:GetParent()
-					tv = IsValid(p) and p or tv
-				end
 				
-				if (((trace.Entity == target or target:GetParent() == trace.Entity) or trace.Entity:IsPlayer() or trace.Entity:IsNPC()) or ok[trace.Entity:GetClass()] or trace.HitSky or (tv and trace.Entity == tv and (((tv.LFS and tv:GetHP() > 0 or tv.isWacAircraft) and self:GetIsAntiAircraft()) or self:GetIsAntiGroundVehicles()))) and dist > 0.015 then
+				if dist > 0.015 then
 					ang = (calcPos - attpos):Angle()
 					ang = Angle(!self.Seatable and -ang.p - self.CurRecoil or -ang.p,ang.y+180,ang.r)
 					ang:Add(self.BotAngleOffset)
@@ -493,7 +515,7 @@ function ENT:GetShootAngles(ply,botmode,target)
 					-- self:SetTargetValid(false)
 				end
 				if self:GetIsAntiAircraft() and self:GetAmmoType() == 2 then
-					self:SetFuseTime(((dist/self.BulletVelCalc)/(10+math.Rand(0,1)))+(vel:Length()*0.0002))
+					self:SetFuseTime(((dist/self.BulletVelCalc)/(10+math.Rand(0,1)))+(vel:Length()*0.0003))
 				end
 				-- debugoverlay.Line(trace.StartPos,calcPos,FrameTime()+0.02,Color( 255, 255, 255 ),false )
 			else
@@ -503,49 +525,38 @@ function ENT:GetShootAngles(ply,botmode,target)
 			end
 		elseif self.EmplacementType == "Cannon" then
 			if IsValid(target) then
-				-- Don't look at this, pretty much everything here is wrong
-				
+			
 				ft = FrameTime()
-				local pos = target:LocalToWorld(target:OBBCenter())
-				local attpos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
-				local attang = self:LocalToWorldAngles(self.TurretMuzzles[1].Ang)
-				local vel = target:GetVelocity()
-				local dist = attpos:Distance(pos) -- need to square it
-				
-				local ammotype = self:GetAmmoType()
-				local properties = self:GetStoredShellProperties(ammotype)
-				local SHELL_VEL = self.AmmunitionTypes[ammotype][1] == "AP" and properties.vel or properties.hevel
+				local TargetPos = target:LocalToWorld(target:OBBCenter())
+				local OurPos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
+				local TargetVel = target:GetVelocity()
+				local Dist = OurPos:DistToSqr(TargetPos)
+				local Height = TargetPos.z - OurPos.z
+				local AmmoType = self.AmmunitionTypes[self:GetAmmoType()]
+				local MuzzleVelocity = AmmoType.MuzzleVelocity/METERS_TO_UNITS
 				
 				-------------------------------------------
-				ang = (attpos-pos):Angle()
-				ang.y = ang.y + 90
-				local H = self.DummyMuzzle:WorldToLocal(pos).z
-				-- local Velocity = Vector(SHELL_VEL*cos(rad(a)),)
-				local ANGLE = deg(atan((SHELL_VEL^2 + sqrt(SHELL_VEL^4 - g * ((g*dist)^2 + 2*(H*SHELL_VEL^2)))) / g*SHELL_VEL))
-				print(ANGLE)
+				ang = (TargetPos - OurPos):Angle()
+				ang:RotateAroundAxis(ang:Up(),-90)
 				
-				--[[
-				ang = (attpos-pos):Angle()
-				ang.y = ang.y + 90
+				g,Dist,MuzzleVelocity,Height = g,Dist*METERS_TO_UNITS,MuzzleVelocity*METERS_TO_UNITS,Height*METERS_TO_UNITS -- What needs to work but in meters
 				
-				local H_pos = self.DummyMuzzle:WorldToLocal(pos)
-				local H = H_pos.z
-				ang.r = CALC_ANGLE(g,dist,SHELL_VEL,H)
-				print("ang = "..ang.r,"    g = "..g,"    X = "..dist,"    V = "..SHELL_VEL,"    h = "..H,"    hpos = "..tostring(H_pos))
-				ang.p = 0
-				-- ang.y = ang.y + 90
 				
-				-------------------------------------------
-				-- print(ang)
+				local a = 0.5 * -g*METERS_TO_UNITS * (Dist * 0.0001)
+				local c = a + Height
+				local d = sqrt(Dist - 4 * a * c)
+				local e = sqrt(Dist)
+				local f = 2 * a
+				local X1 = deg(atan((-e + d) / f)) -- Quadratic formula #1
+				local X2 = deg(atan((-e - d) / f)) -- Quadratic formula #2
+				local X3 = (deg(acos((((g*METERS_TO_UNITS*Dist) / (MuzzleVelocity*MuzzleVelocity)) - Height) / sqrt(Height*Height+Dist)) + atan(sqrt(Dist)/Height))) * 0.5 -- Something else
 				
-				-- print(SHELL_MAX_Z)
-				-- local TARGET_TOGROUND = util.QuickTrace(pos,Vector(pos.x,pos.y,-9999999),{target}).HitPos
-				-- local MUZZLE_TOGROUND = util.QuickTrace(attpos,Vector(attpos.x,attpos.y,-9999999),self.Entities).HitPos
+				-- local X = Dist / MuzzleVelocity
+				print(X2)
+				-- ang.r = Height < 0 and ang.r - 180 or ang.r
 				
-				local endpos = util.QuickTrace(attpos,self:GetRight()*-dist,self.Entities).HitPos
-				
-				debugoverlay.Line(attpos,endpos,FrameTime()+0.03,Color(0,0,255),false )
-				-- debugoverlay.Line(SHELL_STOPTHRUST_POS,SHELL_STOPTHRUST_POS_TOGROUND,FrameTime()+0.03,Color(255,0,255),false )--]]
+				local tr = util.QuickTrace(OurPos,self:GetRight()*-Dist,self)
+				debugoverlay.Line(tr.StartPos,tr.HitPos,ft + 0.03)
 			else
 				self:SetTarget(nil)
 				self:SetTargetValid(false)
@@ -575,25 +586,25 @@ function ENT:GetShootAngles(ply,botmode,target)
 		if ply:IsPlayer() then
 			if not self.Seatable then
 				ply:DrawViewModel(false)
-				ply:SetActiveWeapon(ply:Give("weapon_base"))
-			end
-			local attpos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
-			if self.CustomEyeTrace and self:GetViewMode() > 0 then
-				trace = util.QuickTrace(attpos,self.CustomEyeTrace.HitPos,self.Entities)
-				ang = (trace.StartPos - trace.HitPos):Angle()
-				-- ang:RotateAroundAxis(ang:Up(),90)
-			else
-				-- trace = util.QuickTrace(attpos,ply:EyeAngles():Forward()*100000,self.Entities)
-				-- ang = (trace.StartPos - trace.HitPos):Angle()
-				ang = ply:EyeAngles()
-				ang:RotateAroundAxis(ang:Up(),-90)
-				-- print((ply:EyePos() - self:GetHull():GetPos()):Angle())
+				ply:SetActiveWeapon(ply:Give("gred_emp_empty"))
 			end
 			
-			-- debugoverlay.Line(trace.StartPos,trace.HitPos,FrameTime()+0.02,Color( 255, 255, 255 ),false )
+			if self.CustomEyeTrace then
+				local vec = self:GetPos() - self.CustomEyeTraceHitPos
+				ang = vec:Angle()
+				ang:RotateAroundAxis(ang:Up(),-90)
+				
+				ang.y = ang.y + 180
+				ang.r = -ang.r + (self.EmplacementType == "Cannon" and (80 - vec:Length() * 0.001) or 0)
+				ang:Normalize()
+			elseif self.CustomAng then
+				ang = self:CustomAng(ply,ang,hull,hullAng)
+			else
+				ang = ply:EyeAngles()
+				ang:RotateAroundAxis(ang:Up(),-90)
+			end
 		end
 	end
-	
 	if self.EmplacementType == "Mortar" and !noAngleChange and ang then
 		ang.r = -ang.r - self.DefaultPitch
 	end
@@ -604,11 +615,9 @@ function ENT:GetShootAngles(ply,botmode,target)
 		end
 		ang:Normalize()
 	end
-	local hullAng = self:GetHull():GetAngles()
 	if self.MaxRotation and !noAngleChange and ang then
 		local newang = ang - hullAng
 		newang:Normalize()
-		
 		if newang.r > self.MaxRotation.p and self.EmplacementType != "Mortar" and self.MaxRotation.p > 0 then
 		
 			local oldang = hullAng+Angle(0,0,self.MaxRotation.p)
@@ -648,6 +657,7 @@ function ENT:GetShootAngles(ply,botmode,target)
 			end
 		end
 	end
+	
 	self.RightPitch = 0
 	self.RightYaw = 0
 	if ang and self.EmplacementType != "Mortar" and gred.CVars.gred_sv_progressiveturn:GetInt() >= 1 then
@@ -663,7 +673,7 @@ function ENT:GetShootAngles(ply,botmode,target)
 	return ang
 end
 
-function ENT:FindBotTarget(botmode,target)
+function ENT:FindBotTarget(botmode,target,ct)
 	if self.EmplacementType == "Cannon" then
 		self:SetBotMode(false)
 		botmode = false
@@ -673,34 +683,41 @@ function ENT:FindBotTarget(botmode,target)
 		end
 		if not IsValid(target) then
 			target = nil
-			
-			for k,v in pairs(ents.FindByClass("prop_physics")) do target = v break end
-			if IsValid(target) then self:SetTarget(target) end
-			
-			if simfphys and istable(simfphys.LFS) and !target then
-				for k,v in pairs(simfphys.LFS:PlanesGetAll()) do
-					if self:IsValidTarget(v) then
-						self:SetTarget(v)
-						target = target
-						break
+			if self.NextFindBot < ct then
+				self.NextFindBot = ct + 0.2
+				local pos,entpos = self:LocalToWorld(self.TurretMuzzles[1].Pos),nil
+				
+				for k,v in pairs(ents.FindByClass("prop_physics")) do target = v break end
+				if IsValid(target) then self:SetTarget(target) end
+				
+				if simfphys and istable(simfphys.LFS) and !target then
+					for k,v in pairs(simfphys.LFS:PlanesGetAll()) do
+						entpos = v:LocalToWorld(v:OBBCenter())
+						if self:TargetTraceValid(util.QuickTrace(pos,(entpos - pos)*pos:DistToSqr(entpos),self),v) then
+							self:SetTarget(v)
+							target = target
+							break
+						end
 					end
 				end
-			end
-			if not target then
-				for k,v in pairs(player.GetAll()) do
-					if self:IsValidTarget(v) then
-						self:SetTarget(v)
-						target = v
-						break
+				if not target then
+					for k,v in pairs(player.GetAll()) do
+						entpos = v:LocalToWorld(v:OBBCenter())
+						if self:TargetTraceValid(util.QuickTrace(pos,(entpos - pos)*pos:DistToSqr(entpos),self),v) then
+							self:SetTarget(v)
+							target = v
+							break
+						end
 					end
 				end
-			end
-			if not target then
-				for k,v in pairs(gred.AllNPCs) do
-					if self:IsValidTarget(v) then
-						self:SetTarget(v)
-						target = v
-						break
+				if not target then
+					for k,v in pairs(gred.AllNPCs) do
+						entpos = v:LocalToWorld(v:OBBCenter())
+						if self:TargetTraceValid(util.QuickTrace(pos,(entpos - pos)*pos:DistToSqr(entpos),self),v) then
+							self:SetTarget(v)
+							target = v
+							break
+						end
 					end
 				end
 			end
@@ -710,30 +727,30 @@ function ENT:FindBotTarget(botmode,target)
 end
 
 function ENT:BotAmmoType(target)
+	if self.EmplacementType == "Cannon" then return end
 	self:CheckTarget()
 	if IsValid(target) then
-		local tparent = target:GetParent()
-		local isValidAirTarget = self:IsValidAirTarget(target)
-		if target.GetDriver and not IsValid(target:GetDriver()) and not (tparent.LFS and isValidAirTarget) then
+		local pos,entpos = self:LocalToWorld(self.TurretMuzzles[1].Pos),target:LocalToWorld(target:OBBCenter())
+		if !self:TargetTraceValid(util.QuickTrace(pos,(entpos - pos)*pos:DistToSqr(entpos),self),target) then
 			self:SetTarget(nil)
 			target = nil
 		else
 			if self:GetIsAntiAircraft() and self.EmplacementType == "MG" then
 				if self.AmmunitionTypes then
-					if isValidAirTarget then
+					if self:IsValidAirTarget(target) then
 						self:SetAmmoType(2)
 					else
 						self:SetAmmoType(1)
 					end
 				end
 			elseif self.EmplacementType == "Cannon" then
-				if target:IsPlayer() or target:IsNPC() then
-					self:SetAmmoType(1)
-				else
-					if self.AmmunitionTypes[2][1] == "AP" then
-						self:SetAmmoType(2)
-					end
-				end
+				-- if target:IsPlayer() or target:IsNPC() then
+					self:SetAmmoType(2)
+				-- else
+					-- if self.AmmunitionTypes[2][1] == "AP" then
+						-- self:SetAmmoType(2)
+					-- end
+				-- end
 			end
 		end
 	end
@@ -804,7 +821,7 @@ function ENT:Think()
 	
 	-- If bot mode is on, find a target
 	if botmode then
-		botmode,target = self:FindBotTarget(target)
+		botmode,target = self:FindBotTarget(botmode,target,ct)
 	else
 		if ply == self then
 			self:LeaveTurret(self)
@@ -825,23 +842,15 @@ function ENT:Think()
 			self:LeaveTurret(ply)
 		else
 			-- Angle Stuff
-			if shouldSetAngles then
+			if shouldSetAngles or self.CustomEyeTrace then
 				local ang = self:GetShootAngles(ply,botmode,target)
 				if ang then
 					self:HandleRecoil(ang)
 					if self.YawModel then
-						local yaw = self:GetYaw()
-						local yawang = yaw:GetAngles()
-						local hullAng = self:GetHull():GetAngles()
-						yawang = Angle(hullAng.p,ang.y,hullAng.r)
-						ang = Angle(ang.p - hullAng.p,ang.y,ang.r - hullAng.r)
-						yawang:Normalize()
-						yaw:SetAngles(yawang)
-						self:SetAngles(ang)
-						
-					else
-						self:SetAngles(ang)
+						local hull = self:GetHull()
+						self:GetYaw():SetAngles(hull:LocalToWorldAngles(Angle(0,hull:WorldToLocalAngles(ang).y,0)))
 					end
+					self:SetAngles(ang)
 				end
 			end
 			-- Seat checking
@@ -876,11 +885,15 @@ function ENT:Think()
 		end
 	end
 	
+	if self.FireMissions then
+		self.MaxViewModes = table.Count(self.FireMissions)
+	end
+	
 	self:ManualReload(ammo)
 	
 	self:SetIsAttacking(attacking)
 	self:SetIsShooting(canShoot)
-	if self:GetHP() <= 0 then self:Explode() end
+	if self:GetHP() <= 0 then self:Explode() return end
 	self:OnTick(ct,ply,botmode,IsShooting,canShoot,ammo,IsReloading,shouldSetAngles)
 	
 	self:NextThink(ct)
@@ -903,7 +916,7 @@ function ENT:CanShoot(ammo,ct,ply,IsReloading)
 				return (ammo > 0 or (self.Ammo < 0 and gred.CVars.gred_sv_manual_reload:GetInt() == 0)) and nextShot <= ct and !IsReloading and self:CalcMortarCanShoot(ply,ct)
 			end
 		else
-			return (ammo > 0 or (self.Ammo < 0 and gred.CVars.gred_sv_manual_reload:GetInt() == 0)) and nextShot <= ct and !IsReloading
+			return (ammo > 0 or (self.Ammo < 0 and gred.CVars.gred_sv_manual_reload:GetInt() == 0)) and nextShot <= ct and !IsReloading and (self.CustomEyeTrace and self:CalcMortarCanShoot(ply,ct) or !self.CustomEyeTrace)
 		end
 	else
 		return (ammo > 0 or self.Ammo < 0) and nextShot <= ct and !IsReloading
@@ -914,6 +927,7 @@ function ENT:CalcMortarCanShoot(ply,ct)
 	local tr = util.QuickTrace(self:LocalToWorld(self.TurretMuzzles[1].Pos),reachSky,self.Entities)
 	local canShoot = true
 	local botmode = self:GetBotMode()
+	local shootPos
 	self.Time_Mortar = self.Time_Mortar or 0
 	if tr.Hit and !tr.HitSky then
 		canShoot = false
@@ -926,11 +940,19 @@ function ENT:CalcMortarCanShoot(ply,ct)
 		end
 	else
 		noHitSky = false
-		local ang = self:GetAngles() - self:GetHull():GetAngles()
-		ang:Normalize()
-		canShoot = not (ang.y >= self.MaxRotation.y or ang.y-0.1 <= -self.MaxRotation.y)
-		-- canShoot = not (ang.y > self.MaxRotation.y or ang.y < -self.MaxRotation.y)
-		
+		if self.EmplacementType == "Cannon" then
+			if self.MaxRotation and self.MaxRotation.y != 0 then
+				local ang = self:GetAngles() - self:GetHull():GetAngles()
+				ang:Normalize()
+				canShoot = not (ang.y >= self.MaxRotation.y or ang.y-0.1 <= -self.MaxRotation.y)
+			else
+				canShoot = true
+			end
+		else
+			local ang = self.CustomEyeTrace and (self:GetPos() - self.CustomEyeTraceHitPos):Angle() or self:GetAngles() - self:GetHull():GetAngles()
+			ang:Normalize()
+			canShoot = not (ang.y >= self.MaxRotation.y or ang.y-0.1 <= -self.MaxRotation.y)
+		end
 		if !canShoot then
 			if !botmode and self.Time_Mortar <= ct then
 				net.Start("gred_net_message_ply")
@@ -944,9 +966,9 @@ function ENT:CalcMortarCanShoot(ply,ct)
 					shootPos = self:GetTarget():GetPos()
 				end
 			else
-				shootPos = util.TraceLine(util.GetPlayerTrace(ply)).HitPos
+				shootPos = ply:GetEyeTrace().HitPos
 			end
-			local tr = self.CustomEyeTrace and self:GetViewMode() > 0 and self.CustomEyeTrace or util.QuickTrace(shootPos,shootPos + reachSky,self.Entities)
+			local tr = util.QuickTrace(shootPos,shootPos + reachSky,self.Entities)
 			if tr.Hit and !tr.HitSky and !tr.Entity == self:GetTarget() then
 				canShoot = false
 				if !botmode and self.Time_Mortar <= ct then
@@ -999,17 +1021,17 @@ function ENT:FireMortar(ply,ammo,muzzle)
 	
 	local pos = self:GetPos()
 	util.ScreenShake(pos,5,5,0.5,200)
-	pos.z = pos.z - 10
 	
-	local dir = ply:EyeAngles():Forward()*100000
-	
+	local EyeTrace = ply:GetEyeTrace()
+	local viewmode = self:GetViewMode()
 	local trace = {}				
-	trace.start = self.CustomEyeTrace and self:GetViewMode() > 0 and self.CustomEyeTrace.HitPos or shootPos
-	trace.endpos = self.CustomEyeTrace and self:GetViewMode() > 0 and self.CustomEyeTrace.HitPos + Vector(0,0,1000) or shootPos + Vector(0,0,1000) -- This calculates the spawn altitude
+	trace.start = self.CustomEyeTrace and viewmode > 0 and self.CustomEyeTraceHitPos or EyeTrace.HitPos
+	trace.endpos = self.CustomEyeTrace and viewmode > 0 and self.CustomEyeTraceHitPos + Vector(0,0,1000) or EyeTrace.HitPos + Vector(0,0,1000) -- This calculates the spawn altitude
 	trace.Mask = MASK_SOLID_BRUSHONLY
 	local tr = util.TraceLine(trace)
 	
-	local BPos = tr.HitPos + Vector(math.random(-self.Spread,self.Spread),math.random(-self.Spread,self.Spread),-1) -- Creates our spawn position
+	local spread = sqrt(tr.HitPos:Distance(EyeTrace.StartPos))*2.5
+	local BPos = tr.HitPos + Vector(math.random(-spread,spread),math.random(-spread,spread),-1) -- Creates our spawn position
 	if !util.IsInWorld(BPos) then
 		BPos = tr.HitPos
 	end
@@ -1017,7 +1039,7 @@ function ENT:FireMortar(ply,ammo,muzzle)
 	
 	local HitBPos = Vector(0,0,util.QuickTrace(BPos,BPos - reachSky,self.Entities).HitPos.z) -- Defines the ground's pos
 	local zpos = Vector(0,0,BPos.z) -- The exact spawn altitude
-	local dist = HitBPos:Distance(zpos) -- Calculates the distance between our spawn altitude and the ground
+	local dist = HitBPos:DistToSqr(zpos) -- Calculates the distance between our spawn altitude and the ground
 	
 	----------------------
 	
@@ -1026,32 +1048,96 @@ function ENT:FireMortar(ply,ammo,muzzle)
 	local curShell = self:GetAmmoType()
 	timer.Simple(gred.CVars.gred_sv_shell_arrival_time:GetFloat(),function()
 		if not IsValid(self) then return end
-		local time = (dist/-1000)+(sndDuration-0.2) -- Calculates when to play the whistle sound
+		local time = (dist * MortarNum) + (sndDuration - 0.2) -- Calculates when to play the whistle sound
 		if time < 0 then
-			local b = gred.CreateShell(BPos,Angle(90),ply,self.Entities,self.AmmunitionTypes[curShell].Caliber,self.AmmunitionTypes[curShell].ShellType,self.AmmunitionTypes[curShell].MuzzleVelocity,self.AmmunitionTypes[curShell].Mass,self.AmmunitionTypes[curShell].TracerColor,self.AmmunitionTypes[curShell].CallBack)
-			b:Arm()
-			timer.Simple(-time,function()
-				if !IsValid(b) then return end
-				b:EmitSound(snd, 140, 100, 1)
-			end)
-		else
-			local p = ents.Create("prop_dynamic")
-			p:SetModel("models/hunter/blocks/cube025x025x025.mdl")
-			p:SetPos(BPos)
-			p:Spawn()
-			p:SetRenderMode(RENDERMODE_TRANSALPHA)
-			p:SetColor(255,255,255,0)
-			p:EmitSound(snd,140,100,1)
-			p:Remove()
-			timer.Simple(time,function()
-				if !IsValid(self) then return end
-				local b = gred.CreateShell(BPos,Angle(90),ply,self.Entities,self.AmmunitionTypes[curShell].Caliber,self.AmmunitionTypes[curShell].ShellType,self.AmmunitionTypes[curShell].MuzzleVelocity,self.AmmunitionTypes[curShell].Mass,self.AmmunitionTypes[curShell].TracerColor,self.AmmunitionTypes[curShell].CallBack)
-				b:Arm()
-				b:SetBodygroup(0,1)
-				b.PhysicsUpdate = function(data,phys)
-					phys:SetVelocityInstantaneous(Vector(0,0,-1000))
+			local b
+			if self.IsRocketLauncher then
+				b = ents.Create(self.AmmunitionTypes[curShell].Entity)
+				b:SetPos(BPos)
+				b:SetAngles(Angle(90))
+				b.FuelBurnoutTime = self:GetMaxRange()
+				if self.AmmunitionTypes[curShell].ShellType == "Smoke" then
+					b.Smoke = true
+					b.Effect = "doi_smoke_artillery"
+					b.EffectAir = "doi_smoke_artillery"
+					b.ExplosionRadius = 0
+					b.ExplosionDamage = 0
+					b.RSound = 1
+					b.ExplosionSound = table.Random(self.SmokeExploSNDs)
+					b.WaterExplosionSound = table.Random(self.SmokeExploSNDs)
 				end
-			end)
+				b.IsOnPlane = true
+				b:Spawn()
+				b:SetOwner(ply)
+				b:Activate()
+				for k,v in pairs(self.Entities) do
+					constraint.NoCollide(v,b,0,0)
+				end
+			else
+				b = gred.CreateShell(BPos,Angle(90),ply,self.Entities,self.AmmunitionTypes[curShell].Caliber,self.AmmunitionTypes[curShell].ShellType,self.AmmunitionTypes[curShell].MuzzleVelocity,self.AmmunitionTypes[curShell].Mass,self.AmmunitionTypes[curShell].TracerColor,self.AmmunitionTypes[curShell].CustomDamage,self.AmmunitionTypes[curShell].CallBack,self.AmmunitionTypes[curShell].TNTEquivalent,self.AmmunitionTypes[curShell].ExplosiveMass,self.AmmunitionTypes[curShell].LinearPenetration,self.AmmunitionTypes[curShell].Normalization,self.AmmunitionTypes[curShell].CoreMass)
+			end
+			if self.EmplacementType == "Mortar" then
+				b:SetModel("models/gredwitch/bombs/artillery_shell.mdl")
+			end
+			if b.IS_AP and b.IS_AP[b.ShellType] then
+				b:Launch()
+			else
+				b:Arm()
+				timer.Simple(-time,function()
+					if !IsValid(b) then return end
+					b:EmitSound(snd, 140, 100, 1)
+				end)
+			end
+		else
+			
+			local b
+			if self.IsRocketLauncher then
+				b = ents.Create(self.AmmunitionTypes[curShell].Entity)
+				b:SetPos(BPos)
+				b:SetAngles(Angle(90))
+				b.FuelBurnoutTime = self:GetMaxRange()
+				if self.AmmunitionTypes[curShell].ShellType == "Smoke" then
+					b.Smoke = true
+					b.Effect = "doi_smoke_artillery"
+					b.EffectAir = "doi_smoke_artillery"
+					b.ExplosionRadius = 0
+					b.ExplosionDamage = 0
+					b.RSound = 1
+					b.ExplosionSound = table.Random(self.SmokeExploSNDs)
+					b.WaterExplosionSound = table.Random(self.SmokeExploSNDs)
+				end
+				b.IsOnPlane = true
+				b:Spawn()
+				b:SetOwner(ply)
+				b:Activate()
+				for k,v in pairs(self.Entities) do
+					constraint.NoCollide(v,b,0,0)
+				end
+			else
+				b = gred.CreateShell(BPos,Angle(90),ply,self.Entities,self.AmmunitionTypes[curShell].Caliber,self.AmmunitionTypes[curShell].ShellType,self.AmmunitionTypes[curShell].MuzzleVelocity,self.AmmunitionTypes[curShell].Mass,self.AmmunitionTypes[curShell].TracerColor,self.AmmunitionTypes[curShell].CustomDamage,self.AmmunitionTypes[curShell].CallBack,self.AmmunitionTypes[curShell].TNTEquivalent,self.AmmunitionTypes[curShell].ExplosiveMass,self.AmmunitionTypes[curShell].LinearPenetration,self.AmmunitionTypes[curShell].Normalization,self.AmmunitionTypes[curShell].CoreMass)
+			end
+			if self.EmplacementType == "Mortar" then
+				b:SetModel("models/gredwitch/bombs/artillery_shell.mdl")
+			end
+			if b.IS_AP and b.IS_AP[b.ShellType] then
+				b:Launch()
+			else
+				b:SetBodygroup(0,1)
+				b:SetNoDraw(true)
+				b:SetMoveType(MOVETYPE_NONE)
+				b:EmitSound(snd,140,100,1)
+				
+				timer.Simple(time,function()
+					if !IsValid(self) then return end
+					
+					b:SetNoDraw(false)
+					b:SetMoveType(MOVETYPE_VPHYSICS)
+					b:Arm()
+					b.PhysicsUpdate = function(data,phys)
+						phys:SetVelocityInstantaneous(Vector(0,0,-1000))
+					end
+				end)
+			end
 		end
 	end)
 end
@@ -1102,7 +1188,7 @@ function ENT:FireCannon(ply,ammo,muzzle)
 		end
 		b:Launch()
 	else
-		gred.CreateShell(pos,ang,ply,self.Entities,self.AmmunitionTypes[curShell].Caliber,self.AmmunitionTypes[curShell].ShellType,self.AmmunitionTypes[curShell].MuzzleVelocity,self.AmmunitionTypes[curShell].Mass,self.AmmunitionTypes[curShell].TracerColor,self.AmmunitionTypes[curShell].CallBack):Launch()
+		gred.CreateShell(pos,ang,ply,self.Entities,self.AmmunitionTypes[curShell].Caliber,self.AmmunitionTypes[curShell].ShellType,self.AmmunitionTypes[curShell].MuzzleVelocity,self.AmmunitionTypes[curShell].Mass,self.AmmunitionTypes[curShell].TracerColor,self.AmmunitionTypes[curShell].CustomDamage,self.AmmunitionTypes[curShell].CallBack,self.AmmunitionTypes[curShell].TNTEquivalent,self.AmmunitionTypes[curShell].ExplosiveMass,self.AmmunitionTypes[curShell].LinearPenetration,self.AmmunitionTypes[curShell].Normalization,self.AmmunitionTypes[curShell].CoreMass):Launch()
 	end
 	if self.TurretEjects[1] then
 		timer.Simple(self.AnimPlayTime + (self.TimeToEjectShell or 0.2),function()
@@ -1127,34 +1213,41 @@ function ENT:Reload()
 end
 
 function ENT:PlayAnim(noanimplaytime)
-	if self:GetIsReloading() then print("NOT ANIMPLAYING") return end
+	if self.EmplacementType != "Cannon" and self:GetIsReloading() then print("NOT ANIMPLAYING") return end
 	self.sounds.reload_finish:Stop()
 	self.sounds.reload_start:Stop()
 	self.sounds.reload_shell:Stop()
 	
 	local manualReload = gred.CVars.gred_sv_manual_reload:GetInt() == 1
-	self:SetIsReloading(false)
+	self:SetIsReloading(true)
 	self:SetAmmo(0)
-	timer.Simple(noanimplaytime and 0 or self.AnimPlayTime,function()
+	local str = tostring(self)
+	
+	timer.Remove(str.."_stage_1")
+	timer.Remove(str.."_stage_2")
+	timer.Remove(str.."_stage_3")
+	timer.Remove(str.."_stage_4")
+	
+	timer.Create(str.."_stage_1",noanimplaytime and 0 or self.AnimPlayTime,1,function()
 		if !IsValid(self) then return end
 		self:ResetSequence("reload")
 		self.sounds.reload_start:Play()
 		self:SetIsReloading(true)
 		if manualReload then
-			timer.Simple(self.AnimPauseTime or 0,function() 
+			timer.Create(str.."_stage_2",self.AnimPauseTime or 0,1,function() 
 				if !IsValid(self) then return end
 				self:SetCycle(.6)
 				self:SetPlaybackRate(0) 
 			end)
 		else
-			timer.Simple(self.ShellLoadTime or self.AnimRestartTime/2,function()
+			timer.Create(str.."_stage_2",self.ShellLoadTime or self.AnimRestartTime/2,1,function()
 				if !IsValid(self) then return end
 				self.sounds.reload_shell:Play()
 			end)
-			timer.Simple(self:SequenceDuration()-0.6,function() 
+			timer.Create(str.."_stage_3",self:SequenceDuration()-0.6,1,function() 
 				if !IsValid(self) then return end
 				self.sounds.reload_finish:Play()
-				timer.Simple(SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),function()
+				timer.Create(str.."_stage_4",SoundDuration("gred_emp/common/reload"..self.ATReloadSound.."_2.wav"),1,function()
 					if !IsValid(self) then return end
 					self:SetIsReloading(false)
 				end)
@@ -1203,7 +1296,11 @@ function ENT:PreFire(ammo,ct,ply)
 		elseif self.EmplacementType == "Mortar" then
 			self:FireMortar(ply,ammo,self.TurretMuzzles[m])
 		elseif self.EmplacementType == "Cannon" then
-			self:FireCannon(ply,ammo,self.TurretMuzzles[m])
+			if self.CustomEyeTrace then
+				self:FireMortar(ply,ammo,self.TurretMuzzles[m])
+			else
+				self:FireCannon(ply,ammo,self.TurretMuzzles[m])
+			end
 		end
 		
 		self:SetCurrentMuzzle(m + 1)
@@ -1220,7 +1317,11 @@ function ENT:PreFire(ammo,ct,ply)
 			elseif self.EmplacementType == "Mortar" then
 				self:FireMortar(ply,ammo,m)
 			elseif self.EmplacementType == "Cannon" then
-				self:FireCannon(ply,ammo,m)
+				if self.CustomEyeTrace then
+					self:FireMortar(ply,ammo,m)
+				else
+					self:FireCannon(ply,ammo,m)
+				end
 			end
 			
 			if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then -- if MG or Nebelwerfer
@@ -1260,28 +1361,31 @@ end
 function ENT:SwitchAmmoType(ply,ct)
 	local ammotype = self:GetAmmoType()
 	if self.EmplacementType == "Cannon" then
-		if self:GetIsReloading() then return end
 		
-		self:PlayAnim(true)
 		self:SetNextShot(ct + self.ShotInterval)
 		
 		if self.TurretEjects[1] then
-			local oldammotype = ammotype
-			timer.Simple(self.TimeToEjectShell or 0.2,function()
-				if !IsValid(self) then return end
-				shellEject = self.TurretEjects[self:GetCurrentMuzzle()-1]
-				shellEject = shellEject or self.TurretEjects[1]
-				local shell = ents.Create("gred_prop_casing")
-				shell.Model = "models/gredwitch/bombs/75mm_shell.mdl"
-				shell:SetPos(self:LocalToWorld(shellEject.Pos))
-				shell:SetAngles(self:LocalToWorldAngles(shellEject.Ang))
-				shell.BodyGroupA = 1
-				shell.BodyGroupB = self.AmmunitionTypes[oldammotype].ShellType == "AP" and 0 or 1
-				shell:Spawn()
-				shell:Activate()
-				shell:SetModelScale(self.AmmunitionTypes[oldammotype].Caliber / 75)
-			end)
+			if !self:GetIsReloading() then
+				local oldammotype = ammotype
+				timer.Simple(self.TimeToEjectShell or 0.2,function()
+					if !IsValid(self) then return end
+					shellEject = self.TurretEjects[self:GetCurrentMuzzle()-1]
+					shellEject = shellEject or self.TurretEjects[1]
+					local shell = ents.Create("gred_prop_casing")
+					shell.Model = "models/gredwitch/bombs/75mm_shell.mdl"
+					shell:SetPos(self:LocalToWorld(shellEject.Pos))
+					shell:SetAngles(self:LocalToWorldAngles(shellEject.Ang))
+					shell.BodyGroupA = 1
+					shell.BodyGroupB = self.AmmunitionTypes[oldammotype].ShellType == "AP" and 0 or 1
+					shell:Spawn()
+					shell:Activate()
+					shell:SetModelScale(self.AmmunitionTypes[oldammotype].Caliber / 75)
+				end)
+			end
 		end
+		
+		self:PlayAnim(true)
+		
 	end
 	ammotype = ammotype + 1
 	self:SetAmmoType(ammotype)
@@ -1412,14 +1516,204 @@ function ENT:ManualReload(ammo)
 				self.sounds.reloadend:Stop()
 				self.sounds.reloadend:Play()
 				self.MagIn = true
+				self.NewMagIn = true
 				timer.Simple(self.ReloadTime, function()
 					if !IsValid(self) then return end
 					self:SetAmmo(self.Ammo)
 					self:SetIsReloading(false)
+					self.NewMagIn = false
 				end)
 			end
 		end
 	end
+end
+
+
+----------------------------------------
+-- DUPES AND SAVES
+
+
+local EmplacementEnts = {}
+
+local function GetFlex(ent)
+	local tab = {}
+	
+	for i = 0, ent:GetFlexNum() do
+		tab[i] = ent:GetFlexWeight(i)
+		tab[i] = tab[i] == 0 and nil or tab[i]
+	end
+	
+	return tab
+end
+
+local function GetBodyGroups(ent)
+	local tab = {}
+	for k,v in pairs(ent:GetBodyGroups()) do
+		tab[v.id] = ent:GetBodygroup(v.id)
+	end
+	return tab
+end
+
+local function GetEntityGeneric(ent)
+	if !IsValid(ent) then return nil end
+	
+	return {
+		Model = ent:GetModel(),
+		Skin = ent:GetSkin(),
+		Flex = GetFlex(ent),
+		FlexScale = ent:GetFlexScale(),
+		ModelScale = ent:GetModelScale(),
+		ColGroup = ent:GetCollisionGroup(),
+		Color = ent:GetColor(),
+		BodyG = GetBodyGroups(ent),
+	}
+end
+
+local function DuplicateEntityGeneric(ent1,ent2)
+	if !IsValid(ent1) or !IsValid(ent2) then return end
+	
+	ent2:SetModel(ent1:GetModel())
+	ent2:SetSkin(ent1:GetSkin())
+	ent2:SetFlexScale(ent1:GetFlexScale())
+	ent2:SetModelScale(ent1:GetModelScale(),0)
+	ent2:SetCollisionGroup(ent1:GetCollisionGroup())
+	
+	for i = 0,ent1:GetBoneCount() do
+		ent2:ManipulateBoneScale(i,ent1:GetManipulateBoneScale(i))
+		ent2:ManipulateBoneAngles(i,ent1:GetManipulateBoneAngles(i))
+		ent2:ManipulateBonePosition(i,ent1:GetManipulateBonePosition(i))
+	end
+	
+	for k,v in pairs(ent:GetBodyGroups()) do
+		ent2:SetBodygroup(v.id,ent1:GetBodygroup(v.id))
+	end
+	
+	for i = 0, ent1:GetFlexNum() do
+		ent2:SetFlexWeight(i,ent1:GetFlexWeight(i))
+	end
+end
+
+function ENT:PreEntityCopy()
+	local hull = self:GetHull()
+	self.DUPE_OLD_ANG = hull:WorldToLocalAngles(self:GetAngles())
+	self.DUPE_OLD_HULL_ANG = hull:GetAngles()
+	
+	self.OldEntitiesProperties = self.OldEntitiesProperties or {}
+	for k,v in pairs(self.Entities) do
+		if IsValid(v) then
+			self.OldEntitiesProperties[k] = GetEntityGeneric(v)
+		end
+	end
+	
+	local phy = hull:GetPhysicsObject()
+	if IsValid(phy) then
+		self.DUPE_HULL_FROZEN = phy:IsMotionEnabled()
+	end
+end
+
+function ENT:OnDuplicated(entTable)
+	local index = self:EntIndex()
+	local hull = self:GetHull()
+	local hullpos = hull:GetPos()
+	self.Entities = {}
+	entTable.Entities = {}
+	
+	for k,v in pairs(EmplacementEnts[index].Entities) do
+		self.Entities[k] = Entity(v)
+		if !IsValid(self.Entities[k]) then
+			self.Entities[k] = nil
+		end
+		entTable.Entities[k] = self.Entities[k]
+	end
+end
+
+function ENT:PostEntityCopy()
+	local index = self:EntIndex()
+	EmplacementEnts[index] = {Entities = {}}
+	for k,v in pairs(self.Entities) do
+		EmplacementEnts[index].Entities[k] = v:EntIndex()
+	end
+end
+
+function ENT:PostEntityPaste(ply,ent,createdEntities)
+	local class = self:GetClass()
+	local index = self:EntIndex()
+	local plyValid = IsValid(ply)
+	-- if class == "gred_emp_gau19" then PrintTable(createdEntities) end
+	for k,v in pairs(createdEntities) do
+		if v:GetClass() == "gred_prop_emp" then
+			v:Remove()
+			v = nil
+			createdEntities[k] = nil
+		else
+			if self != v and plyValid then
+				v:Remove()
+				v = nil
+				createdEntities[k] = nil
+			end
+		end
+	end
+	
+	for k,v in pairs(self.Entities) do
+		if self.OldEntitiesProperties[k] then
+			duplicator.DoGeneric(v,self.OldEntitiesProperties[k])
+			v:SetColor(self.OldEntitiesProperties[k].Color)
+		end
+	end
+	
+	local hull = self:GetHull()
+	local oldang = hull:GetAngles()
+	local hullpos
+	
+	if IsValid(ply) then
+		oldang.p = 0
+		oldang.r = 0
+	
+		if self.DUPE_OLD_HULL_ANG then
+			oldang.y = self.DUPE_OLD_HULL_ANG.y + oldang.y
+		end
+		
+		-- hullpos = ply:GetEyeTrace().HitPos + self.TurretPos
+		hullpos = hull:GetPos() - self.TurretPos
+	else
+		hullpos = hull:GetPos() - self.TurretPos
+	end
+	
+	local oldparent = self:GetParent()
+	hull:SetPos(hullpos)
+	hull:SetAngles(Angle(0,0,0))
+	self:SetParent(nil)
+	self:SetPos(hullpos + self.TurretPos)
+	self:SetParent(oldparent)
+	hull:SetAngles(oldang)
+	
+	local phy = hull:GetPhysicsObject()
+	if IsValid(phy) then
+		phy:EnableMotion(self.DUPE_HULL_FROZEN)
+		if self.DUPE_HULL_FROZEN then
+			phy:Wake()
+		end
+	end
+	
+	if self.DUPE_OLD_ANG then
+		local yaw = self:GetYaw()
+		if IsValid(yaw) then
+			local ang = hull:LocalToWorldAngles(self.DUPE_OLD_ANG)
+			local oldr = oldang.r
+			ang.r = 0
+			
+			yaw:SetAngles(ang)
+			
+			ang.r = oldr
+			
+			self:SetAngles(ang)
+		else
+			self:SetAngles(hull:LocalToWorldAngles(self.DUPE_OLD_ANG))
+		end
+	end
+	
+	self.DUPE_HULL_FROZEN = false
+	EmplacementEnts[index] = nil
 end
 
 
@@ -1431,6 +1725,13 @@ function ENT:Explode(ply)
 	if self.Exploded then return end
 	if gred.CVars.gred_sv_enable_explosions:GetInt() == 0 then return end
 	self.Exploded = true
+	
+	if self.Seatable then
+		local shooter = self:GetShooter()
+		if shooter != self and IsValid(shooter) then
+			shooter:TakeDamage(1500,ply,self)
+		end
+	end
 	
 	local b = self:BoundingRadius()
 	local p = self:GetPos()
@@ -1465,6 +1766,7 @@ function ENT:Explode(ply)
 		ply = ply or self
 		util.BlastDamage(ply,ply,v,100,100)
 	end
+	
 	self:Remove()
 end
 

@@ -38,6 +38,7 @@ ENT.CurRecoil				= 0
 ENT.RecoilRate				= 0.05
 ENT.ShootAnim				= nil -- string / int
 ENT.BotAngleOffset			= Angle(0,0,0)
+ENT.DelayToNetwork = 0
 
 ---------------------
 
@@ -72,13 +73,19 @@ ENT.MagIn					= true -- bool
 
 ENT.MaxViewModes			= 0 -- int
 ENT.DefaultPitch			= 0
+ENT.NextFindBot				= 0
 ENT.HP						= 200 --+ (ENT.HullModel and 75 or 0) + (ENT.YawModel and 75 or 0)
 
 ----------------------------------------
 
 local IsValid = IsValid
+local ok = {
+	["gred_prop_part"] = true,
+}
 
 function ENT:SetupDataTables()
+	self.OldMaxViewModes = self.MaxViewModes
+	
 	self:NetworkVar("Entity",0,"Hull")
 	self:NetworkVar("Entity",1,"Shooter")
 	self:NetworkVar("Entity",2,"PrevShooter")
@@ -92,7 +99,7 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Int",2,"CurrentTracer")
 	self:NetworkVar("Int",3,"RoundsPerMinute")
 	self:NetworkVar("Int",4,"CurrentExtractor")
-	self:NetworkVar("Int",5,"ViewMode", { KeyName = "Viewmode", Edit = { type = "Int", order = 0,min = 0, max = self.MaxViewModes} } )
+	self:NetworkVar("Int",5,"ViewMode")
 	self:NetworkVar("Int",6,"AmmoType", { KeyName = "Ammotype", Edit = { type = "Int", order = 0,min = 1, max = self.AmmunitionTypes and table.Count(self.AmmunitionTypes) or 0, category = "Ammo"} } )
 	-- self:NetworkVar("Int",7,"CurrentAmmoType")
 	
@@ -158,8 +165,8 @@ function ENT:ShooterStillValid(ply,botmode)
 	else
 		if botmode then 
 			return true 
-		else 
-			return ply:Alive() and ply:GetPos():DistToSqr(self:GetPos()) <= self.MaxUseDistance
+		else
+			return ply:Alive() and (!self.Seatable and ply:GetPos():DistToSqr(self:GetPos()) <= self.MaxUseDistance or self.Seatable)
 		end
 	end
 end
@@ -167,24 +174,6 @@ end
 
 ----------------------------------------
 -- MATHS
-
-
-local g = GetConVar("sv_gravity"):GetFloat()
-
-local math = math
-local util = util
-
-local atan = math.atan
-local acos = math.acos
-local sqrt = math.sqrt
-
-local deg = math.deg
-					-- FUCK GARRY, FUCK BREXIT LAND, FUCK RADIANS.
-local rad = math.rad
-
-local function CALC_ANGLE(g,X,V,H) 
-	return (deg(acos((g*X^2/V^2-H)/sqrt(H^2+X^2)))+deg(atan(X/H)))/2
-end
 
 function ENT:CheckMuzzle()
 	local m = self:GetCurrentMuzzle()
@@ -197,34 +186,46 @@ end
 -- BOT
 
 
+function ENT:TargetTraceValid(trace,target)
+	local tv = target.GetVehicle and target:GetVehicle() or false
+	if tv and IsValid(tv) then
+		local p = tv:GetParent()
+		tv = IsValid(p) and p or tv
+	end
+	
+	return ((trace.Entity == target or target:GetParent() == trace.Entity) and self:IsValidTarget(target)) 
+	or (trace.HitSky and (IsValid(trace.Entity) and trace.Entity:IsPlayer() or trace.Entity:IsNPC() or ok[trace.Entity:GetClass()]))
+	or (tv and trace.Entity == tv and (self:IsValidAirTarget(tv) or self:IsValidGroundTarget(tv,self:GetIsAntiGroundVehicles()))),tv
+end
+
 function ENT:IsValidTarget(ent)
 	self.Owner = self.Owner or self
-	return IsValid(ent) and (self:IsValidBot(ent) or self:IsValidHuman(ent)) and ent:GetClass() != "prop_physics" 
+	return IsValid(ent) and ent:GetClass() != "prop_physics" and (self:IsValidBot(ent) or self:IsValidHuman(ent))
 end
 
 function ENT:IsValidBot(ent,b)
 	self.Owner = self.Owner or self
 	return ((ent:IsNPC() and self:GetAttackNPCs() and (!self.Owner:IsPlayer() or ent:Disposition(self.Owner) == 1 or self:GetShouldNotCareAboutOwnersTeam())) 
-	or (ent.LFS and ent:GetAI() and self:GetIsAntiAircraft() and (ent:GetAITEAM() != (self.Owner.lfsGetAITeam and self.Owner:lfsGetAITeam() or nil) or self:GetShouldNotCareAboutOwnersTeam()))) and ent:GetClass() != "prop_physics" and IsValid(ent)
+	or (ent.LFS and ent:GetAI() and self:GetIsAntiAircraft() and (ent:GetAITEAM() != (self.Owner.lfsGetAITeam and self.Owner:lfsGetAITeam() or nil) or self:GetShouldNotCareAboutOwnersTeam())))
 end
 
-function ENT:IsValidGroundTarget(ply)
-	ent = ply.GetVehicle and ply:GetVehicle() or nil
+function ENT:IsValidGroundTarget(ply,IsAntiGroundVehicles)
+	ent = ply.GetVehicle and ply:GetVehicle() or ply
 	if IsValid(ent) then
-		local car = ent:GetParent()
+		local car = IsValid(ent:GetParent()) and ent:GetParent() or ent
 		local driver = ent.GetDriver and ent:GetDriver() or nil
-		return (simfphys and simfphys.IsCar and IsValid(car) and simfphys.IsCar(car) and (driver != self.Owner and (self.Owner:IsPlayer() and driver:Team() != self.Owner:Team())) or self:GetShouldNotCareAboutOwnersTeam())
+		return (simfphys and simfphys.IsCar and IsValid(car) and simfphys.IsCar(car) and (driver != self.Owner and (self.Owner:IsPlayer() and driver:Team() != self.Owner:Team())) or self:GetShouldNotCareAboutOwnersTeam()) and (IsAntiGroundVehicles or !car.IsArmored)
 	end
 end 
 
 function ENT:IsValidHuman(ent)
-	return ((ent:IsPlayer() and self:GetAttackPlayers() and ent:Alive()) and ((ent != self.Owner and (self.Owner:IsPlayer() and ent:Team() != self.Owner:Team())) or self:GetShouldNotCareAboutOwnersTeam()) or (self:IsValidGroundTarget(ent) and self:GetIsAntiGroundVehicles()) or self:IsValidAirTarget(ent) and self:GetIsAntiAircraft() and self.EmplacementType != "Mortar") and ent:GetClass() != "prop_physics" and IsValid(ent)
+	return ((ent:IsPlayer() and self:GetAttackPlayers() and ent:Alive()) and ((ent != self.Owner and (self.Owner:IsPlayer() and ent:Team() != self.Owner:Team())) or self:GetShouldNotCareAboutOwnersTeam()) or (self:IsValidGroundTarget(ent,self:GetIsAntiGroundVehicles())) or self:IsValidAirTarget(ent) and self:GetIsAntiAircraft() and self.EmplacementType != "Mortar") and ent:GetClass() != "prop_physics" and IsValid(ent)
 end
 
 function ENT:IsValidAirTarget(ent)
 	local seat = (ent.GetVehicle and ent:GetVehicle() or nil) or ent
 	if IsValid(seat) then
-		local aircraft = seat:GetParent()
+		local aircraft = (seat.LFS or seat.isWacAircraft) and seat or seat:GetParent()
 		if IsValid(aircraft) then
 			if aircraft.LFS and (IsValid(aircraft:GetDriver()) or self:IsValidBot(aircraft,true)) then
 				return aircraft:GetHP() > 0

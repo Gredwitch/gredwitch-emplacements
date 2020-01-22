@@ -16,6 +16,7 @@ ENT.ExtractAngle		= Angle(0,0,0)
 ENT.MuzzleEffect		= "ins_weapon_rpg_frontblast"
 ENT.ShotInterval		= 0.375
 ENT.TracerColor			= "Yellow"
+ENT.ShootAnim			= "shoot"
 ENT.Spread				= 0.7
 ENT.AmmunitionTypes		= {
 						{"Direct Hit","wac_base_40mm"},

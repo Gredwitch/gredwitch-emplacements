@@ -17,22 +17,35 @@ ENT.AmmunitionTypes		= {
 	{
 		Caliber = 128,
 		ShellType = "HE",
-		MuzzleVelocity = 880,
-		Mass = 26,
+		MuzzleVelocity = 750,
+		Mass = 28,
+		LinearPenetration = 45,
+		TNTEquivalent = 3.7,
 		TracerColor = "white",
 	},
 	{
 		Caliber = 128,
-		ShellType = "AP",
-		MuzzleVelocity = 880,
-		Mass = 26,
+		ShellType = "APC",
+		Normalization = -1,
+		MuzzleVelocity = 930,
+		TNTEquivalent = 0.7865,
+		Mass = 28,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 128,
+		ShellType = "APCBC",
+		Normalization = 4,
+		MuzzleVelocity = 930,
+		TNTEquivalent = 0.7865,
+		Mass = 28,
 		TracerColor = "white",
 	},
 	{
 		Caliber = 128,
 		ShellType = "Smoke",
-		MuzzleVelocity = 880,
-		Mass = 26,
+		MuzzleVelocity = 750,
+		Mass = 28,
 		TracerColor = "white",
 	},
 }
@@ -148,7 +161,7 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetViewMode() == 1 then
 		local view = {}
 		local ang = self:GetAngles()
-		angles.p = -ang.r - 1
+		angles.p = -ang.r
 		angles.y = ang.y + 90
 		angles.r = -ang.p
 		
@@ -162,6 +175,7 @@ function ENT:ViewCalc(ply, pos, angles, fov)
 		if seatValid then
 			local view = {}
 			view.origin = seat:LocalToWorld(self.ViewPos)
+			angles.r = angles.r + 1
 			view.angles = angles
 			view.fov = fov
 			view.drawviewer = false

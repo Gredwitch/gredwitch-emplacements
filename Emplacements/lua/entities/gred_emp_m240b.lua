@@ -78,12 +78,14 @@ function ENT:Reload(ply)
 		timer.Simple(1.5,function() 
 			if !IsValid(self) then return end
 			self.MagIn = true
+			self.NewMagIn = true
 			self:SetBodygroup(2,1)
 		end)
 		timer.Simple(self:SequenceDuration(),function()
 			if !IsValid(self) then return end
 			self:SetAmmo(self.Ammo)
 			self:SetIsReloading(false)
+			self.NewMagIn = false
 			self:SetCurrentTracer(0)
 		end)
 	else
@@ -95,19 +97,23 @@ function ENT:Reload(ply)
 	end
 end
 
-function ENT:OnTick()
-	if SERVER then
+if SERVER then
+	function ENT:OnTick()
 		self:SetSkin(1)
 		self:SetBodygroup(1,1) -- Gun
 		self:SetBodygroup(5,1) -- Lid
 		self:SetBodygroup(6,1) -- Mag Base
-		if (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
-			self:SetBodygroup(2,1) -- Ammo box shown
-			if self:GetAmmo() <= 0 then
-				self:SetBodygroup(7,2) -- Ammo belt hidden
+		
+		if self.MagIn then
+			self:SetBodygroup(2,1)
+			if (self:GetAmmo() < 1 and !self.NewMagIn) or !self.MagIn then
+				self:SetBodygroup(7,2)
 			else
-				self:SetBodygroup(7,0) -- M240B Ammo belt
+				self:SetBodygroup(7,1)
 			end
+		else
+			self:SetBodygroup(2,2)
+			self:SetBodygroup(7,2)
 		end
 	end
 end

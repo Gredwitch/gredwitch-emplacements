@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+$basetexture				"models/gredwitch/bofors/Bofors40mm_Gun_C"
+$bumpmap					"models/gredwitch/bofors/Bofors40mm_Gun_b"
+
+$normalmapalphaenvmapmask 	1
+$envmaptint 				"[0.20 0.20 0.20]"
+$lightwarptexture			 "models/gredwitch/common/lightwarp"
+$phong 						1
+$phongfresnelranges 		"[0.25 0.58 8]"
+$phongtint 					"[1 0.99 0.79]"
+$phongexponent 				31
+$phongboost 				8
+$phongalbedoboost 			1
+}

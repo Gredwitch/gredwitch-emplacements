@@ -16,18 +16,49 @@ ENT.AmmunitionTypes		= {
 	{
 		Caliber = 152,
 		ShellType = "HE",
-		MuzzleVelocity = 300, -- actually 810
+		MuzzleVelocity = 823,
+		Mass = 43.56,
+		TNTEquivalent = 5.900,
+		LinearPenetration = 49,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 152,
+		ShellType = "APHE",
+		MuzzleVelocity = 823,
+		TNTEquivalent = 0.739,
+		Normalization = -1,
+		Mass = 43.56,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 152,
+		ShellType = "HEAT",
+		MuzzleVelocity = 823,
+		TNTEquivalent = 5.9121,
+		LinearPenetration = 250,
+		Mass = 43.56,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 152,
+		ShellType = "APHEBC",
+		MuzzleVelocity = 823,
+		TNTEquivalent = 1.0164,
+		Normalization = 4,
 		Mass = 43.56,
 		TracerColor = "white",
 	},
 	{
 		Caliber = 152,
 		ShellType = "Smoke",
-		MuzzleVelocity = 300,
-		Mass = 100,
+		MuzzleVelocity = 810,
+		Mass = 43.56,
 		TracerColor = "white",
 	},
 }
+ENT.IsHowitzer			= true
+ENT.AddShootAngle		= -3
 ENT.PitchRate			= 20
 ENT.YawRate				= 20
 ENT.ShootAnim			= "shoot"

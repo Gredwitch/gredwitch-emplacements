@@ -1,12 +1,17 @@
 include("shared.lua")
 
 local reachSky = Vector(0,0,9999999999)
+local Z_CANNON = Vector(0,0,10)
+local vector_zero = vector_zero
+local soundSpeed = 18005.25*18005.25 -- 343m/s
+local bigNum = 99999999999
 
 function ENT:Initialize()
 	self:ReloadSounds()
 	self:InitAttachmentsCL()
 	self:OnInitializeCL()
 	self.Initialized = true
+	
 end
 
 function ENT:OnInitializeCL()
@@ -100,21 +105,20 @@ function ENT:Think()
 	end
 	self:GetPrevShooter().Gred_Emp_Ent = nil
 	
+	if self.FireMissions then
+		self.MaxViewModes = table.Count(self.FireMissions) + (self.EmplacementType == "Cannon" and 1 or 0)
+	end
+	
 	self:OnThinkCL(ct,ply)
 end
 
-local Z_CANNON = Vector(0,0,10)
-local vector_zero = vector_zero
-local soundSpeed = 18005.25*18005.25 -- 343m/s
 function ENT:OnShoot()
-	-- timer.Simple(LocalPlayer():GetViewEntity():GetPos():DistToSqr(self:GetPos())/soundSpeed,function()
-		-- if !IsValid(self) then return end
-		self.PlayStopSound = true
-		if (self.EmplacementType != "MG" or self.OnlyShootSound) then
-			self.sounds.shoot:Stop()
-			self.sounds.shoot:Play()
-		end
-	-- end)
+	self.PlayStopSound = true
+	if (self.EmplacementType != "MG" or self.OnlyShootSound) then
+		self.sounds.shoot:Stop()
+		self.sounds.shoot:Play()
+	end
+	
 	local effectdata
 	if self.Sequential then
 		effectdata = EffectData()
@@ -191,6 +195,77 @@ function ENT:HUDPaint(ply,viewmode,scrW,scrH)
 	
 end
 
-function ENT:ViewCalc(ply, pos, angles, fov)
+function ENT:PaintHUD(ply,ViewMode)
+	local viewmode = ViewMode - self.OldMaxViewModes
+	
+	if self.FireMissions and self.FireMissions[viewmode] then
+		LANGUAGE = GetConVar("gred_cl_lang"):GetString() or "en"
+		if not LANGUAGE then return end
+		local ScrW,ScrH = ScrW(),ScrH()
+		
+		
+		surface.SetFont("GFont_arti")
+		surface.SetTextColor(255,255,255)
+		surface.SetTextPos(ScrW*0.01,ScrH*0.01)
+		surface.DrawText(gred.Lang[LANGUAGE].EmplacementBinoculars.emplacement_missionid..self.FireMissions[viewmode][3])
+		surface.SetTextPos(ScrW*0.01,ScrH*0.07)
+		surface.DrawText(gred.Lang[LANGUAGE].EmplacementBinoculars.emplacement_caller..self.FireMissions[viewmode][1]:GetName())
+		surface.SetTextPos(ScrW*0.01,ScrH*0.14)
+		surface.DrawText(gred.Lang[LANGUAGE].EmplacementBinoculars.emplacement_timeleft..math.Round((self.FireMissions[viewmode][4] + gred.CVars.gred_sv_emplacement_artillery_time:GetFloat()) - CurTime()).."s")
+	else
+		return self:HUDPaint(ply,ViewMode)
+	end
+end
 
+function ENT:View(ply,pos,angles,fov)
+	if (self.IsHowitzer or self.EmplacementType == "Mortar" or (self.EmplacementType == "Cannon" and gred.CVars.gred_sv_enable_cannon_artillery:GetBool())) then
+		local viewmode = self:GetViewMode() - self.OldMaxViewModes
+		if self.FireMissions and self.FireMissions[viewmode] then
+			local ct = CurTime()
+			local view = {}
+			local ang = self:GetAngles()
+			
+			ang:RotateAroundAxis(ang:Right(),-180)
+			angles = self.Seatable and angles - ang or angles
+			angles.p = math.Clamp(angles.p,50,90)
+			angles.r = 0
+			view.angles = angles
+			view.origin = self.FireMissions[viewmode][2] + Vector(0,0,2000)
+			view.drawviewer = true
+			
+			local ang = Angle() + angles
+			ang.p = ang.p + 180
+			
+			self.CustomEyeTraceRemoved = false
+			self.CustomEyeTrace = util.QuickTrace(view.origin,view.origin + ang:Forward()*-bigNum)
+			
+			if self.DelayToNetwork < ct then
+				net.Start("gred_net_sendeyetrace")
+					net.WriteEntity(self)
+					net.WriteVector(self.CustomEyeTrace.HitPos)
+				net.SendToServer()
+				
+				self.DelayToNetwork = ct + 0.1
+			end
+			
+			return view
+		else
+			
+			if !self.CustomEyeTraceRemoved then
+				self.CustomEyeTrace = nil
+				net.Start("gred_net_removeeyetrace")
+					net.WriteEntity(self)
+				net.SendToServer()
+			end
+			
+			self.CustomEyeTraceRemoved = true
+			
+			return self:ViewCalc(ply,pos,angles,fov)
+		end
+	else
+		return self:ViewCalc(ply,pos,angles,fov)
+	end
+end
+
+function ENT:ViewCalc(ply,pos,angles,fov)
 end

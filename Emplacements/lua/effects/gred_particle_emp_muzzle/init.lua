@@ -57,18 +57,22 @@ function EFFECT:Init(data)
 			end
 		end
 		if canExtractShell then
-			
-			for a,b in pairs(ent.TurretEjects) do
-				local effectdata = EffectData()
-				
-				effectdata:SetOrigin(ent:LocalToWorld(b.Pos))
-				effectdata:SetAngles(ent:LocalToWorldAngles(b.Ang + ent.ExtractAngle))
-				
-				if ent.AmmunitionType == "wac_base_7mm" then
-					util.Effect("ShellEject",effectdata)
-				else
-					util.Effect("RifleShellEject",effectdata)
+			if ent.EFFECT_CUR_MUZZLE and ent.EFFECT_CUR_MUZZLE >= #ent.TurretEjects or !ent.EFFECT_CUR_MUZZLE then
+				for a,b in pairs(ent.TurretEjects) do
+					local effectdata = EffectData()
+					
+					effectdata:SetOrigin(ent:LocalToWorld(b.Pos))
+					effectdata:SetAngles(ent:LocalToWorldAngles(b.Ang + ent.ExtractAngle))
+					
+					if ent.AmmunitionType == "wac_base_7mm" then
+						util.Effect("ShellEject",effectdata)
+					else
+						util.Effect("RifleShellEject",effectdata)
+					end
 				end
+				ent.EFFECT_CUR_MUZZLE = 1
+			else
+				ent.EFFECT_CUR_MUZZLE = ent.EFFECT_CUR_MUZZLE and ent.EFFECT_CUR_MUZZLE + 1 or 2
 			end
 		end
 	end

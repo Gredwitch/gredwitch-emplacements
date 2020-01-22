@@ -24,6 +24,7 @@ ENT.AmmunitionTypes		= {
 		Entity = "gb_rocket_nebel",
 	},
 }
+ENT.IsHowitzer			= true
 ENT.IsRocketLauncher	= true
 ENT.ShotInterval		= 1
 

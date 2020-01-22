@@ -15,6 +15,7 @@ ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.12
 ENT.TracerColor			= "Red"
 
+ENT.Recoil				= 0.4
 ENT.RecoilRate			= 0.1
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "^gred_emp/vickers/shoot.wav"
@@ -25,7 +26,7 @@ ENT.EmplacementType		= "MG"
 ENT.HullModel			= "models/gredwitch/vickers/vickers_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/vickers/vickers_gun.mdl"
 
-ENT.Ammo				= 250
+ENT.Ammo				= 385
 ENT.ReloadTime			= 1.77
 ------------------------
 
@@ -92,12 +93,14 @@ function ENT:Reload(ply)
 			self:SetBodygroup(3,0)
 			self:SetBodygroup(4,0)
 			self.MagIn = true
+			self.NewMagIn = true
 		end)
 		timer.Simple(self:SequenceDuration() + 0.1,function()
 			if !IsValid(self) then return end
 			self:SetAmmo(self.Ammo)
 			self:SetIsReloading(false)
 			self:SetCurrentTracer(0)
+			self.NewMagIn = false
 		end)
 	else
 		timer.Simple(1.5,function() 
@@ -111,20 +114,47 @@ function ENT:Reload(ply)
 	end
 end
 
-function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
-		if self:GetAmmo() <= 7 then 
-			self:SetBodygroup(3,1)
-			if self:GetAmmo() <= 0 then 
-				self:SetBodygroup(4,1)
+-- function ENT:OnTick()
+	-- if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
+		-- if self:GetAmmo() <= 7 then 
+			-- self:SetBodygroup(3,1)
+			-- if self:GetAmmo() <= 0 then 
+				-- self:SetBodygroup(4,1)
+			-- else
+				-- self:SetBodygroup(4,0)
+			-- end
+		-- else
+			-- self:SetBodygroup(3,0)
+			-- self:SetBodygroup(4,0)
+		-- end
+		-- self:SetBodygroup(2,0)
+	-- end
+-- end
+
+if SERVER then
+	function ENT:OnTick()
+		if self.MagIn then
+			self:SetBodygroup(2,0)
+			if !self.NewMagIn or !self.MagIn then
+				local ammo = self:GetAmmo()
+				if ammo <= 7 then
+					self:SetBodygroup(3,1)
+					if ammo < 1 then
+						self:SetBodygroup(4,1)
+					else
+						self:SetBodygroup(4,0)
+					end
+				else
+					self:SetBodygroup(3,0)
+				end
 			else
-				self:SetBodygroup(4,0)
+				self:SetBodygroup(2,0)
 			end
 		else
-			self:SetBodygroup(3,0)
-			self:SetBodygroup(4,0)
+			self:SetBodygroup(2,1)
+			self:SetBodygroup(3,1)
+			self:SetBodygroup(4,1)
 		end
-		self:SetBodygroup(2,0)
 	end
 end
 

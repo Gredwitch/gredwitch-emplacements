@@ -31,7 +31,7 @@ ENT.ReloadTime			= 1.4
 ------------------------
 
 ENT.TurretPos			= Vector(0,0,43.5)
-ENT.SightPos			= Vector(0.63,-15,2.85)
+ENT.SightPos			= Vector(0.65,-15,2.95)
 ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -42,7 +42,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
  	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
-	ent:SetModelScale(1.1)
+	ent:SetModelScale(1.15)
 	return ent
 end
 
@@ -62,6 +62,7 @@ function ENT:Reload(ply)
 		prop:SetPos(att.Pos)
 		prop:SetAngles(att.Ang)
 		prop:Spawn()
+		prop:SetModelScale(1.15)
 		prop:Activate()
 		self.MagIn = false
 		-- if self.CurAmmo <= 0 then prop:SetBodygroup(1,1) end
@@ -77,6 +78,7 @@ function ENT:Reload(ply)
 		timer.Simple(1.1,function() 
 			if !IsValid(self) then return end
 			self.MagIn = true
+			self.NewMagIn = true
 			self:SetBodygroup(3,0)
 			self:SetBodygroup(4,0)
 		end)
@@ -84,6 +86,7 @@ function ENT:Reload(ply)
 			if !IsValid(self) then return end
 			self:SetAmmo(self.Ammo)
 			self:SetIsReloading(false)
+			self.NewMagIn = false
 			self:SetCurrentTracer(0)
 		end)
 	else
@@ -95,14 +98,19 @@ function ENT:Reload(ply)
 	end
 end
 
-function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
-		if self:GetAmmo() <= 0 then 
-			self:SetBodygroup(4,1)
+if SERVER then
+	function ENT:OnTick()
+		if self.MagIn then
+			self:SetBodygroup(3,0)
+			if (self:GetAmmo() < 1 and !self.NewMagIn) or !self.MagIn then
+				self:SetBodygroup(4,1)
+			else
+				self:SetBodygroup(4,0)
+			end
 		else
-			self:SetBodygroup(4,0)
+			self:SetBodygroup(3,1)
+			self:SetBodygroup(4,1)
 		end
-		self:SetBodygroup(3,0)
 	end
 end
 

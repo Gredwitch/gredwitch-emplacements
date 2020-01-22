@@ -4,7 +4,7 @@ ENT.Type 				= "anim"
 ENT.Base 				= "gred_emp_base"
 
 ENT.Category			= "Gredwitch's Stuff"
-ENT.PrintName 			= "[EMP]6pdr Ordnance QF"
+ENT.PrintName 			= "[EMP]6-pdr Ordnance QF Mk III"
 ENT.Author				= "Gredwitch"
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= true
@@ -16,15 +16,34 @@ ENT.AmmunitionTypes		= {
 	{
 		Caliber = 57,
 		ShellType = "HE",
-		MuzzleVelocity = 820,
-		Mass = 2.86,
+		MuzzleVelocity = 807,
+		LinearPenetration = 4,
+		TNTEquivalent = 0.153,
+		Mass = 3,
 		TracerColor = "white",
 	},
 	{
 		Caliber = 57,
 		ShellType = "AP",
 		MuzzleVelocity = 853,
-		Mass = 3,
+		Mass = 2.8,
+		Normalization = -1,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 57,
+		ShellType = "APC",
+		MuzzleVelocity = 853,
+		Mass = 2.87,
+		Normalization = -1,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 57,
+		ShellType = "APCBC",
+		MuzzleVelocity = 801,
+		Mass = 3.23,
+		Normalization = 4,
 		TracerColor = "white",
 	},
 	{

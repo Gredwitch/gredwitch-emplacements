@@ -79,6 +79,7 @@ function ENT:Reload(ply)
 			self:SetBodygroup(2,0)
 			self:SetBodygroup(7,0)
 			self.MagIn = true
+			self.NewMagIn = true
 		end)
 		timer.Simple(1.9,function() if IsValid(self) then self:SetBodygroup(7,0) end end)
 		timer.Simple(self:SequenceDuration(),function()
@@ -86,6 +87,7 @@ function ENT:Reload(ply)
 			self:SetAmmo(self.Ammo)
 			self:SetIsReloading(false)
 			self:SetCurrentTracer(0)
+			self.NewMagIn = false
 		end)
 	else
 		timer.Simple(1.5,function() 
@@ -96,19 +98,23 @@ function ENT:Reload(ply)
 	end
 end
 
-function ENT:OnTick()
-	if SERVER then
+if SERVER then
+	function ENT:OnTick()
 		self:SetSkin(0)
 		self:SetBodygroup(1,0) -- Gun
 		self:SetBodygroup(5,0) -- Lid
 		self:SetBodygroup(6,0) -- Mag Base
-		if (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
-			self:SetBodygroup(2,0) -- Ammo bag shown
-			if self:GetAmmo() <= 0 then
-				self:SetBodygroup(7,2) -- Ammo belt hidden
+		
+		if self.MagIn then
+			self:SetBodygroup(2,0)
+			if (self:GetAmmo() < 1 and !self.NewMagIn) or !self.MagIn then
+				self:SetBodygroup(7,2)
 			else
-				self:SetBodygroup(7,0) -- FN MAG Ammo belt
+				self:SetBodygroup(7,0)
 			end
+		else
+			self:SetBodygroup(2,2)
+			self:SetBodygroup(7,2)
 		end
 	end
 end

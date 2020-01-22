@@ -16,8 +16,28 @@ ENT.AmmunitionTypes		= {
 	{
 		Caliber = 105,
 		ShellType = "HE",
-		MuzzleVelocity = 470,
-		Mass = 14.81,
+		MuzzleVelocity = 472,
+		Mass = 15,
+		LinearPenetration = 22,
+		TNTEquivalent = 1.75,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 105,
+		ShellType = "APHE",
+		MuzzleVelocity = 475,
+		Mass = 14,
+		TNTEquivalent = 0.238,
+		Normalization = -1,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 105,
+		ShellType = "HEAT",
+		MuzzleVelocity = 495,
+		Mass = 12,
+		LinearPenetration = 115,
+		TNTEquivalent = 2.55,
 		TracerColor = "white",
 	},
 	{
@@ -28,6 +48,7 @@ ENT.AmmunitionTypes		= {
 		TracerColor = "white",
 	},
 }
+ENT.IsHowitzer			= true
 ENT.PitchRate			= 30
 ENT.YawRate				= 30
 ENT.ShootAnim			= "shoot"

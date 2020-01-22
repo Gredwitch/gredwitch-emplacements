@@ -18,13 +18,26 @@ ENT.AmmunitionTypes		= {
 		ShellType = "HE",
 		MuzzleVelocity = 700,
 		Mass = 3.75,
+		TNTEquivalent = 0.22,
+		LinearPenetration = 5,
 		TracerColor = "white",
 	},
 	{
 		Caliber = 57,
-		ShellType = "AP",
+		ShellType = "APHE",
 		MuzzleVelocity = 990,
 		Mass = 3.14,
+		Normalization = -1,
+		TNTEquivalent = 0.0277,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 57,
+		ShellType = "APHEBC",
+		MuzzleVelocity = 990,
+		Mass = 3.14,
+		Normalization = 4,
+		TNTEquivalent = 0.0216,
 		TracerColor = "white",
 	},
 	{
@@ -53,6 +66,9 @@ ENT.Spread				= 0.1
 ENT.WheelsModel			= "models/gredwitch/zis2/zis2_wheels.mdl"
 ENT.WheelsPos			= Vector(0,5,-6)
 ENT.Ammo				= -1
+ENT.MaxViewModes		= 1
+ENT.SightTexture		= "gredwitch/overlay_russian_tanksight_02"
+ENT.SightPos			= Vector(-10,-10,28)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -64,4 +80,31 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Activate()
 	ent:SetSkin(math.random(0,4))
 	return ent
+end
+
+function ENT:ViewCalc(ply, pos, angles, fov)
+	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
+	if self:GetViewMode() == 1 then
+		local ang = self:GetAngles()
+		angles.p = -ang.r
+		angles.y = ang.y + 90
+		angles.r = -ang.p
+		local view = {}
+		view.origin = self:LocalToWorld(self.SightPos)
+		view.angles = angles
+		view.fov = 20
+		view.drawviewer = false
+
+		return view
+	end
+end
+
+function ENT:HUDPaint(ply,viewmode)
+	if viewmode == 1 then
+		local ScrW,ScrH = ScrW(),ScrH()
+		surface.SetDrawColor(255,255,255,255)
+		surface.SetTexture(surface.GetTextureID(self.SightTexture))
+		surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+		return ScrW,ScrH
+	end
 end

@@ -16,25 +16,38 @@ ENT.AmmunitionTypes		= {
 	{
 		Caliber = 76,
 		ShellType = "HE",
-		MuzzleVelocity = 792,
-		Mass = 6.5,
+		MuzzleVelocity = 800,
+		Mass = 5.8,
 		TracerColor = "white",
+		LinearPenetration = 7,
+		TNTEquivalent = 0.39
 	},
 	{
 		Caliber = 76,
 		ShellType = "AP",
 		MuzzleVelocity = 792,
-		Mass = 6.5,
+		Mass = 6.8,
 		TracerColor = "white",
+		Normalization = -1,
+	},
+	{
+		Caliber = 76,
+		ShellType = "APCBC",
+		MuzzleVelocity = 792,
+		Mass = 7,
+		TracerColor = "white",
+		Normalization = 4,
+		TNTEquivalent = 0.0637,
 	},
 	{
 		Caliber = 76,
 		ShellType = "Smoke",
-		MuzzleVelocity = 792,
-		Mass = 6.5,
+		MuzzleVelocity = 274,
+		Mass = 3.4,
 		TracerColor = "white",
 	},
 }
+
 ENT.PitchRate			= 40
 ENT.YawRate				= 40
 ENT.ShootAnim			= "shoot"

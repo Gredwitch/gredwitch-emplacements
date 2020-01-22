@@ -97,11 +97,11 @@ function ENT:Reload(ply)
 		end)
 	end
 end
-
-function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then self:SetBodygroup(2,0) end
+if SERVER then
+	function ENT:OnTick()
+		if (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then self:SetBodygroup(2,0) end
+	end
 end
-
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then

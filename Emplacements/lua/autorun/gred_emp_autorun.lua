@@ -1,7 +1,7 @@
-AddCSLuaFile()
 
 local GRED_SVAR = { FCVAR_REPLICATED, FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE, FCVAR_NOTIFY }
 local CreateConVar = CreateConVar
+
 
 gred = gred or {}
 gred.CVars = gred.CVars or {}
@@ -19,68 +19,218 @@ gred.CVars["gred_sv_enable_recoil"] 				= CreateConVar("gred_sv_enable_recoil"		
 gred.CVars["gred_sv_progressiveturn"] 				= CreateConVar("gred_sv_progressiveturn"			,  "1"  , GRED_SVAR)
 gred.CVars["gred_sv_progressiveturn_mg"] 			= CreateConVar("gred_sv_progressiveturn_mg"			,  "1"  , GRED_SVAR)
 gred.CVars["gred_sv_progressiveturn_cannon"] 		= CreateConVar("gred_sv_progressiveturn_cannon"		,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_enable_cannon_artillery"] 		= CreateConVar("gred_sv_enable_cannon_artillery"	,  "1"  , GRED_SVAR)
+gred.CVars["gred_sv_emplacement_artillery_time"]	= CreateConVar("gred_sv_emplacement_artillery_time"	, "60"  , GRED_SVAR)
+gred.EmplacementTool = {}
+gred.EmplacementTool.BlackList = {"gred_emp_nebelwerfer_tubes","gred_emp_m61","gred_emp_base",
+								-- "gred_emp_[whatyouwant]",  -- These emplacements won't show up in the menu
+}
+
+gred.Lang = gred.Lang or {}
+gred.Lang.fr = gred.Lang.fr or {}
+gred.Lang.en = gred.Lang.en or {}
+gred.Lang.fr.EmplacementTool = {
+	["control_init_base"] = "[Recharger] + [Intéragir] pour alterner entre les modes.",
+	["control_mode_construct"] = "Clique droit pour faire apparaître le menu, clique droit + [Utiliser] pour supprimer la selection, clique gauche pour spawn l'emplacement, recharger pour changer l'angle de l'emplacement.",
+	["info_emplacement_motion_1"] = "L'emplacement '",
+	["info_emplacement_motion_2"] = "' a été ",
+	["info_emplacement_freeze"] = "freeze",
+	["info_emplacement_unfreeze"] = "unfreeze",
+	["control_mode_edit"] = "Clique droit pour ouvrir le menu d'édition en visant un emplacement.",
+	["info_emplacement_destroyed_1"] = "L'emplacement '",
+	["info_emplacement_destroyed_2"] = "' a été détruit!",
+	["hud_curmode"] = "Mode:",
+	["hud_constructmode"] = "Construction",
+	["hud_editmode"] = "Edition",
+	["menu_copy_to_clipboard"] = "Copier vers le presse-papier",
+	["cant_edit_emplacement"] = "Vous ne pouvez pas modifier cet emplacement!",
+	["info_singleplayer"] = "ATTENTION! Ce SWEP ne fonctionne pas en mode solo! Pour l'utiliser, démarrez une partie en mode local ou Peer To Peer (comme ça: https://i.imgur.com/X3bCUcj.png).",
+	["menu_emplacement_selection"] = "Sélection de l'emplacement",
+	["menu_edit"] = "Menu d'édition",
+	["menu_move"] = "Déplacer",
+	["menu_destroy"] = "Détruire",
+	["menu_properties"] = "Propriétés",
+}
+gred.Lang.en.EmplacementTool = {
+	["control_init_base"] = "[Reload] + [Use] to toggle modes.",
+	["control_mode_construct"] = "Right click to show the menu, right click + [Use] to remove the selection, left click to spawn the emplacement and reload to change the emplacement's angle.",
+	["info_emplacement_motion_1"] = "The emplacement '",
+	["info_emplacement_motion_2"] = "' has been ",
+	["info_emplacement_freeze"] = "frozen",
+	["info_emplacement_unfreeze"] = "unfrozen",
+	["control_mode_edit"] = "Right click to open the edit menu while aiming at an emplacement.",
+	["info_emplacement_destroyed_1"] = "The emplacement '",
+	["info_emplacement_destroyed_2"] = "' has been destroyed!",
+	["hud_curmode"] = "Current mode:",
+	["hud_constructmode"] = "Construct mode",
+	["hud_editmode"] = "Edit mode",
+	["menu_copy_to_clipboard"] = "Copy to clipboard",
+	["cant_edit_emplacement"] = "You cannot edit this emplacement!",
+	["info_singleplayer"] = "WARNING! This SWEP doesn't work in single player mode! If you want to use it, you must start a local game or a Peer To Peer game (like this : https://i.imgur.com/X3bCUcj.png).",
+	["menu_emplacement_selection"] = "Emplacement selection",
+	["menu_edit"] = "Edit menu",
+	["menu_move"] = "Move",
+	["menu_destroy"] = "Destroy",
+	["menu_properties"] = "Properties",
+}
+
+gred.EmplacementBinoculars = gred.EmplacementBinoculars or {}
+gred.EmplacementBinoculars.FireMissionID = gred.EmplacementBinoculars.FireMissionID or 124
+gred.Lang.fr.EmplacementBinoculars = { -- gred.Lang.fr.EmplacementBinoculars or {
+	["info_emplacement_paired"] = "Vous avez synchronisé l'emplacement ",
+	["info_emplacement_unpaired"] = "Vous avez dé-synchronisé l'emplacement ",
+	["info_firemission"] = "Fire mission ID: ",
+	["info_invalidpos"] = "Coordonées invalides! Rien ne doit obstruer la cible!",
+	["emplacement_missionid"] = "DEMANDE N°: #",
+	["emplacement_caller"] = "SOUS L'ORDRE DE: ",
+	["emplacement_timeleft"] = "TEMPS RESTANT: ",
+	["info_nopairedemplacements"] = "Aucun emplacement synchronisé!",
+	
+}
+gred.Lang.en.EmplacementBinoculars = { -- gred.Lang.fr.EmplacementBinoculars or {
+	["info_emplacement_paired"] = "You have paired ",
+	["info_emplacement_unpaired"] = "You have unpaired ",
+	["info_firemission"] = "Fire mission ID: ",
+	["info_invalidpos"] = "Invalid coordinates! Make sure nothing is obstructing your target!",
+	["emplacement_missionid"] = "FIRE MISSION ID: #",
+	["emplacement_caller"] = "CALLER: ",
+	["emplacement_timeleft"] = "TIME LEFT: ",
+	["info_nopairedemplacements"] = "No paired emplacements!",
+	
+}
+
 
 local tableinsert = table.insert
 gred.AddonList = gred.AddonList or {}
-tableinsert(gred.AddonList,1554003672) -- Emplacements materials 2
-tableinsert(gred.AddonList,1484100983) -- Emplacements materials
 tableinsert(gred.AddonList,1391460275) -- Emplacements
 tableinsert(gred.AddonList,1131455085) -- Base addon
+
+timer.Simple(0.1,function()
+	local tablehasvalue = table.HasValue
+	local startsWith = string.StartWith
+	
+	gred.EntsList = {}
+	for k,v in pairs (scripted_ents.GetList()) do
+		if (startsWith(k,"gred_emp") or k == "gred_prop_ammobox") and not tablehasvalue(gred.EmplacementTool.BlackList,k) then
+			gred.EntsList[k] = v
+		end
+	end
+	-- table.sort(gred.EntsList,function(a,b) return a.t.ClassName > b.t.ClassName end)
+end)
+
 
 if SERVER then
 	util.AddNetworkString("gred_net_emp_reloadsounds")
 	util.AddNetworkString("gred_net_emp_prop")
 	util.AddNetworkString("gred_net_emp_viewmode")
 	util.AddNetworkString("gred_net_emp_onshoot")
+	util.AddNetworkString("gred_net_emp_firemission")
+	util.AddNetworkString("gred_net_sendeyetrace")
+	util.AddNetworkString("gred_net_removeeyetrace")
 	
+	util.AddNetworkString("gred_net_send_emplacement_type")
+	util.AddNetworkString("gred_net_send_emplacement_zoffset")
+	util.AddNetworkString("gred_net_emplacement_builtpercent")
+	util.AddNetworkString("gred_net_modifyemplacement")
+	util.AddNetworkString("gred_net_freeze_unfreeze")
+	util.AddNetworkString("gred_net_getmotion")
+	util.AddNetworkString("gred_net_setmotion")
+	util.AddNetworkString("gred_net_move")
+	util.AddNetworkString("gred_net_remove")
+	
+	timer.Simple(0,function()
+		net.Receive("gred_net_sendeyetrace",function()
+			local self = net.ReadEntity()
+			local vec = net.ReadVector()
+			if !IsValid(self) then return end
+			
+			self.CustomEyeTrace = true
+			self.CustomEyeTraceHitPos = vec
+		end)
+		
+		net.Receive("gred_net_removeeyetrace",function()
+			local self = net.ReadEntity()
+			if !IsValid(self) then return end
+			
+			self.CustomEyeTrace = nil
+			self.CustomEyeTraceHitPos = nil
+		end)
+	end)
 	net.Receive("gred_net_emp_viewmode",function()
 		self = net.ReadEntity()
 		self:SetViewMode(net.ReadInt(8))
 	end)
+	
+	net.Receive("gred_net_send_emplacement_type",function()
+		local self = net.ReadEntity()
+		self:SendWeaponAnim(ACT_VM_DEPLOY)
+		self:SetSelectedEmplacement(net.ReadString())
+	end)
+	
+	net.Receive("gred_net_send_emplacement_zoffset",function()
+		net.ReadEntity().Emplacement.ZOffset = net.ReadVector()
+	end)
+	
+	net.Receive("gred_net_getmotion",function()
+		local self = net.ReadEntity()
+		local ent = net.ReadEntity()
+		local p = ent:GetPhysicsObject()
+		if IsValid(p) then
+			net.Start("gred_net_setmotion")
+				net.WriteEntity(self)
+				net.WriteBool(p:IsMotionEnabled())
+			net.Broadcast()
+		end
+	end)
+	
+	net.Receive("gred_net_remove",function()
+		net.ReadEntity():Remove()
+	end)
+	
+	net.Receive("gred_net_move",function()
+		local self = net.ReadEntity()
+		local ent = net.ReadEntity()
+		
+		self:SendWeaponAnim(ACT_VM_DEPLOY)
+		self.Emplacement.ZOffset = nil
+		self:SetSelectedEmplacement(ent.ClassName)
+		self:SetIsMoving(true)
+		self:SetPrevBuiltPercent(ent.BuiltPercent or 999)
+		
+		-- self:SetGredEMPBaseENT(nil)
+		self:SetEditMode(false)
+		
+		ent:Remove()
+	end)
+	
+	net.Receive("gred_net_freeze_unfreeze",function()
+		local ent = net.ReadEntity()
+		local bool = net.ReadBool()
+		if ent.Entities then
+			for k,v in pairs(ent.Entities) do
+				local p = v:GetPhysicsObject()
+				if IsValid(p) then
+					p:EnableMotion(bool)
+				end
+			end
+		else
+			local p = ent:GetPhysicsObject()
+			if IsValid(p) then
+				p:EnableMotion(bool)
+			end
+		end
+	end)
+
 else
 	
 	local CreateClientConVar = CreateClientConVar
-	CreateClientConVar("gred_cl_shelleject","1", true,false)
-	CreateClientConVar("gred_cl_emp_mouse_sensitivity","1", true,false)
-	CreateClientConVar("gred_cl_emp_mouse_invert_x","0", true,false)
-	CreateClientConVar("gred_cl_emp_mouse_invert_y","0", true,false)
+	gred.CVars.gred_cl_shelleject = CreateClientConVar("gred_cl_shelleject","1", true,false)
+	gred.CVars.gred_cl_emp_mouse_sensitivity = CreateClientConVar("gred_cl_emp_mouse_sensitivity","1", true,false)
+	gred.CVars.gred_cl_emp_mouse_invert_x = CreateClientConVar("gred_cl_emp_mouse_invert_x","0", true,false)
+	gred.CVars.gred_cl_emp_mouse_invert_y = CreateClientConVar("gred_cl_emp_mouse_invert_y","0", true,false)
+	gred.CVars.gred_cl_lang = CreateConVar("gred_cl_lang",system.GetCountry() == "FR" and "fr" or "en",FCVAR_USERINFO,"'fr' or 'en'")
 	-- CreateClientConVar("gred_cl_emp_volume","1", true,false)
 	
-	
-	net.Receive("gred_net_emp_reloadsounds",function()
-		net.ReadEntity().ShotInterval = net.ReadFloat()
-	end)
-	
-	net.Receive("gred_net_emp_prop",function()
-		net.ReadEntity().GredEMPBaseENT = net.ReadEntity()
-	end)
-	
-	net.Receive("gred_net_emp_onshoot",function()
-		local self = net.ReadEntity()
-		if !IsValid(self) or !self.OnShoot then return end
-		self:OnShoot()
-	end)
-	
-	hook.Add("AdjustMouseSensitivity", "gred_emp_mouse", function(s)
-		local ply = LocalPlayer()
-		local ent = ply.Gred_Emp_Ent
-		if not IsValid(ent) then ply.Gred_Emp_Ent = nil return end
-		if string.StartWith(ent.ClassName,"gred_emp") then
-			if IsValid(ent:GetSeat()) and ply == ent:GetShooter() then
-				return GetConVar("gred_cl_emp_mouse_sensitivity"):GetFloat()
-			end
-		end
-	end)
-	
-	hook.Add("CalcView","gred_emp_calcview",function(ply, pos, angles, fov)
-		if ply:GetViewEntity() != ply then return end
-		if ply.Gred_Emp_Ent and ply:Alive() then
-			local ent = ply.Gred_Emp_Ent
-			if IsValid(ent) then
-				return ent:ViewCalc(ply,pos,angles,fov)
-			end
-		end
-	end)
 	
 	local function DrawCircle( X, Y, radius )
 		local segmentdist = 360 / ( 2 * math.pi * radius / 2 )
@@ -89,60 +239,6 @@ else
 			surface.DrawLine( X + math.cos( math.rad( a ) ) * radius, Y - math.sin( math.rad( a ) ) * radius, X + math.cos( math.rad( a + segmentdist ) ) * radius, Y - math.sin( math.rad( a + segmentdist ) ) * radius )
 		end
 	end
-	
-	hook.Add("HUDPaint","gred_emp_hudpaint",function()
-		local ply = LocalPlayer()
-		if not ply.Gred_Emp_Ent then return end
-		
-		local ent = ply.Gred_Emp_Ent
-		if !IsValid(ent) then return end
-		if ent:GetShooter() != ply then return end
-		
-		local ScrW,ScrH = ent:HUDPaint(ply,ent:GetViewMode())
-		if ScrW and ScrH then
-			local startpos = ent:LocalToWorld(ent.SightPos)
-			local scr = util.TraceLine({
-				start = startpos,
-				endpos = (startpos + ply:EyeAngles():Forward() * 1000),
-				filter = ent.Entities
-			}).HitPos:ToScreen()
-			scr.x = scr.x > ScrW and ScrW or (scr.x < 0 and 0 or scr.x)
-			scr.y = scr.y > ScrH and ScrH or (scr.y < 0 and 0 or scr.y)
-			
-			
-			surface.SetDrawColor(255,255,255)
-			DrawCircle(scr.x,scr.y,19)
-			surface.SetDrawColor(0,0,0)
-			DrawCircle(scr.x,scr.y,20)
-		end
-	end)
-	
-	hook.Add("InputMouseApply", "gred_emp_move",function(cmd,x,y,angle)
-		local ply = LocalPlayer()
-		local ent = ply.Gred_Emp_Ent
-		if not IsValid(ent) then ply.Gred_Emp_Ent = nil return end
-		if string.StartWith(ent.ClassName,"gred_emp") then
-			if IsValid(ent:GetSeat()) or ent:GetViewMode() != 0 then
-				if ply == ent:GetShooter() then
-					local InvertX = GetConVar("gred_cl_emp_mouse_invert_x"):GetInt() == 1
-					local InvertY = GetConVar("gred_cl_emp_mouse_invert_Y"):GetInt() == 1
-					if InvertX then
-						angle.yaw = angle.yaw + x / 50
-					else
-						angle.yaw = angle.yaw - x / 50
-					end
-					if InvertY then
-						angle.pitch = math.Clamp( angle.pitch - y / 50, -89, 89 )
-					else
-						angle.pitch = math.Clamp( angle.pitch + y / 50, -89, 89 )
-					end
-					cmd:SetViewAngles( angle )
-                   
-					return true
-				end
-			end
-		end
-	end)
 	
 	local function gred_settings_emplacements(Panel)
 		Panel:ClearControls()
@@ -214,6 +310,19 @@ else
 			gred.CheckConCommand("gred_sv_progressiveturn",val)
 		end
 		
+		local this = Panel:CheckBox("Should every cannons be able to be used as artillery?","gred_sv_enable_cannon_artillery");
+		this.OnChange = function(this,val)
+			val = val and 1 or 0
+			gred.CheckConCommand("gred_sv_enable_cannon_artillery",val)
+		end
+		
+		local this = Panel:NumSlider( "Fire mission time", "gred_sv_emplacement_artillery_time", 1, 900, 0 );
+		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
+		this.OnValueChanged = function(this,val)
+			if this.ConVarChanging then return end
+			gred.CheckConCommand("gred_sv_emplacement_artillery_time",val)
+		end
+		
 		local this = Panel:NumSlider( "Progressive rotation multiplier (MGs)", "gred_sv_progressiveturn_mg", 0, 10, 2 );
 		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
 		this.OnValueChanged = function(this,val)
@@ -244,7 +353,7 @@ else
 		
 		-- end
 		
-		local this = Panel:NumSlider( "Mouse sensitivity", "gred_cl_emp_mouse_sensitivity", 0, 0.99, 2 );
+		local this = Panel:NumSlider( "Mouse sensitivity", "gred_cl_emp_mouse_sensitivity", 0.01, 0.99, 2 );
 		
 		-- local this = Panel:NumSlider( "Shoot sound volume", "gred_cl_emp_volume", 0, 1, 2 );
 		
@@ -253,6 +362,220 @@ else
 		local this = Panel:CheckBox("Invert Y axis in seats?","gred_cl_emp_mouse_invert_y");
 		
 	end
+	
+	surface.CreateFont( "GFont", {
+		font = "Arial", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
+		extended = false,
+		size = (ScrW()/100 + ScrH()/100)*3,
+		weight = 500,
+		blursize = 0,
+		scanlines = 0,
+		antialias = true,
+		underline = false,
+		italic = false,
+		strikeout = false,
+		symbol = false,
+		rotary = false,
+		shadow = true,
+		additive = false,
+		outline = false,
+	} )
+	
+	surface.CreateFont( "GFont_arti", {
+		font = "Arial", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
+		extended = false,
+		size = (ScrW()/100 + ScrH()/100)*3,
+		weight = 500,
+		blursize = 0,
+		scanlines = 0,
+		antialias = true,
+		underline = false,
+		italic = false,
+		strikeout = false,
+		symbol = false,
+		rotary = false,
+		shadow = true,
+		additive = false,
+		outline = false,
+	} )
+	
+	net.Receive("gred_net_emplacement_builtpercent",function()
+		local ent = net.ReadEntity()
+		ent.BuiltPercent = net.ReadFloat()
+		ent.HP = net.ReadFloat()
+	end)
+	
+	net.Receive("gred_net_setmotion",function()
+		local self = net.ReadEntity()
+		self.EmplacementMotion = net.ReadBool()
+	end)
+	
+	net.Receive("gred_net_modifyemplacement",function()
+		
+		local emplacement = net.ReadEntity()
+		if !IsValid(emplacement) then return end
+		emplacement.BuiltPercent = emplacement.BuiltPercent or 0
+		
+		emplacement.Draw = function(self)
+			self:DrawModel()
+			
+			if self.ClassName == "gred_prop_ammobox" then
+				if self.BuiltPercent < 300 then
+					local ang = LocalPlayer():EyeAngles()
+					ang.p = 0
+					ang.y = ang.y - 90
+					ang.r = 90
+					local pos = self:GetPos()
+					pos.z = pos.z + 30
+					local mins,maxs = self:GetModelBounds()
+					
+					cam.Start3D2D(pos,ang,0.25)
+						surface.SetFont("Default")
+						surface.SetTextColor(0,0,0)
+						surface.SetTextPos(0,-maxs.x/2)
+						draw.DrawText(math.Round((self.BuiltPercent/300 * 100),1).."%","DermaDefault",0,offset,Color( 255, 255, 255, 255 ),TEXT_ALIGN_LEFT )
+					cam.End3D2D()
+				end
+			else
+				if self.BuiltPercent < self.HP then
+					local ang = LocalPlayer():EyeAngles()
+					ang.p = 0
+					ang.y = ang.y - 90
+					ang.r = 90
+					local pos = self:GetPos()
+					local mins,maxs = self:GetModelBounds()
+					local c = self:GetClass()
+					if c == "gred_emp_flak38" or c == "gred_emp_flakvierling38" or c == "gred_emp_bofors" or c == "gred_emp_artemis30" or c == "gred_emp_nebelwerfer" or c == "gred_emp_m60" or c == "gred_emp_mg42" or c == "gred_emp_mg81z" or c == "gred_emp_m2"  or c == "gred_emp_m2_low" or c == "gred_emp_vickers" then
+						pos.z = pos.z + 30
+					elseif c == "gred_emp_breda35" or c == "gred_emp_zsu23" or c == "gred_emp_kwk" or c == "gred_emp_zpu4_1949" or c == "gred_emp_bar" or c == "gred_emp_mg3" or c == "gred_emp_rpk" then
+						pos.z = pos.z + maxs.z*4
+					else
+						pos.z = pos.z + maxs.z*1.5
+					end
+					cam.Start3D2D(pos,ang,0.25)
+						surface.SetFont("Default")
+						surface.SetTextColor(0,0,0)
+						surface.SetTextPos(0,-maxs.x/2)
+						draw.DrawText(math.Round((self.BuiltPercent/self.HP * 100),1).."%","DermaDefault",0,offset,Color( 255, 255, 255, 255 ),TEXT_ALIGN_LEFT )
+					cam.End3D2D()
+				end
+			end
+		end
+	end)
+	
+	net.Receive("gred_net_emp_reloadsounds",function()
+		net.ReadEntity().ShotInterval = net.ReadFloat()
+	end)
+	
+	net.Receive("gred_net_emp_prop",function()
+		net.ReadEntity().GredEMPBaseENT = net.ReadEntity()
+	end)
+	
+	net.Receive("gred_net_emp_onshoot",function()
+		local self = net.ReadEntity()
+		if !IsValid(self) or !self.OnShoot then return end
+		self:OnShoot()
+	end)
+	
+	net.Receive("gred_net_emp_firemission",function()
+		local ent = net.ReadEntity()
+		local id = net.ReadInt(14)
+		local tab = net.ReadTable()
+		
+		if !IsValid(ent) then return end
+		
+		gred = gred or {}
+		gred.EmplacementBinoculars = gred.EmplacementBinoculars or {}
+		gred.EmplacementBinoculars.FireMissionID = id
+		ent.FireMissions = ent.FireMissions or {}
+		ent.FireMissions[id] = tab
+		
+		timer.Simple(gred.CVars.gred_sv_emplacement_artillery_time:GetFloat(),function()
+			if !IsValid(ent) then return end
+			ent.FireMissions[id] = nil
+		end)
+	end)
+	
+	
+	hook.Add("AdjustMouseSensitivity", "gred_emp_mouse", function(s)
+		local ply = LocalPlayer()
+		local ent = ply.Gred_Emp_Ent
+		if not IsValid(ent) then ply.Gred_Emp_Ent = nil return end
+		if string.StartWith(ent.ClassName,"gred_emp") then
+			if IsValid(ent:GetSeat()) and ply == ent:GetShooter() then
+				return gred.CVars.gred_cl_emp_mouse_sensitivity:GetFloat()
+			end
+		end
+	end)
+	
+	hook.Add("CalcView","gred_emp_calcview",function(ply, pos, angles, fov)
+		if ply:GetViewEntity() != ply then return end
+		if !ply:Alive() then return end
+		if !ply.Gred_Emp_Ent then return end
+		if !IsValid(ply.Gred_Emp_Ent) then return end
+		
+		return ply.Gred_Emp_Ent:View(ply,pos,angles,fov)
+	end)
+	
+	hook.Add("HUDPaint","gred_emp_hudpaint",function()
+		local ply = LocalPlayer()
+		if not ply.Gred_Emp_Ent then return end
+		
+		local ent = ply.Gred_Emp_Ent
+		if !IsValid(ent) then return end
+		if ent:GetShooter() != ply then return end
+		
+		local ScrW,ScrH = ent:PaintHUD(ply,ent:GetViewMode())
+		if ScrW and ScrH then
+			local startpos = ent:LocalToWorld(ent.SightPos)
+			local scr = util.TraceLine({
+				start = startpos,
+				endpos = (startpos + ply:EyeAngles():Forward() * 1000),
+				filter = ent.Entities
+			}).HitPos:ToScreen()
+			scr.x = scr.x > ScrW and ScrW or (scr.x < 0 and 0 or scr.x)
+			scr.y = scr.y > ScrH and ScrH or (scr.y < 0 and 0 or scr.y)
+			
+			
+			surface.SetDrawColor(255,255,255)
+			DrawCircle(scr.x,scr.y,19)
+			surface.SetDrawColor(0,0,0)
+			DrawCircle(scr.x,scr.y,20)
+		end
+	end)
+	
+	hook.Add("InputMouseApply", "gred_emp_move",function(cmd,x,y,angle)
+		local ply = LocalPlayer()
+		local ent = ply.Gred_Emp_Ent
+		if not IsValid(ent) then ply.Gred_Emp_Ent = nil return end
+		if string.StartWith(ent.ClassName,"gred_emp") then
+			if IsValid(ent:GetSeat()) or ent:GetViewMode() != 0 then
+				if ply == ent:GetShooter() then
+					local InvertX = gred.CVars.gred_cl_emp_mouse_invert_x:GetInt() == 1
+					local InvertY = gred.CVars.gred_cl_emp_mouse_invert_y:GetInt() == 1
+					local sensitivity = gred.CVars.gred_cl_emp_mouse_sensitivity:GetFloat()
+					
+					x = x * sensitivity
+					y = y * sensitivity
+					
+					if InvertX then
+						angle.yaw = angle.yaw + x / 50
+					else
+						angle.yaw = angle.yaw - x / 50
+					end
+					if InvertY then
+						angle.pitch = math.Clamp( angle.pitch - y / 50, -89, 89 )
+					else
+						angle.pitch = math.Clamp( angle.pitch + y / 50, -89, 89 )
+					end
+					
+					cmd:SetViewAngles( angle )
+                   
+					return true
+				end
+			end
+		end
+	end)
 	
 	hook.Add( "PopulateToolMenu", "gred_menu_emplacements", function()
 		spawnmenu.AddToolMenuOption("Options",						-- Tab

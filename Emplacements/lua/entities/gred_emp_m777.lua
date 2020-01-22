@@ -12,22 +12,54 @@ ENT.NameToPrint			= "M777"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4
+ENT.IsHowitzer			= true
 ENT.AmmunitionTypes		= {
 	{
 		Caliber = 155,
 		ShellType = "HE",
-		MuzzleVelocity = 300, -- actually 827
-		Mass = 43.2,
+		MuzzleVelocity = 823,
+		Mass = 43.56,
+		TNTEquivalent = 5.900,
+		LinearPenetration = 49,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 155,
+		ShellType = "APHE",
+		MuzzleVelocity = 823,
+		TNTEquivalent = 0.739,
+		Normalization = -1,
+		Mass = 43.56,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 155,
+		ShellType = "HEAT",
+		MuzzleVelocity = 823,
+		TNTEquivalent = 5.9121,
+		LinearPenetration = 250,
+		Mass = 43.56,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 155,
+		ShellType = "APHEBC",
+		MuzzleVelocity = 823,
+		TNTEquivalent = 1.0164,
+		Normalization = 4,
+		Mass = 43.56,
 		TracerColor = "white",
 	},
 	{
 		Caliber = 155,
 		ShellType = "Smoke",
-		MuzzleVelocity = 300,
-		Mass = 43.2,
+		MuzzleVelocity = 810,
+		Mass = 43.56,
 		TracerColor = "white",
 	},
 }
+ENT.AddShootAngle		= 0
+ENT.MaxUseDistance		= 120
 ENT.PitchRate			= 20
 ENT.YawRate				= 20
 ENT.AnimPauseTime		= 1

@@ -1,0 +1,17 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/gredwitch/gpf155/GPF_155mm_c"
+	"$bumpmap" "models/gredwitch/gpf155/GPF_155mm_b"
+
+    // $envmap 					"env_cubemap"
+	$nocull						1
+    $normalmapalphaenvmapmask 	1
+    $envmaptint 				"[0.20 0.20 0.20]"
+
+    $phong 						1
+    $phongfresnelranges 		"[0.25 0.58 8]"
+    $phongtint 					"[1 0.99 0.79]"
+    $phongexponent 				31
+    $phongboost 				8
+    $phongalbedoboost 			1
+}

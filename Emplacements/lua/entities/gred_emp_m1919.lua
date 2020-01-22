@@ -57,22 +57,23 @@ function ENT:Reload(ply)
 	
 	timer.Simple(0.6, function()
 		if !IsValid(self) then return end
-		
-		local att = self:GetAttachment(self:LookupAttachment("mageject"))
-		local prop = ents.Create("prop_physics")
-		prop:SetModel("models/gredwitch/m1919/m1919_belt.mdl")
-		prop:SetPos(att.Pos)
-		prop:SetAngles(att.Ang - Angle(0,90,0))
-		prop:Spawn()
-		prop:Activate()
-		self.MagIn = false
-		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
-		if t > 0 then
-			timer.Simple(t,function()
-				if IsValid(prop) then prop:Remove() end 
-			end)
+		if self:GetAmmo() > 0 then
+			local att = self:GetAttachment(self:LookupAttachment("mageject"))
+			local prop = ents.Create("prop_physics")
+			prop:SetModel("models/gredwitch/m1919/m1919_belt.mdl")
+			prop:SetPos(att.Pos)
+			prop:SetAngles(att.Ang - Angle(0,90,0))
+			prop:Spawn()
+			prop:SetModelScale(1.1)
+			prop:Activate()
+			self.MagIn = false
+			local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
+			if t > 0 then
+				timer.Simple(t,function()
+					if IsValid(prop) then prop:Remove() end 
+				end)
+			end
 		end
-		
 		self:SetBodygroup(1,1)
 	end)
 	
@@ -81,12 +82,14 @@ function ENT:Reload(ply)
 			if !IsValid(self) then return end
 			self:SetBodygroup(1,0)
 			self.MagIn = true
+			self.NewMagIn = true
 		end)
 		timer.Simple(self:SequenceDuration(),function() 
 			if !IsValid(self) then return end
 			self:SetAmmo(self.Ammo)
 			self:SetIsReloading(false)
 			self:SetCurrentTracer(0)
+			self.NewMagIn = false
 		end)
 	else
 		timer.Simple(1.5,function() 
@@ -97,12 +100,17 @@ function ENT:Reload(ply)
 	end
 end
 
-function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
-		if self:GetAmmo() <= 0 then
-			self:SetBodygroup(1,1)
+
+if SERVER then
+	function ENT:OnTick()
+		if self.MagIn then
+			if (self:GetAmmo() < 1 and !self.NewMagIn) or !self.MagIn then
+				self:SetBodygroup(1,1)
+			else
+				self:SetBodygroup(1,0)
+			end
 		else
-			self:SetBodygroup(1,0)
+			self:SetBodygroup(1,1)
 		end
 	end
 end

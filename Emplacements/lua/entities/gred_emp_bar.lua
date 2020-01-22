@@ -35,12 +35,7 @@ ENT.CycleRate			= 0.6
 ENT.TurretPos			= Vector(0,0.9,1.5)
 ENT.ExtractAngle		= Angle(0,0,0)
 ENT.MaxRotation			= Angle(30,45)
-
-if game.SinglePlayer() then
-	ENT.SightPos		= Vector(0.02,-32,1.14)
-else
-	ENT.SightPos		= Vector(-0.005,-32,1.14)
-end
+ENT.SightPos			= Vector(0,-36,1.19)
 ENT.MaxViewModes		= 1
 
 function ENT:SwitchAmmoType(ply)
@@ -71,7 +66,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
  	ent.Owner = ply
 	ent:Spawn()
 	ent:Activate()
-	ent:SetModelScale(1.1)
+	ent:SetModelScale(1.15)
 	return ent
 end
 
@@ -92,6 +87,7 @@ function ENT:Reload(ply)
 		prop:SetAngles(att.Ang + Angle(0,180,0))
 		prop:SetPos(att.Pos + self.TurretPos)
 		prop:Spawn()
+		prop:SetModelScale(1.15)
 		prop:Activate()
 		self.MagIn = false
 		
@@ -112,12 +108,14 @@ function ENT:Reload(ply)
 			self:SetBodygroup(1,0)
 			self:SetBodygroup(2,0)
 			self.MagIn = true
+			self.NewMagIn = true
 		end)
 
 		timer.Simple(self:SequenceDuration(),function() 
 			if !IsValid(self) then return end
 			self:SetAmmo(self.Ammo)
 			self:SetIsReloading(false)
+			self.NewMagIn = false
 			self:SetCurrentTracer(0)
 		end)
 		
@@ -130,14 +128,18 @@ function ENT:Reload(ply)
 	end
 end
 
-function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
-		self:SetBodygroup(1,0)
-		local ammo = self:GetAmmo()
-		if ammo <= 0 then
+if SERVER then
+	function ENT:OnTick()
+		if self.MagIn then
+			self:SetBodygroup(1,0)
+			if (self:GetAmmo() < 1 and !self.NewMagIn) or !self.MagIn then
+				self:SetBodygroup(2,1)
+			else
+				self:SetBodygroup(2,0)
+			end
+		else
+			self:SetBodygroup(1,1)
 			self:SetBodygroup(2,1)
-		elseif ammo >= 1 then
-			self:SetBodygroup(2,0)
 		end
 	end
 end

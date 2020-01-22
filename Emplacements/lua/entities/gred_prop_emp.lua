@@ -10,6 +10,8 @@ ENT.Category                        =	"Gredwitch's Stuff"
 ENT.Model                         	=	""
 ENT.NextUse							=	0
 ENT.Mass							=	nil
+ENT.AutomaticFrameAdvance 			= true
+
 
 if SERVER then
 	function ENT:SpawnFunction( ply, tr, ClassName )
@@ -33,10 +35,18 @@ if SERVER then
 			if self.Mass then self.phys:SetMass(self.Mass) end
 			self.phys:Wake()
 		end
+		if IsValid(self.GredEMPBaseENT) then
+			self.EmplacementClass = self.GredEMPBaseENT:GetClass()
+		end
 	end
 
 	function ENT:Use(ply,caller,useType,value)
-		if self.canPickUp then
+		local phy = self:GetPhysicsObject()
+		local motionEnabled = false
+		if IsValid(phy) then
+			motionEnabled = phy:IsMotionEnabled()
+		end
+		if self.canPickUp and !IsValid(ply.ActiveEmplacement) and motionEnabled then
 			if self:IsPlayerHolding() then return end
 			local ct = CurTime()
 			if self.NextUse >= ct then return end
@@ -55,16 +65,8 @@ if SERVER then
 		if dmg:IsFallDamage() or dmg:IsExplosionDamage() then return end
 		self.GredEMPBaseENT:TakeDamageInfo(dmg)
 	end
-end
 
-if CLIENT then
-	function ENT:Draw()
-		self:DrawModel()
-	end
-end
-
-function ENT:Think()
-	if SERVER then
+	function ENT:Think()
 		if not self.SentToClient and self.GredEMPBaseENT then
 			net.Start("gred_net_emp_prop")
 				net.WriteEntity(self)
@@ -72,5 +74,33 @@ function ENT:Think()
 			net.Broadcast()
 			self.SentToClient = true
 		end
+	end
+	
+	-------------------------------------
+	
+	function ENT:OnDuplicated(entTable)
+	end
+	
+	function ENT:PreEntityCopy()
+	
+	end
+	
+	function ENT:PostEntityCopy()
+	
+	end
+	
+	function ENT:OnEntityCopyTableFinish(data)
+	
+	end
+	
+	function ENT:PostEntityPaste(ply,ent,createdEntities)
+	end
+	
+	function ENT:OnDuplicated()
+	
+	end
+else
+	function ENT:Draw()
+		self:DrawModel()
 	end
 end

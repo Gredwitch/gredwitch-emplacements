@@ -26,6 +26,7 @@ ENT.TracerColor			= "Yellow"
 ENT.OnlyShootSound		= true
 ENT.ShootSound			= "gred_emp/breda35/shoot.wav"
 
+ENT.Ammo				= -1
 ENT.Spread				= 0.5
 ENT.Seatable			= true
 ENT.EmplacementType		= "MG"
@@ -38,6 +39,7 @@ ENT.TurretPos			= Vector(0,3.63057,24)
 ENT.MaxRotation			= Angle(-20)
 ENT.ViewPos				= Vector(32,0,35)
 ENT.SightPos			= Vector(-1.233542,-31.303225,17.839169)
+ENT.AimSightPos			= Vector(1,-18,38.8094)
 ENT.IsAAA				= true
 ENT.CanSwitchTimeFuse	= true
 ENT.MaxViewModes		= 1
@@ -65,7 +67,7 @@ function ENT:OnInit()
 	aimsight.GredEMPBaseENT = self
 	aimsight:SetModel(self.AimsightModel)
 	aimsight:SetAngles(yaw:GetAngles())
-	aimsight:SetPos(yaw:LocalToWorld(Vector(1,-18,38.8094)))
+	aimsight:SetPos(yaw:LocalToWorld(self.AimSightPos))
 	aimsight:Spawn()
 	
 	aimsight:Activate()

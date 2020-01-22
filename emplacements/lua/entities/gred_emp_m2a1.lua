@@ -12,12 +12,24 @@ ENT.NameToPrint			= "M2A1"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast_alt"
 ENT.ShotInterval		= 5.3
+ENT.IsHowitzer			= true
 ENT.AmmunitionTypes		= {
 	{
 		Caliber = 105,
 		ShellType = "HE",
 		MuzzleVelocity = 472,
-		Mass = 18.3,
+		Mass = 15,
+		LinearPenetration = 26,
+		TNTEquivalent = 2.18,
+		TracerColor = "white",
+	},
+	{
+		Caliber = 105,
+		ShellType = "HEAT",
+		MuzzleVelocity = 381,
+		Mass = 13,
+		LinearPenetration = 130,
+		TNTEquivalent = 1.61,
 		TracerColor = "white",
 	},
 	{

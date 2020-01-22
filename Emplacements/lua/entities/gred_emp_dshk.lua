@@ -81,12 +81,14 @@ function ENT:Reload(ply)
 			self:SetBodygroup(2,0)
 			self:SetBodygroup(3,0)
 			self.MagIn = true
+			self.NewMagIn = true
 		end)
 		timer.Simple(self:SequenceDuration(),function()
 			if !IsValid(self) then return end
 			self:SetAmmo(self.Ammo)
 			self:SetIsReloading(false)
 			self:SetCurrentTracer(0)
+			self.NewMagIn = false
 		end)
 	else
 		timer.Simple(1.2,function() 
@@ -97,12 +99,19 @@ function ENT:Reload(ply)
 	end
 end
 
-function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
-		if self:GetAmmo() <= 0 then 
-			self:SetBodygroup(3,1)
+
+if SERVER then
+	function ENT:OnTick()
+		if self.MagIn then
+			self:SetBodygroup(2,0)
+			if (self:GetAmmo() < 1 and !self.NewMagIn) or !self.MagIn then
+				self:SetBodygroup(3,1)
+			else
+				self:SetBodygroup(3,0)
+			end
 		else
-			self:SetBodygroup(3,0)
+			self:SetBodygroup(2,1)
+			self:SetBodygroup(3,1)
 		end
 	end
 end

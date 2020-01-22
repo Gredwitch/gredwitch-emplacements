@@ -25,7 +25,8 @@ ENT.TurretModel			= "models/gredwitch/mg42/mg42_gun.mdl"
 
 ENT.Ammo				= 250
 ENT.TurretPos			= Vector(0,0,43.5)
-ENT.SightPos			= Vector(-0.38,-20,3.8)
+ENT.SightPos			= Vector(0.08,-16,3.45)
+ENT.ExtractAngle		= Angle(0,0,0)
 ENT.MaxViewModes		= 1
 ENT.ReloadTime			= 1.2
 ENT.CycleRate			= 0.6
@@ -37,6 +38,7 @@ function ENT:SpawnFunction( ply, tr, ClassName )
  	ent.Owner = ply
 	ent:SetPos(SpawnPos)
 	ent:Spawn()
+	ent:SetModelScale(1.15)
 	ent:Activate()
 	return ent
 end
@@ -51,19 +53,22 @@ function ENT:Reload(ply)
 	timer.Simple(0.6, function()
 		if !IsValid(self) then return end
 		-- local att = self:GetAttachment(self:LookupAttachment("mageject"))
-		local prop = ents.Create("prop_physics")
-		prop:SetModel("models/gredwitch/mg42/mg42_belt.mdl")
-		prop:SetPos(self:LocalToWorld(Vector(-7,0,5)))
-		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
-		prop:Spawn()
-		prop:Activate()
-		self.MagIn = false
-		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
-		if t > 0 then
-			timer.Simple(t,function()
-				if IsValid(prop) then prop:Remove() end 
-			end)
+		if self:GetAmmo() > 0 then
+			local prop = ents.Create("prop_physics")
+			prop:SetModel("models/gredwitch/mg42/mg42_belt.mdl")
+			prop:SetPos(self:LocalToWorld(Vector(-7,0,5)))
+			prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
+			prop:Spawn()
+			prop:SetModelScale(1.15)
+			prop:Activate()
+			local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
+			if t > 0 then
+				timer.Simple(t,function()
+					if IsValid(prop) then prop:Remove() end 
+				end)
+			end
 		end
+		self.MagIn = false
 		self:SetBodygroup(1,1)
 	end)
 	
@@ -71,6 +76,7 @@ function ENT:Reload(ply)
 		timer.Simple(1.6,function() 
 			if !IsValid(self) then return end
 			self.MagIn = true
+			self.NewMagIn = true
 			self:SetBodygroup(1,0)
 		end)
 		timer.Simple(self:SequenceDuration(),function()
@@ -78,6 +84,7 @@ function ENT:Reload(ply)
 			self:SetAmmo(self.Ammo)
 			self:SetIsReloading(false)
 			self:SetCurrentTracer(0)
+			self.NewMagIn = false
 		end)
 	else
 		timer.Simple(1.6,function() 
@@ -88,16 +95,15 @@ function ENT:Reload(ply)
 	end
 end
 
-function ENT:OnTick()
-	if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then
-		if self:GetAmmo() <= 0 then 
+if SERVER then
+	function ENT:OnTick()
+		if (self:GetAmmo() < 1 and !self.NewMagIn) or !self.MagIn then
 			self:SetBodygroup(1,1)
 		else
 			self:SetBodygroup(1,0)
 		end
 	end
 end
-
 function ENT:ViewCalc(ply, pos, angles, fov)
 	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
