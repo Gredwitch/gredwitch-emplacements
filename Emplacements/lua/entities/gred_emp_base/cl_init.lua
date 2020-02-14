@@ -10,6 +10,9 @@ function ENT:Initialize()
 	self:ReloadSounds()
 	self:InitAttachmentsCL()
 	self:OnInitializeCL()
+	
+	self.ENT_INDEX = self:EntIndex()
+	
 	self.Initialized = true
 	
 end
@@ -50,13 +53,13 @@ function ENT:ReloadSounds()
 	self.sounds = {}
 	if self.ShootSound then
 		self.sounds["shoot"] = CreateSound(self,self.ShootSound)
-		self.sounds.shoot:SetSoundLevel(140)
-		-- self.sounds.shoot:ChangeVolume(1)
+		self.sounds.shoot:SetSoundLevel((self.EmplacementType == "Cannon" and !self.IsRocketLauncher) and 0 or 160)
+		self.sounds.shoot:ChangeVolume(1)
 	end
 	if self.StopShootSound then
 		self.sounds["stop"] = CreateSound(self,self.StopShootSound)
 		self.sounds.stop:SetSoundLevel(140)
-		-- self.sounds.stop:ChangeVolume(1)
+		self.sounds.stop:ChangeVolume(1)
 	end
 end
 
@@ -83,9 +86,9 @@ function ENT:Think()
 	if IsValid(ply) then
 		ply.Gred_Emp_Ent = self
 		if ply:KeyDown(IN_ZOOM) then
-			if self:GetNextSwitchViewMode() <= ct then
-				self:UpdateViewMode()
-				self:SetNextSwitchViewMode(ct + 0.3)
+			if self.NextSwitchViewMode <= ct then
+				self:UpdateViewMode(ply)
+				self.NextSwitchViewMode = ct + 0.3
 			end
 		end
 		local ammo = self:GetAmmo()
@@ -104,10 +107,6 @@ function ENT:Think()
 		self:StopSoundStuff(ply,ammo,self:GetIsReloading(),IsShooting)
 	end
 	self:GetPrevShooter().Gred_Emp_Ent = nil
-	
-	if self.FireMissions then
-		self.MaxViewModes = table.Count(self.FireMissions) + (self.EmplacementType == "Cannon" and 1 or 0)
-	end
 	
 	self:OnThinkCL(ct,ply)
 end
@@ -138,6 +137,8 @@ function ENT:OnShoot()
 		effectdata:SetFlags(table.KeyFromValue(gred.Particles,"gred_mortar_explosion_smoke_ground"))
 		util.Effect("gred_particle_simple",effectdata)
 	end
+	
+	self.LastShoot = CurTime()
 end
 
 function ENT:OnThinkCL(ct,ply)
@@ -174,21 +175,17 @@ function ENT:OnRemove()
 	end
 end
 
-function ENT:UpdateViewMode()
-	self:SetViewMode(self:GetViewMode()+1)
-	local vm = self:GetViewMode()
-	if vm > self.MaxViewModes then
-		net.Start("gred_net_emp_viewmode")
-			net.WriteEntity(self)
-			net.WriteInt(0,8)
-		net.SendToServer()
-		self:SetViewMode(0)
-	else
-		net.Start("gred_net_emp_viewmode")
-			net.WriteEntity(self)
-			net.WriteInt(vm,8)
-		net.SendToServer()
-	end
+function ENT:UpdateViewMode(ply)
+	local vm = self:GetViewMode() + 1
+	vm = vm > self.MaxViewModes and 0 or vm
+	
+	self:SetViewMode(vm)
+	
+	net.Start("gred_net_emp_viewmode")
+		net.WriteEntity(self)
+		net.WriteInt(vm,8)
+	net.SendToServer()
+	
 end
 
 function ENT:HUDPaint(ply,viewmode,scrW,scrH)
@@ -199,7 +196,7 @@ function ENT:PaintHUD(ply,ViewMode)
 	local viewmode = ViewMode - self.OldMaxViewModes
 	
 	if self.FireMissions and self.FireMissions[viewmode] then
-		LANGUAGE = GetConVar("gred_cl_lang"):GetString() or "en"
+		LANGUAGE = gred.CVars.gred_cl_lang:GetString() or "en"
 		if not LANGUAGE then return end
 		local ScrW,ScrH = ScrW(),ScrH()
 		
@@ -212,6 +209,9 @@ function ENT:PaintHUD(ply,ViewMode)
 		surface.DrawText(gred.Lang[LANGUAGE].EmplacementBinoculars.emplacement_caller..self.FireMissions[viewmode][1]:GetName())
 		surface.SetTextPos(ScrW*0.01,ScrH*0.14)
 		surface.DrawText(gred.Lang[LANGUAGE].EmplacementBinoculars.emplacement_timeleft..math.Round((self.FireMissions[viewmode][4] + gred.CVars.gred_sv_emplacement_artillery_time:GetFloat()) - CurTime()).."s")
+		surface.SetTextPos(ScrW*0.01,ScrH*0.21)
+		surface.DrawText(gred.Lang[LANGUAGE].EmplacementBinoculars.emplacement_requesttype..gred.Lang[LANGUAGE].EmplacementBinoculars["emplacement_requesttype_"..self.FireMissions[viewmode][5]])
+		-- surface.DrawText(self.FireMissions[viewmode][5])
 	else
 		return self:HUDPaint(ply,ViewMode)
 	end
@@ -224,6 +224,17 @@ function ENT:View(ply,pos,angles,fov)
 			local ct = CurTime()
 			local view = {}
 			local ang = self:GetAngles()
+			local vec
+			
+			if self.LastShoot then
+				local LastShoot = self.LastShoot + 1
+				if LastShoot > ct then
+					local dif = (LastShoot - ct) * 10
+					vec = Vector(math.Rand(-dif,dif),math.Rand(-dif,dif),math.Rand(-dif,dif))
+				else
+					self.LastShoot = nil
+				end
+			end
 			
 			ang:RotateAroundAxis(ang:Right(),-180)
 			angles = self.Seatable and angles - ang or angles
@@ -231,6 +242,7 @@ function ENT:View(ply,pos,angles,fov)
 			angles.r = 0
 			view.angles = angles
 			view.origin = self.FireMissions[viewmode][2] + Vector(0,0,2000)
+			view.origin = vec and view.origin + vec or view.origin
 			view.drawviewer = true
 			
 			local ang = Angle() + angles

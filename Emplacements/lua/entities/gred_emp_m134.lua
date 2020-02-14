@@ -26,7 +26,6 @@ ENT.TurretModel				= "models/gredwitch/M134/M134_gun.mdl"
 
 ENT.TurretPos			= Vector(0,0,0)
 ENT.Ammo				= -1
-ENT.ExtractAngle		= Angle(0,0,0)
 
 -- ENT.SightPos			= Vector(-0.2,-25,11.65)
 -- ENT.MaxViewModes		= 1
@@ -42,15 +41,15 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
+
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		angles = ply:EyeAngles()
-		angles.p = angles.p - (self:GetRecoil())*0.8
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
-		view.fov = 35
+		view.angles = ply:EyeAngles()
+		view.angles.p = view.angles.p - (self:GetRecoil())*0.2
+		view.angles.r = self:GetAngles().r
+		view.fov = 40
 		view.drawviewer = false
 
 		return view

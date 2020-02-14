@@ -30,10 +30,16 @@ ENT.TurretModel			= "models/gredwitch/zpu4_1949/zpu4_gun.mdl"
 ENT.EmplacementType     = "MG"
 ENT.MaxRotation			= Angle(-10)
 
-ENT.SightPos			= Vector(-0.25,27,5)
-ENT.TurretPos			= Vector(0,0,50)
+ENT.SightPos			= Vector(27,0,0)
+ENT.TurretPos			= Vector(1.949830,0,53.4302)
 ENT.IsAAA				= true
 ENT.MaxViewModes		= 1
+ENT.WheelsPos			= Vector(49.9752,0, -34)
+ENT.WheelsPos2			= Vector(-49.9752,0,-34)
+ENT.WheelsModel			= "models/gredwitch/zpu4_1949/zpu4_wb.mdl"
+ENT.WheelsModel2		= "models/gredwitch/zpu4_1949/zpu4_wf.mdl"
+ENT.MaxRotation			= Angle(90,180)
+ENT.MinRotation			= Angle(-10,-180)
 
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -48,33 +54,79 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
+	
+	-- for i=0, yaw:GetBoneCount()-1 do
+		-- print( i, yaw:GetBoneName( i ) )
+	-- end
+	yaw:ManipulateBoneAngles(2,Angle(0,0,ang.y*15))
+	yaw:ManipulateBoneAngles(3,Angle(0,0,ang.p*15))
+end
+
+function ENT:InitWheels(ang)
+	local wheels = ents.Create("gred_prop_emp")
+	wheels.GredEMPBaseENT = self
+	wheels:SetModel(self.WheelsModel)
+	wheels:SetAngles(ang)
+	wheels:SetPos(self:LocalToWorld(self.WheelsPos))
+	wheels.BaseEntity = self
+	wheels:Spawn()
+	wheels:Activate()
+	local phy = wheels:GetPhysicsObject()
+	if IsValid(phy) then
+		phy:SetMass(self.WheelsMass)
+	end
+	
+	self:SetWheels(wheels)
+	self:AddEntity(wheels)
+	constraint.Axis(wheels,self:GetHull(),0,0,Vector(0,0,0),self:WorldToLocal(wheels:LocalToWorld(Vector(0,1,0))),0,0,10,1,Vector(90,0,0))
+	
+	local wheels = ents.Create("gred_prop_emp")
+	wheels.GredEMPBaseENT = self
+	wheels:SetModel(self.WheelsModel2)
+	wheels:SetAngles(ang)
+	wheels:SetPos(self:LocalToWorld(self.WheelsPos2))
+	wheels.BaseEntity = self
+	wheels:Spawn()
+	wheels:Activate()
+	local phy = wheels:GetPhysicsObject()
+	if IsValid(phy) then
+		phy:SetMass(self.WheelsMass)
+	end
+	
+	self:SetWheels(wheels)
+	self:AddEntity(wheels)
+	constraint.Axis(wheels,self:GetHull(),0,0,Vector(0,0,0),self:WorldToLocal(wheels:LocalToWorld(Vector(0,1,0))),0,0,10,1,Vector(90,0,0))
+end
+
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
-	seat = self:GetSeat()
+	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
+	local seat = self:GetSeat()
 	local seatValid = IsValid(seat)
 	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
-	angles = ply:EyeAngles()
+	
 	if self:GetViewMode() == 1 then
 		local view = {}
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90
-		angles.r = -ang.p
-		
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
-		view.fov = 35
-		view.drawviewer = true
+		view.angles = self:GetAngles()
+		view.fov = 20
+		view.drawviewer = false
 
 		return view
 	else
 		if seatValid then
 			local view = {}
 			view.origin = pos
-			view.angles = angles
+			view.angles = ply:EyeAngles()
+			view.angles.r = self:GetAngles().r
 			view.fov = fov
 			view.drawviewer = false
-
+	 
 			return view
 		end
 	end

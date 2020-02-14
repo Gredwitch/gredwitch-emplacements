@@ -30,8 +30,9 @@ ENT.ReloadTime			= 2.57
 
 ------------------------
 
-ENT.TurretPos			= Vector(0,0,7)
-ENT.SightPos			= Vector(-0.005,-25,5.655)
+ENT.ExtractAngle		= Angle(-90,0,0)
+ENT.TurretPos			= Vector(0,0,-2)
+ENT.SightPos			= Vector(-25,0.01,5.15)
 ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -64,7 +65,7 @@ function ENT:Reload(ply)
 		prop:Activate()
 		if self:GetAmmo() <= 0 then prop:SetBodygroup(1,1) end
 		
-		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
+		local t = gred.CVars.gred_sv_shell_remove_time:GetInt()
 		if t > 0 then
 			timer.Simple(t,function()
 				if IsValid(prop) then prop:Remove() end 
@@ -74,7 +75,7 @@ function ENT:Reload(ply)
 	
 	timer.Simple(0.6,function() if IsValid(self) then self.MagIn = false self:SetBodygroup(7,2) end end)
 	timer.Simple(1.9,function() if IsValid(self) then self:SetBodygroup(7,0) end end)
-	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
+	if gred.CVars.gred_sv_manual_reload_mgs:GetInt() == 0 then
 		timer.Simple(1.5,function() 
 			if !IsValid(self) then return end
 			self.MagIn = true
@@ -118,15 +119,15 @@ if SERVER then
 	end
 end
 
+
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		angles = ply:EyeAngles()
-		angles.p = angles.p - (self:GetRecoil())*0.8
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
-		view.fov = 35
+		view.angles = ply:EyeAngles()
+		view.angles.p = view.angles.p - (self:GetRecoil())*0.2
+		view.angles.r = self:GetAngles().r
+		view.fov = 40
 		view.drawviewer = false
 
 		return view

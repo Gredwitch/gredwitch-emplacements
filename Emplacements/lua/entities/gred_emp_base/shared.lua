@@ -76,9 +76,18 @@ ENT.DefaultPitch			= 0
 ENT.NextFindBot				= 0
 ENT.HP						= 200 --+ (ENT.HullModel and 75 or 0) + (ENT.YawModel and 75 or 0)
 
+ENT.NextShootAnim			= 0
+ENT.NextSwitchTimeFuse		= 0
+ENT.NextSwitchAmmoType		= 0
+ENT.NextSwitchViewMode		= 0
+ENT.FuzeTime				= 0.01
+ENT.MaxRotation				= Angle(180,180,180)
+ENT.MinRotation				= Angle(-180,-180,-180)
+
 ----------------------------------------
 
 local IsValid = IsValid
+local noColl = constraint.NoCollide
 local ok = {
 	["gred_prop_part"] = true,
 }
@@ -94,32 +103,18 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Entity",5,"Seat")
 	self:NetworkVar("Entity",6,"Wheels")
 	
-	self:NetworkVar("Int",0, "Ammo", { KeyName = "Ammo", Edit = { type = "Int", order = 0,min = 0, max = self.Ammo, category = "Ammo"} } )
+	self:NetworkVar("Int",0,"Ammo", { KeyName = "Ammo", Edit = { type = "Int", order = 0,min = 0, max = self.Ammo, category = "Ammo"} } )
 	self:NetworkVar("Int",1,"CurrentMuzzle")
 	self:NetworkVar("Int",2,"CurrentTracer")
-	self:NetworkVar("Int",3,"RoundsPerMinute")
+	self:NetworkVar("Int",3,"AmmoType", { KeyName = "Ammotype", Edit = { type = "Int", order = 0,min = 1, max = self.AmmunitionTypes and table.Count(self.AmmunitionTypes) or 0, category = "Ammo"} } )
 	self:NetworkVar("Int",4,"CurrentExtractor")
 	self:NetworkVar("Int",5,"ViewMode")
-	self:NetworkVar("Int",6,"AmmoType", { KeyName = "Ammotype", Edit = { type = "Int", order = 0,min = 1, max = self.AmmunitionTypes and table.Count(self.AmmunitionTypes) or 0, category = "Ammo"} } )
-	-- self:NetworkVar("Int",7,"CurrentAmmoType")
 	
-	self:NetworkVar("Float",0,"ShootDelay")
-	self:NetworkVar("Float",1,"UseDelay")
-	self:NetworkVar("Float",2,"NextShot")
-	self:NetworkVar("Float",3,"HP", { KeyName = "HP", Edit = { type = "Float", order = 0,min = 0, max = 1000} } )
-	self:NetworkVar("Float",4,"Recoil")
-	self:NetworkVar("Float",5,"NextShootAnim")
-	self:NetworkVar("Float",6,"FuseTime")
-	self:NetworkVar("Float",7,"NextSwitchAmmoType")
-	self:NetworkVar("Float",8,"NextSwitchViewMode")
-	self:NetworkVar("Float",9,"NextSwitchTimeFuse")
-	
-	self:NetworkVar("String",0,"PrevPlayerWeapon")
-	
-	self:NetworkVar("Vector",0,"TargetOrigin")
+	self:NetworkVar("Float",0,"Recoil")
+	self:NetworkVar("Float",1,"NextShot")
+	self:NetworkVar("Float",2,"HP", { KeyName = "HP", Edit = { type = "Float", order = 0,min = 0, max = 1000} } )
 	
 	self:NetworkVar("Bool",0,"BotMode", { KeyName = "BotMode", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
-	self:SetBotMode(false)
 	self:NetworkVar("Bool",1,"IsShooting")
 	self:NetworkVar("Bool",2,"TargetValid")
 	self:NetworkVar("Bool",3,"IsReloading")
@@ -132,6 +127,7 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Bool",10,"IsAttacking")
 	
 	
+	self:SetBotMode(false)
 	self:SetShouldSetAngles(true)
 	self:SetAttackPlayers(true)
 	self:SetAttackNPCs(true)
@@ -140,10 +136,8 @@ function ENT:SetupDataTables()
 	self:SetIsAntiGroundVehicles(self.EmplacementType == "Cannon")
 	self:SetHP(self.HP)
 	self:SetAmmoType(1)
-	self:SetFuseTime(0)
 	self:SetAmmo(self.Ammo)
 	self:SetCurrentMuzzle(1)
-	self:SetRoundsPerMinute(self.ShotInterval*60)
 	
 	self:AddDataTables()
 end
@@ -154,21 +148,13 @@ end
 
 function ENT:AddEntity(ent)
 	table.insert(self.Entities,ent)
-	local noColl = constraint.NoCollide
 	for k,v in pairs(self.Entities) do
 		noColl(v,ent,0,0)
 	end
 end
 
 function ENT:ShooterStillValid(ply,botmode)
-	if not ply then return false
-	else
-		if botmode then 
-			return true 
-		else
-			return ply:Alive() and (!self.Seatable and ply:GetPos():DistToSqr(self:GetPos()) <= self.MaxUseDistance or self.Seatable)
-		end
-	end
+	return ply and (botmode or ((ply:IsPlayer() and ply:Alive()) and (!self.Seatable and ply:GetPos():DistToSqr(self:GetPos()) <= self.MaxUseDistance or self.Seatable)))
 end
 
 

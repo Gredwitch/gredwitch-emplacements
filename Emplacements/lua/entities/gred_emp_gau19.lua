@@ -26,7 +26,7 @@ ENT.HullModel			= "models/gredwitch/M134/M134_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/gau19/gau19.mdl"
 
 ENT.TurretPos			= Vector(0,0,0)
-ENT.SightPos			= Vector(-0.2,-25,11.65)
+ENT.SightPos			= Vector(-25,0.15,11.65)
 ENT.MaxViewModes		= 1
 ENT.Ammo				= -1
 ENT.ExtractAngle		= Angle(0,0,0)
@@ -45,13 +45,13 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 end
 
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		angles = ply:EyeAngles()
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
-		view.fov = 35
+		view.angles = ply:EyeAngles()
+		view.angles.p = view.angles.p - (self:GetRecoil())*0.2
+		view.angles.r = self:GetAngles().r
+		view.fov = 40
 		view.drawviewer = false
 
 		return view

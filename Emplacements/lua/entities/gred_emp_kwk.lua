@@ -73,15 +73,15 @@ ENT.HullModel			= "models/gredwitch/kwk/kwk_base.mdl"
 ENT.YawModel			= "models/gredwitch/kwk/kwk_shield.mdl"
 ENT.TurretModel			= "models/gredwitch/kwk/kwk_gun.mdl"
 ENT.EmplacementType     = "Cannon"
--- ENT.Seatable			= true
+ENT.Seatable			= true
 ENT.Ammo				= -1
-ENT.MaxRotation			= Angle(-20)
 ENT.ATReloadSound		= "small"
 ENT.ViewPos				= Vector(-1.5,-6,30)
 ENT.MaxViewModes		= 1
-ENT.MaxViewModes		= 1
 ENT.SightTexture		= "gredwitch/overlay_german_tanksight_01"
-ENT.SightPos			= Vector(25,20,3)
+ENT.SightPos			= Vector(12,-27,3)
+ENT.MaxRotation			= Angle(20,180)
+ENT.MinRotation			= Angle(-10,-180)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -96,34 +96,30 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 end
 
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
-	-- seat = self:GetSeat()
-	-- local seatValid = IsValid(seat)
-	-- if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
+	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
+	local seat = self:GetSeat()
+	local seatValid = IsValid(seat)
+	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
 	
-	if --[[(seatValid and seat:GetThirdPersonMode()) or]] self:GetViewMode() == 1 then
+	if self:GetViewMode() == 1 then
 		local view = {}
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90.1
-		angles.r = -ang.p
-		
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
+		view.angles = self:GetAngles()
 		view.fov = 20
-		view.drawviewer = true
+		view.drawviewer = false
 
 		return view
-	-- else
-		-- if seatValid then
-			-- local view = {}
-			-- view.origin = seat:LocalToWorld(self.ViewPos)
-			-- view.angles = angles
-			-- view.fov = fov
-			-- view.drawviewer = false
-
-			-- return view
-		-- end
+	else
+		if seatValid then
+			local view = {}
+			view.origin = seat:LocalToWorld(self.ViewPos)
+			view.angles = ply:EyeAngles()
+			view.angles.r = self:GetAngles().r
+			view.fov = fov
+			view.drawviewer = false
+	 
+			return view
+		end
 	end
 end
 

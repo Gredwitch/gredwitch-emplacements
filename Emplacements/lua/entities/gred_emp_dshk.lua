@@ -22,6 +22,7 @@ ENT.RecoilRate			= 0.3
 ENT.EmplacementType		= "MG"
 ENT.HullModel			= "models/gredwitch/dhsk/dhsk_tripod.mdl"
 ENT.TurretModel			= "models/gredwitch/dhsk/dhsk_gun.mdl"
+ENT.YawModel			= "models/gredwitch/dhsk/dhsk_yaw.mdl"
 ENT.ReloadSound			= "gred_emp/dshk/dhsk_reload.wav"
 ENT.ReloadEndSound		= "gred_emp/dshk/dhsk_reloadend.wav"
 
@@ -30,8 +31,9 @@ ENT.ReloadTime			= 1.73 - 0.7
 
 ------------------------
 
-ENT.TurretPos			= Vector(0,0,43)
-ENT.SightPos			= Vector(0.03,-28,16.25)
+ENT.YawPos				= Vector(0,0,42.5)
+ENT.TurretPos			= Vector(-4,0,5.5)
+ENT.SightPos			= Vector(-33,0,10.4)
 ENT.MaxViewModes		= 1
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -63,7 +65,7 @@ function ENT:Reload(ply)
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false
-		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
+		local t = gred.CVars.gred_sv_shell_remove_time:GetInt()
 		if t > 0 then
 			timer.Simple(t,function()
 					if IsValid(prop) then prop:Remove() end 
@@ -75,7 +77,7 @@ function ENT:Reload(ply)
 		self:SetBodygroup(3,1)
 	end)
 	
-	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
+	if gred.CVars.gred_sv_manual_reload_mgs:GetInt() == 0 then
 		timer.Simple(1.2,function() 
 			if !IsValid(self) then return end
 			self:SetBodygroup(2,0)
@@ -117,14 +119,14 @@ if SERVER then
 end
 
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		angles = ply:EyeAngles()
-		angles.p = angles.p - (self:GetRecoil())*0.1
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
-		view.fov = 60
+		view.angles = ply:EyeAngles()
+		view.angles.p = view.angles.p - (self:GetRecoil())*0.2
+		view.angles.r = self:GetAngles().r
+		
+		view.fov = 40
 		view.drawviewer = false
 
 		return view

@@ -28,24 +28,20 @@ ENT.Recoil				= 0
 ENT.PitchRate			= 100
 ENT.YawRate				= 100
 ENT.MaxUseDistance		= 200
--- ENT.Seatable			= true
+ENT.Seatable			= true
 ENT.EmplacementType     = "MG"
 ENT.Ammo				= -1
 ENT.HullModel			= "models/gredwitch/zsu23/zsu23_turret.mdl"
 ENT.YawModel			= "models/gredwitch/zsu23/zsu23_shield.mdl"
 ENT.TurretModel			= "models/gredwitch/zsu23/zsu23_gun.mdl"
-ENT.TurretPos			= Vector(0,33,43)
-ENT.MaxRotation			= Angle(-10)
+ENT.TurretPos			= Vector(87.0727*0.32,0,129.025*0.32)
+ENT.YawPos				= Vector(14.5429*0.32,0,0)
 ENT.IsAAA				= true
 ENT.CanSwitchTimeFuse	= true
-
-if game.SinglePlayer() then
-	ENT.SightPos		= Vector(0,70,10)
-else
-	ENT.SightPos		= Vector(1,70,10)
-end
-ENT.ViewPos				= Vector(-30,0,0)
+ENT.SightPos			= Vector(70,0,10)
 ENT.MaxViewModes		= 1
+ENT.MaxRotation			= Angle(90,180)
+ENT.MinRotation			= Angle(-10,-180)
 
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -60,35 +56,45 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
+	
+	-- for i=0, yaw:GetBoneCount()-1 do
+		-- print( i, yaw:GetBoneName( i ) )
+	-- end
+	yaw:ManipulateBoneAngles(3,Angle(ang.y*15))
+	yaw:ManipulateBoneAngles(4,Angle(0,0,ang.p*15))
+end
+
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
-	-- seat = self:GetSeat()
-	-- local seatValid = IsValid(seat)
-	-- if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
-	angles = ply:EyeAngles()
-	if --[[(seatValid and seat:GetThirdPersonMode()) or]] self:GetViewMode() == 1 then
+	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
+	local seat = self:GetSeat()
+	local seatValid = IsValid(seat)
+	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
+	
+	if self:GetViewMode() == 1 then
 		local view = {}
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90
-		angles.r = -ang.p
-		
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
-		view.fov = 35
-		view.drawviewer = true
+		view.angles = self:GetAngles()
+		view.fov = 20
+		view.drawviewer = false
 
 		return view
-	-- else
-		-- if seatValid then
-			-- local view = {}
-			-- view.origin = seat:LocalToWorld(self.ViewPos)
-			-- view.angles = ang
-			-- view.fov = fov
-			-- view.drawviewer = false
-
-			-- return view
-		-- end
+	else
+		if seatValid then
+			local view = {}
+			view.origin = pos
+			view.angles = ply:EyeAngles()
+			view.angles.r = self:GetAngles().r
+			view.fov = fov
+			view.drawviewer = false
+	 
+			return view
+		end
 	end
 end
 function ENT:HUDPaint(ply,viewmode)

@@ -7,8 +7,8 @@ function EFFECT:Init(data)
 	if ent.Sequential then
 		ent:CheckMuzzle()
 		local v = ent:GetCurrentMuzzle()
-		attPos = ent:LocalToWorld(ent.TurretMuzzles[v].Pos)
-		attAng = ent:LocalToWorldAngles(ent.TurretMuzzles[v].Ang)
+		attPos = ent.CustomShootPos and ent:LocalToWorld(ent.CustomShootPos[v]) or ent:LocalToWorld(ent.TurretMuzzles[v].Pos)
+		attAng = ent.CustomShootAng and ent:LocalToWorldAngles(ent.CustomShootAng[v]) or ent:LocalToWorldAngles(ent.TurretMuzzles[v].Ang)
 		
 		if GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 1 or 
 		(ent.EmplacementType != "MG" and ent.EmplacementType != "Mortar") then
@@ -41,8 +41,8 @@ function EFFECT:Init(data)
 		end
 	else
 		for k,v in pairs(ent.TurretMuzzles) do
-			attPos = ent:LocalToWorld(v.Pos)
-			attAng = ent:LocalToWorldAngles(v.Ang)
+			attPos = ent.CustomShootPos and ent:LocalToWorld(ent.CustomShootPos[k]) or ent:LocalToWorld(v.Pos)
+			attAng = ent.CustomShootAng and ent:LocalToWorldAngles(ent.CustomShootAng[k]) or ent:LocalToWorldAngles(v.Ang)
 			
 			if GetConVar("gred_cl_altmuzzleeffect"):GetInt() == 1 or 
 			(ent.EmplacementType != "MG" and ent.EmplacementType != "Mortar") then

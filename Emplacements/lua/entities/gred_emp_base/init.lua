@@ -9,7 +9,11 @@ AddCSLuaFile("shared.lua")
 
 local IsValid = IsValid
 local reachSky = Vector(0,0,9999999999)
+local add_alt = Vector(0,0,1000)
 local math = math
+
+local vector_zero = Vector(0,0,0)
+local vector_axis = Vector(0,1,0)
 
 function ENT:Initialize()
 	self:SetModel(self.TurretModel)
@@ -58,18 +62,20 @@ function ENT:Initialize()
 				self:PlayAnim()
 			end
 		end
-		if self.EmplacementType == "Cannon" then
-			local dummy = ents.Create("prop_dynamic")
-			dummy:SetModel("models/mm1/box.mdl")
-			dummy:SetPos(self:LocalToWorld(self.TurretMuzzles[1].Pos))
-			dummy:SetParent(self)
-			self.DummyMuzzle = dummy
-		end
+		-- if self.EmplacementType == "Cannon" then
+			-- local dummy = ents.Create("prop_dynamic")
+			-- dummy:SetModel("models/mm1/box.mdl")
+			-- dummy:SetPos(self:LocalToWorld(self.TurretMuzzles[1].Pos))
+			-- dummy:SetParent(self)
+			-- self.DummyMuzzle = dummy
+		-- end
 	end
 	
 	if self.Seatable then
 		self.Seatable = gred.CVars.gred_sv_enable_seats:GetInt() == 1
 	end
+	
+	self.OldSeatable = self.Seatable
 	self.CanTakeMultipleEmplacements = gred.CVars.gred_sv_canusemultipleemplacements
 	self.EnableRecoil = gred.CVars.gred_sv_enable_recoil
 	self.MaxUseDistance = self.MaxUseDistance*self.MaxUseDistance
@@ -80,7 +86,7 @@ function ENT:Initialize()
 	
 	duplicator.CopyEnts(self.Entities)
 	
-	self.AirDensity = physenv.GetAirDensity()
+	-- self.AirDensity = physenv.GetAirDensity()
 	self.Initialized = true
 end
 
@@ -139,9 +145,9 @@ function ENT:InitAttachments()
 end
 
 function ENT:InitParts(pos,ang)
-	self:InitHull(pos,ang)
+	local hull = self:InitHull(pos,ang)
 	self:InitYaw(pos,ang)
-	self:InitWheels(ang)
+	self:InitWheels(ang,hull)
 end
 
 function ENT:InitHull(pos,ang)
@@ -151,6 +157,7 @@ function ENT:InitHull(pos,ang)
 	hull:SetAngles(ang)
 	hull:SetPos(pos)
 	hull.HullFly = self.HullFly
+	hull.IsCarriage = self.ToggleableCarriage
 	hull:Spawn()
 	hull:Activate()
 	hull.canPickUp = self.EmplacementType == "MG" and gred.CVars.gred_sv_cantakemgbase:GetInt() == 1 and not self.YawModel
@@ -174,7 +181,8 @@ function ENT:InitHull(pos,ang)
 			hull:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 		end
 	end
-	-- constraint.Axis(self,hull,0,0,self.TurretPos,Vector(0,0,0),0,0,0,1,Vector(0,0,0),false)
+	-- constraint.Axis(self,hull,0,0,self.TurretPos,vector_zero,0,0,0,1,vector_zero,false)
+	return hull
 end
 
 function ENT:InitYaw(pos,ang)
@@ -184,13 +192,9 @@ function ENT:InitYaw(pos,ang)
 		yaw:SetModel(self.YawModel)
 		yaw:SetAngles(ang)
 		yaw:SetPos(pos+self.YawPos)
-		yaw.Use = function(self,ply,act,use,val)
-			if IsValid(self.GredEMPBaseENT) then
-				self.GredEMPBaseENT:Use(ply,ply,3,0)
-			end
-		end
 		yaw:Spawn()
 		yaw:Activate()
+		
 		local phy = yaw:GetPhysicsObject()
 		if IsValid(phy) then
 			phy:SetMass(self.YawMass)
@@ -203,17 +207,17 @@ function ENT:InitYaw(pos,ang)
 		yaw:SetParent(self:GetHull())
 		self:SetParent(yaw)
 		
-		-- constraint.Axis(self,hull,0,0,self.TurretPos,Vector(0,0,0),0,0,0,1,Vector(0,0,0),false)
+		-- constraint.Axis(self,hull,0,0,self.TurretPos,vector_zero,0,0,0,1,vector_zero,false)
 	end
 end
 
-function ENT:InitWheels(ang)
+function ENT:InitWheels(ang,hull)
 	if not self.WheelsModel then return end
 	local wheels = ents.Create("gred_prop_emp")
 	wheels.GredEMPBaseENT = self
 	wheels:SetModel(self.WheelsModel)
 	wheels:SetAngles(ang)
-	wheels:SetPos(self:LocalToWorld(self.WheelsPos))
+	wheels:SetPos(hull:LocalToWorld(self.WheelsPos))
 	wheels.BaseEntity = self
 	wheels:Spawn()
 	wheels:Activate()
@@ -224,7 +228,7 @@ function ENT:InitWheels(ang)
 	
 	self:SetWheels(wheels)
 	self:AddEntity(wheels)
-	constraint.Axis(wheels,self:GetHull(),0,0,Vector(0,0,0),self:WorldToLocal(wheels:LocalToWorld(Vector(0,1,0))),0,0,10,1,Vector(90,0,0))
+	constraint.Axis(wheels,self:GetHull(),0,0,vector_zero,self:WorldToLocal(wheels:LocalToWorld(vector_zero)),0,0,10,1,vector_axis)
 end
 
 
@@ -232,28 +236,39 @@ end
 -- USE
 
 
-function ENT:ShouldUse(ct)
-	return self:GetUseDelay() <= ct
+function ENT:CanUse(ct,ply)
+	return (ply.NEXT_EMPLACEMENT_USE and ply.NEXT_EMPLACEMENT_USE < ct or !ply.NEXT_EMPLACEMENT_USE) or self.TempPlayer
 end
 
 function ENT:Use(ply,caller,use,val)
 	local ct = CurTime()
-	if !self:ShouldUse(ct) then return end
+	if !self:CanUse(ct,ply) then return end
 	local shooter = self:GetShooter()
 	if ply:IsPlayer() and self:GetBotMode() then
 		self:SetBotMode(false)
 		self:SetShouldSetAngles(true)
 		self:LeaveTurret(self)
 		if self.EmplacementType == "Cannon" and ply:KeyDown(IN_RELOAD) then
-			local seat = self.Seatable
 			self.Seatable = false
+			self.TempPlayer = true
 			self:GrabTurret(ply,true)
 			self:SetShouldSetAngles(false)
-			self:PreFire(self:GetAmmo(),ct,ply)
+			
+			local ammo = self:GetAmmo()
+			local IsReloading = self:GetIsReloading()
+			local canShoot = self:CanShoot(ammo,ct,ply,IsReloading)
+			if canShoot then
+				self.ShouldDoRecoil = true
+				self:PreFire(ammo,ct,ply,IsReloading)
+				net.Start("gred_net_emp_onshoot")
+					net.WriteEntity(self)
+				net.Broadcast()
+			end
 			timer.Simple(0.5,function()
 				if !IsValid(self) then return end
-				self.Seatable = seat
+				self.Seatable = self.OldSeatable
 				self:LeaveTurret(ply)
+				self.TempPlayer = false
 				self:SetShouldSetAngles(true)
 			end)
 		else
@@ -291,8 +306,8 @@ function ENT:Use(ply,caller,use,val)
 			if not IsValid(shooter) then
 				self:SetShouldSetAngles(true)
 				if self.EmplacementType == "Cannon" and ply:KeyDown(IN_RELOAD) then
-					local seat = self.Seatable
 					self.Seatable = false
+					self.TempPlayer = true
 					self:GrabTurret(ply,true)
 					self:SetShouldSetAngles(false)
 					
@@ -308,8 +323,9 @@ function ENT:Use(ply,caller,use,val)
 					end
 					timer.Simple(0.5,function()
 						if !IsValid(self) then return end
-						self.Seatable = seat
+						self.Seatable = self.OldSeatable
 						self:LeaveTurret(ply)
+						self.TempPlayer = false
 						self:SetShouldSetAngles(true)
 					end)
 				else
@@ -343,7 +359,7 @@ function ENT:Use(ply,caller,use,val)
 			end
 		end
 	end
-	self:SetUseDelay(ct + 0.2)
+	ply.NEXT_EMPLACEMENT_USE = ct + 0.2
 end
 
 function ENT:GrabTurret(ply,shootOnly)
@@ -361,9 +377,11 @@ function ENT:GrabTurret(ply,shootOnly)
 		if !shootOnly then
 			local wep = ply:GetActiveWeapon()
 			if IsValid(wep) then
-				self:SetPrevPlayerWeapon(wep:GetClass())
+				self.PrevPlayerWeapon = wep:GetClass()
 			end
 			if self.Seatable then
+				local ang = self:GetAngles()
+				ply:SetEyeAngles(ang)
 				self:CreateSeat(ply)
 			end
 		end
@@ -383,10 +401,11 @@ function ENT:CreateSeat(ply)
 	
 	-- local ang = Angle(att.Ang + self.SeatAngle)
 	-- ang:Normalize()
-	-- seat:SetAngles(ang)
 	
 	-- seat:SetAngles(yaw:LocalToWorldAngles(att.Ang))
-	seat:SetPos(att.Pos-Vector(0,0,5))
+	att.Ang:RotateAroundAxis(att.Ang:Up(),-90)
+	seat:SetAngles(att.Ang)
+	seat:SetPos(att.Pos-yaw:GetUp()*5)
 	seat:SetModel("models/nova/airboat_seat.mdl")
 	seat:SetKeyValue("vehiclescript", "scripts/vehicles/prisoner_pod.txt")
 	seat:SetKeyValue("limitview","0")
@@ -408,12 +427,15 @@ end
 
 function ENT:LeaveTurret(ply)
 	local isPlayer = ply:IsPlayer()
-	if isPlayer then
+	if isPlayer and !self.TempPlayer then
+		ply.NEXT_EMPLACEMENT_USE = CurTime() + (self.TempPlayer and 0.6 or 0.2)
 		ply.ActiveEmplacement = nil
 		if self:GetShouldSetAngles() then
-			if ply.StripWeapon and not self.Seatable then
+			if ply.StripWeapon and !self.Seatable then
 				ply:StripWeapon("gred_emp_empty")
-				ply:SelectWeapon(self:GetPrevPlayerWeapon())
+				if self.PrevPlayerWeapon then
+					ply:SelectWeapon(self.PrevPlayerWeapon)
+				end
 			end
 			if self.Seatable then
 				local seat = self:GetSeat()
@@ -499,16 +521,16 @@ function ENT:GetShootAngles(ply,botmode,target)
 				local pos = target:LocalToWorld(target:OBBCenter())
 				local attpos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
 				
-				local vel = target:GetVelocity()/10 
+				local vel = target:GetVelocity()*0.1
 				local dist = attpos:DistToSqr(pos)
 				self:BulletCalcVel()
 				local calcPos = pos+vel*(dist/self.BulletVelCalc)
 				
 				if dist > 0.015 then
 					ang = (calcPos - attpos):Angle()
-					ang = Angle(!self.Seatable and -ang.p - self.CurRecoil or -ang.p,ang.y+180,ang.r)
+					-- ang = Angle(!self.Seatable and -ang.p - self.CurRecoil or -ang.p,ang.y+180,ang.r)
 					ang:Add(self.BotAngleOffset)
-					ang:RotateAroundAxis(ang:Up(),90)
+					ang = hull:WorldToLocalAngles(ang)
 					self:SetTargetValid(true)
 				else
 					self:SetTarget(nil)
@@ -537,7 +559,6 @@ function ENT:GetShootAngles(ply,botmode,target)
 				
 				-------------------------------------------
 				ang = (TargetPos - OurPos):Angle()
-				ang:RotateAroundAxis(ang:Up(),-90)
 				
 				g,Dist,MuzzleVelocity,Height = g,Dist*METERS_TO_UNITS,MuzzleVelocity*METERS_TO_UNITS,Height*METERS_TO_UNITS -- What needs to work but in meters
 				
@@ -568,10 +589,10 @@ function ENT:GetShootAngles(ply,botmode,target)
 				local attpos = self:LocalToWorld(self.TurretMuzzles[1].Pos)
 				
 				local trace = util.QuickTrace(attpos,(pos-attpos)*100000,self.Entities)
+				self.TargetTrace = trace
 				
 				ang = (pos - attpos):Angle()
-				ang = Angle(-ang.p,ang.y+180,ang.r)
-				ang:RotateAroundAxis(ang:Up(),90)
+				ang = hull:WorldToLocalAngles(Angle(-ang.p,ang.y,ang.r))
 				self:SetTargetValid(true)
 				
 				-- debugoverlay.Line(trace.StartPos,pos,FrameTime()+0.02,Color( 255, 255, 255 ),false )
@@ -589,73 +610,51 @@ function ENT:GetShootAngles(ply,botmode,target)
 				ply:SetActiveWeapon(ply:Give("gred_emp_empty"))
 			end
 			
-			if self.CustomEyeTrace then
-				local vec = self:GetPos() - self.CustomEyeTraceHitPos
-				ang = vec:Angle()
-				ang:RotateAroundAxis(ang:Up(),-90)
+			-- if self.CustomEyeTrace then
+				-- local vec = self:GetPos() - self.CustomEyeTraceHitPos
+				-- ang = vec:Angle()
 				
-				ang.y = ang.y + 180
-				ang.r = -ang.r + (self.EmplacementType == "Cannon" and (80 - vec:Length() * 0.001) or 0)
-				ang:Normalize()
-			elseif self.CustomAng then
-				ang = self:CustomAng(ply,ang,hull,hullAng)
-			else
-				ang = ply:EyeAngles()
-				ang:RotateAroundAxis(ang:Up(),-90)
-			end
+				-- ang.y = ang.y + 180
+				-- ang.r = -ang.r + (self.EmplacementType == "Cannon" and (80 - vec:Length() * 0.001) or 0)
+				-- ang:Normalize()
+			-- elseif self.CustomAng then
+				-- ang = self:CustomAng(ply,ang,hull,hullAng)
+			-- else
+				if self.Seatable then
+					ang = hull:WorldToLocalAngles(self:GetSeat():WorldToLocalAngles(ply:EyeAngles()))
+				else
+					ang = hull:WorldToLocalAngles(ply:EyeAngles())
+				end
+				ang.r = 0
+			-- end
 		end
 	end
 	if self.EmplacementType == "Mortar" and !noAngleChange and ang then
-		ang.r = -ang.r - self.DefaultPitch
+		ang.p = -ang.p + self.DefaultPitch
 	end
 	if self.OffsetAngle then
 		ang = ang + self.OffsetAngle
 		if self.OffsetAngle.p < 0 then
-			ang.r = -ang.r
+			ang.p = -ang.p
 		end
 		ang:Normalize()
 	end
-	if self.MaxRotation and !noAngleChange and ang then
-		local newang = ang - hullAng
-		newang:Normalize()
-		if newang.r > self.MaxRotation.p and self.EmplacementType != "Mortar" and self.MaxRotation.p > 0 then
-		
-			local oldang = hullAng+Angle(0,0,self.MaxRotation.p)
-			oldang:Normalize()
-			ang.r = oldang.r
-			self:SetTarget(nil)
-			self:SetTargetValid(false)
-		elseif (self.MaxRotation.p > 0 and newang.r < -self.MaxRotation.p) and not (self.MaxRotation.p <= 0 and newang.r < self.MaxRotation.p) and self.EmplacementType != "Mortar" then
-			local oldang = hullAng-Angle(0,0,self.MaxRotation.p)
-			oldang:Normalize()
-			ang.r = oldang.r
-			self:SetTarget(nil)
-			self:SetTargetValid(false)
-		elseif not (self.MaxRotation.p > 0 and newang.r < -self.MaxRotation.p) and (self.MaxRotation.p <= 0 and newang.r < self.MaxRotation.p) and self.EmplacementType != "Mortar" then
-			local oldang = hullAng+Angle(0,0,self.MaxRotation.p)
-			oldang:Normalize()
-			ang.r = oldang.r
-			self:SetTarget(nil)
-			self:SetTargetValid(false)
-		end
-		
-		if self.MaxRotation.y != 0 then
-			if newang.y > self.MaxRotation.y then
-			
-				local oldang = hullAng+self.MaxRotation
-				oldang:Normalize()
-				ang.y = oldang.y
-				self:SetTarget(nil)
-				self:SetTargetValid(false)
-			elseif newang.y < -self.MaxRotation.y then
-			
-				local oldang = hullAng-self.MaxRotation
-				oldang:Normalize()
-				ang.y = oldang.y
+	if !noAngleChange and ang then
+		if self.EmplacementType != "Mortar" then
+			local newp = -math.Clamp(-ang.p,self.MinRotation.p,self.MaxRotation.p)
+			if newp != ang.p then
 				self:SetTarget(nil)
 				self:SetTargetValid(false)
 			end
+			ang.p = newp
 		end
+		
+		local newy = math.Clamp(ang.y,self.MinRotation.y,self.MaxRotation.y)
+		if newy != ang.y then
+			self:SetTarget(nil)
+			self:SetTargetValid(false)
+		end
+		ang.y = newy
 	end
 	
 	self.RightPitch = 0
@@ -663,12 +662,12 @@ function ENT:GetShootAngles(ply,botmode,target)
 	if ang and self.EmplacementType != "Mortar" and gred.CVars.gred_sv_progressiveturn:GetInt() >= 1 then
 		ft = ft or FrameTime()
 		self.CurYaw = self.CurYaw and math.ApproachAngle(self.CurYaw,ang.y,self.YawRate*ft) or 0
-		self.CurPitch = self.CurPitch and math.ApproachAngle(self.CurPitch,ang.r,self.PitchRate*ft) or 0
-		self.RightPitch = math.abs(math.Round(ang.r,1) - math.Round(self.CurPitch,1)) == 0 and 0 or 1
+		self.CurPitch = self.CurPitch and math.ApproachAngle(self.CurPitch,ang.p,self.PitchRate*ft) or 0
+		self.RightPitch = math.abs(math.Round(ang.p,1) - math.Round(self.CurPitch,1)) == 0 and 0 or 1
 		self.RightYaw = math.abs(math.Round(ang.y,1) - math.Round(self.CurYaw,1))
 		self.RightYaw = (self.RightYaw <= 0.3 or (self.RightYaw >= 359.7 and self.RightYaw <= 360)) and 0 or 1
 		ang.y = self.CurYaw
-		ang.r = self.CurPitch
+		ang.p = self.CurPitch
 	end
 	return ang
 end
@@ -766,7 +765,7 @@ function ENT:CalcAmmoType(ammo,IsReloading,ct,ply)
 	if self.AmmunitionTypes then
 		-- Toggle ammo types
 		if ply:KeyDown(IN_ATTACK2) then
-			if self:GetNextSwitchAmmoType() <= ct then
+			if self.NextSwitchAmmoType <= ct then
 				if self.EmplacementType != "MG" then
 					if gred.CVars.gred_sv_manual_reload:GetInt() == 0 then
 						self:SwitchAmmoType(ply,ct)
@@ -774,21 +773,21 @@ function ENT:CalcAmmoType(ammo,IsReloading,ct,ply)
 				else
 					self:SwitchAmmoType(ply,ct)
 				end
-				self:SetNextSwitchAmmoType(ct + 0.3)
+				self.NextSwitchAmmoType = ct + 0.3
 			end
 		end
 		
 		-- Update fuse time
 		if self.CanSwitchTimeFuse then
 			if self.AmmunitionTypes[self:GetAmmoType()][1] == "Time-fused" then
-				if self:GetNextSwitchTimeFuse() <= ct then
+				if self.NextSwitchTimeFuse <= ct then
 					if ply:KeyDown(IN_SPEED) then
 						self:SetNewFuseTime(ply)
 					end
 					if ply:KeyDown(IN_WALK) then
 						self:SetNewFuseTime(ply,true)
 					end
-					self:SetNextSwitchTimeFuse(ct + 0.2)
+					self.NextSwitchTimeFuse = ct + 0.2
 				end
 			end
 		end
@@ -823,6 +822,7 @@ function ENT:Think()
 	if botmode then
 		botmode,target = self:FindBotTarget(botmode,target,ct)
 	else
+		self.TargetTrace = nil
 		if ply == self then
 			self:LeaveTurret(self)
 		end
@@ -845,11 +845,12 @@ function ENT:Think()
 			if shouldSetAngles or self.CustomEyeTrace then
 				local ang = self:GetShootAngles(ply,botmode,target)
 				if ang then
-					self:HandleRecoil(ang)
+					local hull = self:GetHull()
 					if self.YawModel then
-						local hull = self:GetHull()
-						self:GetYaw():SetAngles(hull:LocalToWorldAngles(Angle(0,hull:WorldToLocalAngles(ang).y,0)))
+						self:GetYaw():SetAngles(hull:LocalToWorldAngles(Angle(0,ang.y,0)))
 					end
+					ang = hull:LocalToWorldAngles(ang)
+					self:HandleRecoil(ang)
 					self:SetAngles(ang)
 				end
 			end
@@ -940,19 +941,9 @@ function ENT:CalcMortarCanShoot(ply,ct)
 		end
 	else
 		noHitSky = false
-		if self.EmplacementType == "Cannon" then
-			if self.MaxRotation and self.MaxRotation.y != 0 then
-				local ang = self:GetAngles() - self:GetHull():GetAngles()
-				ang:Normalize()
-				canShoot = not (ang.y >= self.MaxRotation.y or ang.y-0.1 <= -self.MaxRotation.y)
-			else
-				canShoot = true
-			end
-		else
-			local ang = self.CustomEyeTrace and (self:GetPos() - self.CustomEyeTraceHitPos):Angle() or self:GetAngles() - self:GetHull():GetAngles()
-			ang:Normalize()
-			canShoot = not (ang.y >= self.MaxRotation.y or ang.y-0.1 <= -self.MaxRotation.y)
-		end
+		local ang = self:GetHull():WorldToLocalAngles(self.CustomEyeTrace and (self.CustomEyeTraceHitPos - self:GetPos()):Angle() or self:GetAngles())
+		canShoot = not (ang.y > self.MaxRotation.y or ang.y-0.1 < self.MinRotation.y)
+		
 		if !canShoot then
 			if !botmode and self.Time_Mortar <= ct then
 				net.Start("gred_net_message_ply")
@@ -1022,7 +1013,7 @@ function ENT:FireMortar(ply,ammo,muzzle)
 	local pos = self:GetPos()
 	util.ScreenShake(pos,5,5,0.5,200)
 	
-	local EyeTrace = ply:GetEyeTrace()
+	local EyeTrace = self.TargetTrace and self.TargetTrace or ply:GetEyeTrace()
 	local viewmode = self:GetViewMode()
 	local trace = {}				
 	trace.start = self.CustomEyeTrace and viewmode > 0 and self.CustomEyeTraceHitPos or EyeTrace.HitPos
@@ -1032,6 +1023,7 @@ function ENT:FireMortar(ply,ammo,muzzle)
 	
 	local spread = sqrt(tr.HitPos:Distance(EyeTrace.StartPos))*2.5
 	local BPos = tr.HitPos + Vector(math.random(-spread,spread),math.random(-spread,spread),-1) -- Creates our spawn position
+	BPos = self.TargetTrace and BPos + add_alt or BPos
 	if !util.IsInWorld(BPos) then
 		BPos = tr.HitPos
 	end
@@ -1150,7 +1142,7 @@ function ENT:FireMG(ply,ammo,muzzle)
 	local ammotype = self["AmmunitionType"]
 	local ammotypes = self["AmmunitionTypes"]
 	local cal = ammotype or ammotypes[1][2]
-	local fusetime = (ammotypes and ammotypes[self:GetAmmoType()][1] == "Time-fused" or false) and self:GetFuseTime() or nil
+	local fusetime = (ammotypes and ammotypes[self:GetAmmoType()][1] == "Time-fused" or false) and self.FuzeTime or nil
 	gred.CreateBullet(ply,pos,ang,cal,self["Entities"],fusetime,self.ClassName == "gred_emp_phalanx",self:UpdateTracers())
 	
 end
@@ -1282,7 +1274,7 @@ function ENT:HandleRecoil(ang)
 		end
 		self.CurRecoil = self.CurRecoil and self.CurRecoil + math.Clamp(0 - self.CurRecoil,-self.RecoilRate,self.RecoilRate) or 0
 		self:SetRecoil(self.CurRecoil)
-		ang.r = ang.r + self.CurRecoil
+		ang.p = ang.p - self.CurRecoil
 	end
 end
 
@@ -1337,9 +1329,9 @@ function ENT:PreFire(ammo,ct,ply)
 	else
 		if self.ShootAnim then 
 			if self.AnimRestartTime and self.EmplacementType != "Cannon" then
-				if self:GetNextShootAnim() < ct then
+				if self.NextShootAnim < ct then
 					self:ResetSequence(self.ShootAnim)
-					self:SetNextShootAnim(ct + self.AnimRestartTime)
+					self.NextShootAnim = ct + self.AnimRestartTime
 				end
 			else
 				self:ResetSequence(self.ShootAnim)
@@ -1397,15 +1389,10 @@ function ENT:SwitchAmmoType(ply,ct)
 end
 
 function ENT:SetNewFuseTime(ply,minus)
-	if minus then
-		self:SetFuseTime(self:GetFuseTime()-0.01)
-	else
-		self:SetFuseTime(self:GetFuseTime()+0.01)
-	end
-	local fusetime = self:GetFuseTime()
-	if fusetime > 0.5 then self:SetFuseTime(0.01) elseif fusetime <= 0 then self:SetFuseTime(0.5) end
+	self.FuzeTime = self.FuzeTime + (minus and -0.01 or 0.01)
+	if self.FuzeTime > 0.5 then self.FuzeTime = 0.01 elseif self.FuzeTime <= 0 then self.FuzeTime = 0.5 end
 	net.Start("gred_net_message_ply")
-		net.WriteString("["..self.NameToPrint.."] Time fuse set to "..math.Round(self:GetFuseTime(),2).." seconds")
+		net.WriteString("["..self.NameToPrint.."] Time fuse set to "..math.Round(self.FuzeTime,2).." seconds")
 	net.Send(ply)
 end
 
@@ -1508,7 +1495,6 @@ function ENT:ManualReload(ammo)
 				end
 			end
 			
-			self.MagIn = false
 			if ent != nil then
 				ent:Remove()
 				self:SetPlaybackRate(1)
@@ -1699,12 +1685,12 @@ function ENT:PostEntityPaste(ply,ent,createdEntities)
 		local yaw = self:GetYaw()
 		if IsValid(yaw) then
 			local ang = hull:LocalToWorldAngles(self.DUPE_OLD_ANG)
-			local oldr = oldang.r
-			ang.r = 0
+			local oldp = oldang.p
+			ang.p = 0
 			
 			yaw:SetAngles(ang)
 			
-			ang.r = oldr
+			ang.p = oldp
 			
 			self:SetAngles(ang)
 		else
@@ -1771,10 +1757,16 @@ function ENT:Explode(ply)
 end
 
 function ENT:OnTakeDamage(dmg)
-	if dmg:IsFallDamage() then return end--or (dmg:IsBulletDamage() and dmg:GetDamage() < 7) then return end
-	self:SetHP(self:GetHP()-dmg:GetDamage())
+	if dmg:IsFallDamage() then return end
+	local IsBulletDamage = dmg:IsBulletDamage()
 	
-	if self:GetHP() <= 0 then self:Explode(dmg:GetAttacker()) end
+	if (self.EmplacementType == "Cannon" and IsBulletDamage) then return end
+	
+	self:SetHP(self:GetHP() - dmg:GetDamage() * (IsBulletDamage and 0.3 or 1))
+	
+	if self:GetHP() <= 0 then 
+		self:Explode(dmg:GetAttacker()) 
+	end
 end
 
 function ENT:OnRemove()

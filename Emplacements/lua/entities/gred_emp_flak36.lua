@@ -1,4 +1,4 @@
-AddCSLuaFile()
+	AddCSLuaFile()
 
 ENT.Type 				= "anim"
 ENT.Base 				= "gred_emp_base"
@@ -35,14 +35,15 @@ ENT.AimsightModel		= "models/gredwitch/flak36/flak36_aimsight.mdl"
 ENT.EmplacementType     = "MG"
 ENT.Seatable			= true
 ENT.Ammo				= -1
-ENT.ViewPos				= Vector(45,25,40)
-ENT.TurretPos			= Vector(0,-2,24.6584)
-ENT.MaxRotation			= Angle(-10)
+ENT.ViewPos				= Vector(2,0,30)
+ENT.TurretPos			= Vector(-2,0,24.6584)
 ENT.MaxViewModes		= 1
 ENT.CanSwitchTimeFuse	= true
 ENT.IsAAA				= true
-ENT.SightPos			= Vector(21.941112518311,-28.728733062744,19.752820968628)
-ENT.AimSightPos			= Vector(22,6,4.7)
+ENT.AimSightPos			= Vector(-37,0,39)
+ENT.SightPos			= Vector(5,-22,5)
+ENT.MaxRotation			= Angle(90,180)
+ENT.MinRotation			= Angle(-10,-180)
 
 -- function ENT:AltShootAngles(ply)
 	-- local ang = ply:EyeAngles()
@@ -87,7 +88,7 @@ function ENT:OnInit()
 	local aimsight = ents.Create("gred_prop_emp")
 	aimsight.GredEMPBaseENT = self
 	aimsight:SetAngles(yaw:GetAngles())
-	aimsight:SetPos(yaw:LocalToWorld(Vector(0,-37,39)))
+	aimsight:SetPos(yaw:LocalToWorld(self.AimSightPos))
 	aimsight:Spawn()
 	
 	aimsight:Activate()
@@ -101,43 +102,54 @@ end
 function ENT:OnTick(ct,ply,botmode)
 	local aimsight = self:GetAimSight()
 	local ang = aimsight:GetAngles()
-	ang.r = self:GetAngles().r
+	ang.p = self:GetAngles().p
 	aimsight:SetAngles(ang)
 end
 
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
-	seat = self:GetSeat()
+	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
+	local seat = self:GetSeat()
 	local seatValid = IsValid(seat)
 	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
-	angles = ply:EyeAngles()
+	
 	if self:GetViewMode() == 1 then
 		local view = {}
-		
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90
-		angles.r = -ang.p
-		
-		view.origin = self:GetAimSight():LocalToWorld(self.AimSightPos)
-		view.angles = angles
-		view.fov = 35
+		view.origin = self:GetAimSight():LocalToWorld(self.SightPos)
+		view.angles = self:GetAngles()
+		view.fov = 20
 		view.drawviewer = false
 
 		return view
 	else
 		if seatValid then
 			local view = {}
-			local yaw = self:GetYaw()
-			view.origin = yaw:GetPos() + yaw:GetForward()*self.ViewPos.y + yaw:GetRight()*self.ViewPos.x + yaw:GetUp()*self.ViewPos.z --seat:LocalToWorld(self.ViewPos)
-			view.angles = angles
+			view.origin = seat:LocalToWorld(self.ViewPos)
+			view.angles = ply:EyeAngles()
+			view.angles.r = self:GetAngles().r
 			view.fov = fov
 			view.drawviewer = false
-
+	 
 			return view
 		end
 	end
 end
+
+
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
+	
+	-- for i=0, yaw:GetBoneCount()-1 do
+		-- print( i, yaw:GetBoneName( i ) )
+	-- end
+	
+	yaw:ManipulateBoneAngles(4,Angle(0,0,ang.y*15))
+	yaw:ManipulateBoneAngles(5,Angle(0,0,ang.p*15))
+end
+
 function ENT:HUDPaint(ply,viewmode)
 	if viewmode == 1 then
 		local ScrW,ScrH = ScrW(),ScrH()

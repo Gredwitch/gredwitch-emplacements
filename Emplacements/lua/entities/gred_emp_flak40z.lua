@@ -61,8 +61,8 @@ ENT.ShootAnim			= "shoot"
 ENT.ShootSound			= "^gred_emp/common/88mm.wav"
 ENT.MaxUseDistance		= 150
 
-ENT.TurretPos			= Vector(0,-44,81)
-ENT.YawPos				= Vector(0,0,0)
+ENT.TurretPos			= Vector(-45.5994,-1.0455,64.8183)
+ENT.YawPos				= Vector(0,0,16)
 
 ENT.Sequential			= true
 ENT.IsAAA				= true
@@ -73,13 +73,15 @@ ENT.EmplacementType     = "Cannon"
 ENT.Spread				= 0.1
 ENT.MaxRotation			= Angle(-20)
 ENT.Seatable			= true
-ENT.SightPos			= Vector(0,30,0)
+ENT.SightPos			= Vector(-30,0,10)
 ENT.AddShootAngle		= 0
 ENT.ViewPos				= Vector(0,0,60)
 ENT.MaxViewModes		= 1
 ENT.Ammo				= 2
 ENT.SightTexture		= "gredwitch/overlay_german_canonsight_01"
 ENT.MaxViewModes		= 1
+ENT.MaxRotation			= Angle(88,180)
+ENT.MinRotation			= Angle(-3,-180)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -153,30 +155,25 @@ function ENT:PlayAnim()
 end
 
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
-	seat = self:GetSeat()
+	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
+	local seat = self:GetSeat()
 	local seatValid = IsValid(seat)
-	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
-	angles = ply:EyeAngles()
+	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
+	
 	if self:GetViewMode() == 1 then
 		local view = {}
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90
-		angles.r = -ang.p
-		
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
+		view.angles = self:GetAngles()
 		view.fov = 20
-		view.drawviewer = true
+		view.drawviewer = false
 
 		return view
 	else
 		if seatValid then
 			local view = {}
 			view.origin = seat:LocalToWorld(self.ViewPos)
-			angles.r = angles.r + 1
-			view.angles = angles
+			view.angles = ply:EyeAngles()
+			view.angles.r = self:GetAngles().r
 			view.fov = fov
 			view.drawviewer = false
 	 

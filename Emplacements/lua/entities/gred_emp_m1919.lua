@@ -25,13 +25,10 @@ ENT.HullModel			= "models/gredwitch/m1919/m1919_bipod.mdl"
 ENT.TurretModel			= "models/gredwitch/m1919/m1919_gun.mdl"
 
 ENT.Ammo				= 250
-ENT.MaxRotation			= Angle(30,45)
+ENT.MaxRotation			= Angle(15,30)
+ENT.MinRotation			= Angle(-30,-30)
 ENT.ReloadTime			= 1.6
-if game.SinglePlayer() then
-	ENT.SightPos		= Vector(0.07,-32,3.1)
-else
-	ENT.SightPos		= Vector(0,-32,3.1)
-end
+ENT.SightPos			= Vector(-32,0,3.1)
 ENT.MaxViewModes		= 1
 ENT.CycleRate			= 0.6
 
@@ -66,18 +63,18 @@ function ENT:Reload(ply)
 			prop:Spawn()
 			prop:SetModelScale(1.1)
 			prop:Activate()
-			self.MagIn = false
-			local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
+			local t = gred.CVars.gred_sv_shell_remove_time:GetInt()
 			if t > 0 then
 				timer.Simple(t,function()
 					if IsValid(prop) then prop:Remove() end 
 				end)
 			end
 		end
+		self.MagIn = false
 		self:SetBodygroup(1,1)
 	end)
 	
-	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
+	if gred.CVars.gred_sv_manual_reload_mgs:GetInt() == 0 then
 		timer.Simple(1.6,function() 
 			if !IsValid(self) then return end
 			self:SetBodygroup(1,0)
@@ -115,15 +112,15 @@ if SERVER then
 	end
 end
 
+
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		angles = ply:EyeAngles()
-		angles.p = angles.p - (self:GetRecoil())*0.8
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
-		view.fov = 35
+		view.angles = ply:EyeAngles()
+		view.angles.p = view.angles.p - (self:GetRecoil())*0.2
+		view.angles.r = self:GetAngles().r
+		view.fov = 40
 		view.drawviewer = false
 
 		return view

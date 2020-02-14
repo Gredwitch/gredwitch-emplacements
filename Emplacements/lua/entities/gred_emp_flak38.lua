@@ -36,15 +36,16 @@ ENT.YawModel			= "models/gredwitch/flak38/flak38_shield.mdl"
 ENT.TurretModel			= "models/gredwitch/flak38/flak38_gun.mdl"
 ENT.ReloadSound			= "gred_emp/flak38/reload.wav"
 ENT.ReloadEndSound		= "gred_emp/flak38/reloadend.wav"
-ENT.TurretPos			= Vector(1.66126,12.734,22.7944)
-ENT.MaxRotation			= Angle(-20)
-ENT.SightPos			= Vector(13.52,-10,8.1)
-ENT.AimSightPos			= Vector(4.78,-11.47,30.01)
+ENT.TurretPos			= Vector(12.734,-1.66126,22.7944)
+ENT.SightPos			= Vector(-10,-13.52,8.1)
+ENT.AimSightPos			= Vector(-11.47,-4.78,30.01)
 ENT.IsAAA				= true
 ENT.CanSwitchTimeFuse	= true
 ENT.MaxViewModes		= 1
 ENT.BotAngleOffset		= Angle(2.5,0,0)
-
+ENT.ViewPos				= Vector(5,0,35)
+ENT.MaxRotation			= Angle(90,180)
+ENT.MinRotation			= Angle(-12,-180)
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 16
@@ -82,7 +83,7 @@ if SERVER then
 	function ENT:OnTick(ct,ply,botmode)
 		local aimsight = self:GetAimSight()
 		local ang = aimsight:GetAngles()
-		ang.r = self:GetAngles().r
+		ang.p = self:GetAngles().p
 		aimsight:SetAngles(ang)
 		
 		self:SetBodygroup(1,self.MagIn and 0 or 1)
@@ -107,7 +108,7 @@ function ENT:Reload(ply)
 		prop:Activate()
 		if self:GetAmmo() < 1 then prop:SetBodygroup(1,1) end
 		self.MagIn = false
-		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
+		local t = gred.CVars.gred_sv_shell_remove_time:GetInt()
 		if t > 0 then
 			timer.Simple(t,function()
 				if IsValid(prop) then prop:Remove() end 
@@ -115,7 +116,7 @@ function ENT:Reload(ply)
 		end
 		self:SetBodygroup(1,1)
 	end)
-	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
+	if gred.CVars.gred_sv_manual_reload_mgs:GetInt() == 0 then
 		timer.Simple(0.73,function() 
 			if !IsValid(self) then return end
 			self:SetBodygroup(1,0)
@@ -139,36 +140,46 @@ function ENT:Reload(ply)
 end
 
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
-	seat = self:GetSeat()
+	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
+	local seat = self:GetSeat()
 	local seatValid = IsValid(seat)
-	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end 
-	angles = ply:EyeAngles()
+	if (!seatValid and GetConVar("gred_sv_enable_seats"):GetInt() == 1) then return end
+	
 	if self:GetViewMode() == 1 then
 		local view = {}
-		
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90
-		angles.r = -ang.p
-		
 		view.origin = self:GetAimSight():LocalToWorld(self.SightPos)
-		view.angles = angles
-		view.fov = 35
+		view.angles = self:GetAngles()
+		view.fov = 20
 		view.drawviewer = false
-	
+
 		return view
 	else
 		if seatValid then
 			local view = {}
-			view.origin = pos
-			view.angles = angles
+			view.origin = seat:LocalToWorld(self.ViewPos)
+			view.angles = ply:EyeAngles()
+			view.angles.r = self:GetAngles().r
 			view.fov = fov
 			view.drawviewer = false
-	
+	 
 			return view
 		end
 	end
+end
+
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
+	
+	-- for i=0, yaw:GetBoneCount()-1 do
+		-- print( i, yaw:GetBoneName( i ) )
+	-- end
+	
+	yaw:ManipulateBoneAngles(5,Angle(ang.y*15))
+	yaw:ManipulateBoneAngles(4,Angle(0,ang.p*15))
 end
 
 function ENT:HUDPaint(ply,viewmode)

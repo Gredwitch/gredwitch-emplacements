@@ -46,7 +46,7 @@ ENT.ATReloadSound		= "big"
 
 ENT.TurretPos			= Vector(0,0,35)
 ENT.YawPos				= Vector(0,0,26.0317)
-ENT.WheelsPos			= Vector(-0.5,24.8589,-40)
+ENT.WheelsPos			= Vector(25,0,23)
 ENT.WheelsModel			= "models/gredwitch/gpf155/gpf155_wheels.mdl"
 ENT.HullModel			= "models/gredwitch/gpf155/gpf155_base_open.mdl"
 ENT.TurretModel			= "models/gredwitch/gpf155/gpf155_gun.mdl"
@@ -55,6 +55,8 @@ ENT.Ammo				= -1
 ENT.EmplacementType     = "Cannon"
 ENT.Spread				= 0.4
 ENT.MaxRotation			= Angle(35,60)
+ENT.MinRotation			= Angle(0,-60)
+ENT.ToggleableCarriage	= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -69,9 +71,12 @@ end
 
 function ENT:OnThinkCL()
 	local yaw = self:GetYaw()
-	local ang = self:GetHull():WorldToLocalAngles(self:GetAngles())
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
 	
 	-- print(yaw:GetBoneName(1))
 	yaw:ManipulateBoneAngles(1,Angle(0,  ang.y*30))
-	yaw:ManipulateBoneAngles(2,Angle(0,0,ang.r*30))
+	yaw:ManipulateBoneAngles(2,Angle(0,0,ang.p*30))
 end

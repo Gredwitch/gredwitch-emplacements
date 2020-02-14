@@ -17,12 +17,13 @@ ENT.Spread				= 400
 
 ENT.ShootSound			= "gred_emp/common/mortar_fire.wav"
 
-ENT.MaxRotation			= Angle(35,45)
 ENT.HullModel			= "models/gredwitch/granatwerfer/granatwerfer_base.mdl"
 ENT.TurretModel			= "models/gredwitch/granatwerfer/granatwerfer_tube.mdl"
 ENT.DefaultPitch		= 50
 ENT.EmplacementType     = "Mortar"
 ENT.Ammo				= -1
+ENT.MaxRotation			= Angle(90,23)
+ENT.MinRotation			= Angle(-45,-23)
 
 ENT.AmmunitionTypes		= {
 	{

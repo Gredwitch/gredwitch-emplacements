@@ -64,21 +64,26 @@ ENT.AnimPlayTime		= 1
 
 ENT.ShootSound			= "^gred_emp/common/6pdr.wav"
 
-ENT.MaxRotation			= Angle(27,65)
-ENT.HullModel			= "models/gredwitch/6pdr/6pdr_carriage.mdl"
-ENT.TurretModel			= "models/gredwitch/6pdr/6pdr_shield.mdl"
+ENT.HullModel			= "models/gredwitch/6pdr/6pdr_carriage_open.mdl"
+ENT.TurretModel			= "models/gredwitch/6pdr/6pdr_gun.mdl"
+ENT.YawModel			= "models/gredwitch/6pdr/6pdr_shield.mdl"
 ENT.EmplacementType     = "Cannon"
 ENT.ATReloadSound    	= "small"
 ENT.Spread				= 0.1
 ENT.AnimPauseTime		= 0.3
-ENT.TurretPos			= Vector(0,50,20)
-ENT.WheelsPos			= Vector(0,5,-5)
+ENT.TurretPos			= Vector(0,0,9)
+-- ENT.YawPos				= Vector(50,0,20)
+ENT.YawPos				= Vector(50,0,19)
+ENT.WheelsPos			= Vector(55,0,15)
 ENT.WheelsModel			= "models/gredwitch/6pdr/6pdr_wheels.mdl"
 ENT.Ammo				= -1
 ENT.AddShootAngle		= 0
 ENT.MaxViewModes		= 1
 ENT.SightTexture		= "gredwitch/overlay_british_canonsight_01"
-ENT.SightPos			= Vector(-15,5,22)
+ENT.SightPos			= Vector(5,14,11.5)
+ENT.MaxRotation			= Angle(15,90)
+ENT.MinRotation			= Angle(-5,-90)
+ENT.ToggleableCarriage	= true
 
 
 function ENT:SpawnFunction( ply, tr, ClassName )
@@ -95,13 +100,9 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90
-		angles.r = -ang.p
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
+		view.angles = self:GetAngles()
 		view.fov = 20
 		view.drawviewer = false
 
@@ -117,4 +118,13 @@ function ENT:HUDPaint(ply,viewmode)
 		surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
 		return ScrW,ScrH
 	end
+end
+
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	
+	yaw:ManipulateBoneAngles(2,Angle(hull:WorldToLocalAngles(self:GetAngles()).p*15))
 end

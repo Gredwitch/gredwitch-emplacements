@@ -56,19 +56,24 @@ ENT.AnimPlayTime		= 1
 
 ENT.ShootSound			= "^gred_emp/common/76mm.wav"
 
-ENT.MaxRotation			= Angle(27,65)
 ENT.TurretTurnMax		= 0.7
-ENT.HullModel			= "models/gredwitch/M5/M5_carriage.mdl"
+ENT.HullModel			= "models/gredwitch/M2A1/M2A1_carriage_open.mdl"
+ENT.YawModel			= "models/gredwitch/M2A1/M2A1_yaw.mdl"
 ENT.TurretModel			= "models/gredwitch/M5/M5_gun.mdl"
 ENT.EmplacementType     = "Cannon"
 ENT.Spread				= 0.1
 
-ENT.WheelsModel			= "models/gredwitch/M5/M5_wheels.mdl"
-ENT.WheelsPos			= Vector(0,13,-4)
+ENT.WheelsModel			= "models/gredwitch/M2A1/M2A1_wheels.mdl"
+ENT.YawPos				= Vector(-5.40738,0,4.08412)
+ENT.TurretPos			= Vector(-13.0314,0,14.3401)
+ENT.WheelsPos			= Vector(0,0,0)
 ENT.Ammo				= -1
 ENT.MaxViewModes		= 1
 ENT.SightTexture		= "gredwitch/overlay_american_canonsight_01"
-ENT.SightPos			= Vector(13.5,15,33)
+ENT.SightPos			= Vector(25,-13,18)
+ENT.MaxRotation			= Angle(66,56)
+ENT.MinRotation			= Angle(-5,-56)
+ENT.ToggleableCarriage	= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -84,18 +89,27 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90
-		angles.r = -ang.p
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
+		view.angles = self:GetAngles()
 		view.fov = 20
 		view.drawviewer = false
 
 		return view
 	end
+end
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
+	
+	-- for i=0, yaw:GetBoneCount()-1 do
+		-- print( i, yaw:GetBoneName( i ) )
+	-- end
+	yaw:ManipulateBoneAngles(2,Angle(ang.y*15))
+	yaw:ManipulateBoneAngles(3,Angle(ang.p*15))
 end
 
 function ENT:HUDPaint(ply,viewmode)

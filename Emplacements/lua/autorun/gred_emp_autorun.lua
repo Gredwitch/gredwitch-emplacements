@@ -25,79 +25,9 @@ gred.EmplacementTool = {}
 gred.EmplacementTool.BlackList = {"gred_emp_nebelwerfer_tubes","gred_emp_m61","gred_emp_base",
 								-- "gred_emp_[whatyouwant]",  -- These emplacements won't show up in the menu
 }
-
-gred.Lang = gred.Lang or {}
-gred.Lang.fr = gred.Lang.fr or {}
-gred.Lang.en = gred.Lang.en or {}
-gred.Lang.fr.EmplacementTool = {
-	["control_init_base"] = "[Recharger] + [Intéragir] pour alterner entre les modes.",
-	["control_mode_construct"] = "Clique droit pour faire apparaître le menu, clique droit + [Utiliser] pour supprimer la selection, clique gauche pour spawn l'emplacement, recharger pour changer l'angle de l'emplacement.",
-	["info_emplacement_motion_1"] = "L'emplacement '",
-	["info_emplacement_motion_2"] = "' a été ",
-	["info_emplacement_freeze"] = "freeze",
-	["info_emplacement_unfreeze"] = "unfreeze",
-	["control_mode_edit"] = "Clique droit pour ouvrir le menu d'édition en visant un emplacement.",
-	["info_emplacement_destroyed_1"] = "L'emplacement '",
-	["info_emplacement_destroyed_2"] = "' a été détruit!",
-	["hud_curmode"] = "Mode:",
-	["hud_constructmode"] = "Construction",
-	["hud_editmode"] = "Edition",
-	["menu_copy_to_clipboard"] = "Copier vers le presse-papier",
-	["cant_edit_emplacement"] = "Vous ne pouvez pas modifier cet emplacement!",
-	["info_singleplayer"] = "ATTENTION! Ce SWEP ne fonctionne pas en mode solo! Pour l'utiliser, démarrez une partie en mode local ou Peer To Peer (comme ça: https://i.imgur.com/X3bCUcj.png).",
-	["menu_emplacement_selection"] = "Sélection de l'emplacement",
-	["menu_edit"] = "Menu d'édition",
-	["menu_move"] = "Déplacer",
-	["menu_destroy"] = "Détruire",
-	["menu_properties"] = "Propriétés",
-}
-gred.Lang.en.EmplacementTool = {
-	["control_init_base"] = "[Reload] + [Use] to toggle modes.",
-	["control_mode_construct"] = "Right click to show the menu, right click + [Use] to remove the selection, left click to spawn the emplacement and reload to change the emplacement's angle.",
-	["info_emplacement_motion_1"] = "The emplacement '",
-	["info_emplacement_motion_2"] = "' has been ",
-	["info_emplacement_freeze"] = "frozen",
-	["info_emplacement_unfreeze"] = "unfrozen",
-	["control_mode_edit"] = "Right click to open the edit menu while aiming at an emplacement.",
-	["info_emplacement_destroyed_1"] = "The emplacement '",
-	["info_emplacement_destroyed_2"] = "' has been destroyed!",
-	["hud_curmode"] = "Current mode:",
-	["hud_constructmode"] = "Construct mode",
-	["hud_editmode"] = "Edit mode",
-	["menu_copy_to_clipboard"] = "Copy to clipboard",
-	["cant_edit_emplacement"] = "You cannot edit this emplacement!",
-	["info_singleplayer"] = "WARNING! This SWEP doesn't work in single player mode! If you want to use it, you must start a local game or a Peer To Peer game (like this : https://i.imgur.com/X3bCUcj.png).",
-	["menu_emplacement_selection"] = "Emplacement selection",
-	["menu_edit"] = "Edit menu",
-	["menu_move"] = "Move",
-	["menu_destroy"] = "Destroy",
-	["menu_properties"] = "Properties",
-}
-
 gred.EmplacementBinoculars = gred.EmplacementBinoculars or {}
 gred.EmplacementBinoculars.FireMissionID = gred.EmplacementBinoculars.FireMissionID or 124
-gred.Lang.fr.EmplacementBinoculars = { -- gred.Lang.fr.EmplacementBinoculars or {
-	["info_emplacement_paired"] = "Vous avez synchronisé l'emplacement ",
-	["info_emplacement_unpaired"] = "Vous avez dé-synchronisé l'emplacement ",
-	["info_firemission"] = "Fire mission ID: ",
-	["info_invalidpos"] = "Coordonées invalides! Rien ne doit obstruer la cible!",
-	["emplacement_missionid"] = "DEMANDE N°: #",
-	["emplacement_caller"] = "SOUS L'ORDRE DE: ",
-	["emplacement_timeleft"] = "TEMPS RESTANT: ",
-	["info_nopairedemplacements"] = "Aucun emplacement synchronisé!",
-	
-}
-gred.Lang.en.EmplacementBinoculars = { -- gred.Lang.fr.EmplacementBinoculars or {
-	["info_emplacement_paired"] = "You have paired ",
-	["info_emplacement_unpaired"] = "You have unpaired ",
-	["info_firemission"] = "Fire mission ID: ",
-	["info_invalidpos"] = "Invalid coordinates! Make sure nothing is obstructing your target!",
-	["emplacement_missionid"] = "FIRE MISSION ID: #",
-	["emplacement_caller"] = "CALLER: ",
-	["emplacement_timeleft"] = "TIME LEFT: ",
-	["info_nopairedemplacements"] = "No paired emplacements!",
-	
-}
+
 
 
 local tableinsert = table.insert
@@ -157,8 +87,14 @@ if SERVER then
 		end)
 	end)
 	net.Receive("gred_net_emp_viewmode",function()
-		self = net.ReadEntity()
-		self:SetViewMode(net.ReadInt(8))
+		local self = net.ReadEntity()
+		local int = net.ReadInt(8)
+		if !IsValid(self) then return end
+		
+		self:SetViewMode(int)
+		if int > self.OldMaxViewModes then
+			self:GetShooter():SetEyeAngles(Angle(90))
+		end
 	end)
 	
 	net.Receive("gred_net_send_emplacement_type",function()
@@ -489,10 +425,19 @@ else
 		gred.EmplacementBinoculars.FireMissionID = id
 		ent.FireMissions = ent.FireMissions or {}
 		ent.FireMissions[id] = tab
+		ent.MaxViewModes = table.Count(ent.FireMissions) + ent.OldMaxViewModes
+		
+		local shooter = ent:GetShooter()
+		if LocalPlayer() == shooter then
+			LANGUAGE = gred.CVars.gred_cl_lang:GetString() or "en"
+			if not LANGUAGE then return end
+			shooter:ChatPrint(tab[1]:GetName()..gred.Lang[LANGUAGE].EmplacementBinoculars.emp_player_requested..gred.Lang[LANGUAGE].EmplacementBinoculars["emplacement_requesttype_"..tab[5]].."!")
+		end
 		
 		timer.Simple(gred.CVars.gred_sv_emplacement_artillery_time:GetFloat(),function()
 			if !IsValid(ent) then return end
 			ent.FireMissions[id] = nil
+			ent.MaxViewModes = table.Count(ent.FireMissions) + ent.OldMaxViewModes
 		end)
 	end)
 	
@@ -587,4 +532,28 @@ else
 									gred_settings_emplacements		-- Function
 		)
 	end)
+	
+	gred = gred or {}
+	gred.TakeScreenShot = function()
+		local t = os.clock()
+		print("Capturing...")
+		render.CapturePixels()
+		
+		local ScrW,ScrH = ScrW(),ScrH()
+		local tab = {}
+		local r,g,b
+		print("Running...")
+		for x = 0,ScrW do
+			-- local y = 500
+			for y = 0,ScrH do
+				r,g,b = render.ReadPixel(x,y)
+				print(r,g,b)
+				-- tab[x.." "..y] = {r = r,g = g,b = b}
+			end
+		end
+		print("Writing...")
+		-- file.Write("screenshot.json",util.TableToJSON(tab))
+		PrintTable(tab)
+		print("Done in "..(os.clock() - t).."s!")
+	end
 end

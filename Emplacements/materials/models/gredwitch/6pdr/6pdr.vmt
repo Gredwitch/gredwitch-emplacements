@@ -2,7 +2,8 @@
 {
 	"$basetexture" "models/gredwitch/6pdr/6pdr_c"
 	"$bumpmap" "models/gredwitch/6pdr/6pdr_b"
-
+	
+	$nocull						1
     // $envmap 					"env_cubemap"
     $normalmapalphaenvmapmask 	1
     $envmaptint 				"[0.20 0.20 0.20]"

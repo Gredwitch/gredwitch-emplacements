@@ -71,14 +71,16 @@ ENT.ShootAnim			= "shoot"
 ENT.ShootSound			= "^gred_emp/common/155mm.wav"
 ENT.ATReloadSound		= "big"
 
-ENT.TurretPos			= Vector(0,-10,20)
-ENT.YawPos				= Vector(0,0,21)
+ENT.TurretPos			= Vector(-14.113,0,23.2157)
+ENT.YawPos				= Vector(-15.8768,0,21.9047)
 ENT.HullModel			= "models/gredwitch/M777/M777_carriage.mdl"
 ENT.TurretModel			= "models/gredwitch/M777/M777_gun.mdl"
 ENT.YawModel			= "models/gredwitch/M777/M777_shield.mdl"
 ENT.Ammo				= -1
 ENT.EmplacementType     = "Cannon"
 ENT.Spread				= 0.4
+ENT.MaxRotation			= Angle(71.7,180)
+ENT.MinRotation			= Angle(0,-180)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -89,4 +91,18 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn()
 	ent:Activate()
 	return ent
+end
+
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
+	
+	for i=0, yaw:GetBoneCount()-1 do
+		print( i, yaw:GetBoneName( i ) )
+	end
+	-- yaw:ManipulateBoneAngles(2,Angle(0,0,ang.y*15))
+	-- yaw:ManipulateBoneAngles(3,Angle(0,0,ang.p*15))
 end

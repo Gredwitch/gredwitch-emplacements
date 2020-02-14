@@ -12,6 +12,7 @@ ENT.NameToPrint			= "2A65"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4
+ENT.MaxRotation			= Angle(27,65)
 ENT.AmmunitionTypes		= {
 	{
 		Caliber = 152,
@@ -58,6 +59,7 @@ ENT.AmmunitionTypes		= {
 	},
 }
 ENT.IsHowitzer			= true
+ENT.ToggleableCarriage	= true
 ENT.AddShootAngle		= -3
 ENT.PitchRate			= 20
 ENT.YawRate				= 20
@@ -67,16 +69,22 @@ ENT.AnimRestartTime		= 4.4
 ENT.AnimPlayTime		= 1.6
 ENT.ShootSound			= "^gred_emp/common/152mm.wav"
 ENT.ATReloadSound		= "big"
+ENT.CustomShootAng		= {Angle(0,0,0)}
 
-ENT.HullModel			= "models/gredwitch/2A65/2A65_carriage.mdl"
+ENT.HullModel			= "models/gredwitch/2A65/2A65_carriage_open.mdl"
 ENT.TurretModel			= "models/gredwitch/2A65/2A65_gun.mdl"
+ENT.YawModel			= "models/gredwitch/2A65/2A65_yaw.mdl"
 ENT.EmplacementType     = "Cannon"
 ENT.Spread				= 0.4
 
 ENT.Ammo				= -1
 ENT.WheelsModel			= "models/gredwitch/2A65/2A65_wheels.mdl"
-ENT.WheelsPos			= Vector(1,12,25)
+ENT.TurretPos			= Vector(0,0,0)
+ENT.YawPos				= Vector(0,0,25)
+ENT.WheelsPos			= Vector(10,0,24)
 ENT.AddShootAngle		= 0
+ENT.MaxRotation			= Angle(70,28)
+ENT.MinRotation			= Angle(-3.5,-28)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -87,4 +95,17 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:Spawn()
 	ent:Activate()
 	return ent
+end
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
+	
+	-- for i=0, yaw:GetBoneCount()-1 do
+		-- print( i, yaw:GetBoneName( i ) )
+	-- end
+	yaw:ManipulateBoneAngles(2,Angle(ang.y*15))
+	yaw:ManipulateBoneAngles(3,Angle(ang.p*15))
 end

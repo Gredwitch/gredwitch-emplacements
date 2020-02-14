@@ -10,6 +10,7 @@ ENT.Spawnable			= true
 ENT.AdminSpawnable		= false
 
 ENT.MuzzleEffect		= "muzzleflash_mg42_3p"
+ENT.AltClassName		= "gred_emp_mg15"
 ENT.AmmunitionType		= "wac_base_7mm"
 ENT.ShotInterval		= 0.057
 ENT.TracerColor			= "Green"
@@ -29,11 +30,12 @@ ENT.Ammo        		= 75
 ENT.ReloadTime			= 2.4 - 0.8
 
 ENT.TurretPos			= Vector(0,0,0)
-ENT.ExtractAngle		= Angle(85,0,0)
-ENT.SightPos			= Vector(0.02,-47,5.1)
+ENT.ExtractAngle		= Angle(0,0,0)
+ENT.SightPos			= Vector(-40,0,5)
 ENT.MaxViewModes		= 1
 ENT.HullFly				= true
-ENT.MaxRotation			= Angle(15,45)
+ENT.MaxRotation			= Angle(15,30)
+ENT.MinRotation			= Angle(-30,-30)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -66,7 +68,7 @@ function ENT:Reload(ply)
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false
-		local t = GetConVar("gred_sv_shell_remove_time"):GetInt()
+		local t = gred.CVars.gred_sv_shell_remove_time:GetInt()
 		if t > 0 then
 			timer.Simple(t,function()
 				if IsValid(prop) then prop:Remove() end 
@@ -76,7 +78,7 @@ function ENT:Reload(ply)
 		self:SetBodygroup(2,1)
 	end)
 	
-	if GetConVar("gred_sv_manual_reload_mgs"):GetInt() == 0 then
+	if gred.CVars.gred_sv_manual_reload_mgs:GetInt() == 0 then
 		timer.Simple(1.3,function() 
 			if !IsValid(self) then return end
 			self.MagIn = true
@@ -103,16 +105,14 @@ end
 function ENT:OnTick()
 	if SERVER and (!self:GetIsReloading() or (self:GetIsReloading() and self.MagIn)) then self:SetBodygroup(2,0) end
 end
-
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
 	if self:GetViewMode() == 1 then
-		angles = ply:EyeAngles()
-		angles.p = angles.p - (self:GetRecoil())*0.5
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
-		view.fov = 35
+		view.angles = ply:EyeAngles()
+		view.angles.p = view.angles.p - (self:GetRecoil())*0.2
+		view.angles.r = self:GetAngles().r
+		view.fov = 40
 		view.drawviewer = false
 
 		return view

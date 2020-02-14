@@ -74,19 +74,24 @@ ENT.ShellLoadTime		= 1.1
 
 ENT.ShootSound			= "^gred_emp/common/76mm.wav"
 
-
-ENT.MaxRotation			= Angle(27,65)
-ENT.HullModel			= "models/gredwitch/zis3/zis3_carriage.mdl"
+ENT.AddShootAngle		= 0.4
+ENT.HullModel			= "models/gredwitch/zis3/zis3_carriage_open.mdl"
 ENT.TurretModel			= "models/gredwitch/zis3/zis3_gun.mdl"
+ENT.YawModel			= "models/gredwitch/zis3/zis3_shield.mdl"
 ENT.EmplacementType     = "Cannon"
 ENT.Spread				= 0.1
 
 ENT.WheelsModel			= "models/gredwitch/zis3/zis3_wheels.mdl"
-ENT.WheelsPos			= Vector(0,2,17)
+ENT.WheelsPos			= Vector(0,0,17.0459)
+ENT.YawPos				= Vector(-2.85028,0,22.9786)
+ENT.TurretPos			= Vector(-5.71739,0,7.83511)
 ENT.Ammo				= -1
 ENT.MaxViewModes		= 1
 ENT.SightTexture		= "gredwitch/overlay_russian_tanksight_02"
 ENT.SightPos			= Vector(-12,-15,55)
+ENT.MaxRotation			= Angle(37,54)
+ENT.MinRotation			= Angle(-5,-54)
+ENT.ToggleableCarriage	= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -103,18 +108,27 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90
-		angles.r = -ang.p
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
+		view.angles = self:GetAngles()
 		view.fov = 20
 		view.drawviewer = false
 
 		return view
 	end
+end
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
+	
+	-- for i=0, yaw:GetBoneCount()-1 do
+		-- print( i, yaw:GetBoneName( i ) )
+	-- end
+	yaw:ManipulateBoneAngles(2,Angle(ang.y*15))
+	yaw:ManipulateBoneAngles(3,Angle(ang.p*15))
 end
 
 function ENT:HUDPaint(ply,viewmode)
@@ -126,3 +140,4 @@ function ENT:HUDPaint(ply,viewmode)
 		return ScrW,ScrH
 	end
 end
+

@@ -57,6 +57,10 @@ if SERVER then
 			ply:PickupObject(self)
 			self.PlyPickup = ply
 			self.NextUse = ct + 0.3
+		else
+			if IsValid(self.GredEMPBaseENT) then
+				self.GredEMPBaseENT:Use(ply,caller,useType,value)
+			end
 		end
 	end
 

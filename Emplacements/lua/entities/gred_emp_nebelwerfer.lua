@@ -30,19 +30,24 @@ ENT.ShotInterval		= 1
 
 ENT.ShootSound			= "gred_emp/common/empty.wav"
 
-ENT.HullModel			= "models/gredwitch/nebelwerfer/nebelwerfer_base.mdl"
+ENT.HullModel			= "models/gredwitch/nebelwerfer/nebelwerfer_base_open.mdl"
 ENT.TurretModel			= "models/gredwitch/nebelwerfer/nebelwerfer_tubes.mdl"
+ENT.YawModel			= "models/gredwitch/nebelwerfer/nebelwerfer_yaw.mdl"
 ENT.Sequential			= true
 
+ENT.YawPos				= Vector(1.43531,0,14.7211)
+ENT.TurretPos			= Vector(1.30202,0,27.1435)
+ENT.WheelsModel			= "models/gredwitch/nebelwerfer/nebelwerfer_wheels.mdl"
+ENT.WheelsPos			= Vector(0,0,17.3949)
 ENT.PitchRate			= 30
 ENT.YawRate				= 30
 ENT.EmplacementType		= "Cannon"
 ENT.Ammo				= 6
-ENT.TurretPos			= Vector(0,0,43.8)
-ENT.SightPos			= Vector(0,30,22)
+ENT.SightPos			= Vector(-30,0,22)
 ENT.MaxViewModes		= 1
-ENT.OffsetAngle			= Angle(-1,180)
-ENT.MaxRotation			= Angle(27,45)
+ENT.AddShootAngle		= 4
+ENT.MaxRotation			= Angle(45,27)
+ENT.MinRotation			= Angle(-5,-27) -- actually 5 for elevation
 
 ENT.SmokeExploSNDs		= {}
 ENT.SmokeExploSNDs[1]		=  "gred_emp/nebelwerfer/artillery_strike_smoke_close_01.wav"
@@ -92,60 +97,24 @@ function ENT:PlayAnim()
 	end)
 end
 
-function ENT:InitAttachments()
-	local attachments = self:GetAttachments()
-	local tableinsert = table.insert
-	local startsWith = string.StartWith
-	local t
-	for k,v in pairs(attachments) do
-		if startsWith(v.name,"rocket") then
-			t = self:GetAttachment(self:LookupAttachment(v.name))
-			t.Pos = self:WorldToLocal(t.Pos)
-			t.Ang = self:WorldToLocalAngles(t.Ang)
-			tableinsert(self.TurretMuzzles,t)
-			
-		elseif startsWith(v.name,"shelleject") then
-		
-			t = self:GetAttachment(self:LookupAttachment(v.name))
-			t.Pos = self:WorldToLocal(t.Pos)
-			t.Ang = self:WorldToLocalAngles(t.Ang)
-			tableinsert(self.TurretEjects,t)
-		end
-	end
-end
-
-function ENT:InitAttachmentsCL()
-	local tableinsert = table.insert
-	local startsWith = string.StartWith
-	local t
-	for k,v in pairs(self:GetAttachments()) do
-		if startsWith(v.name,"rocket") then
-		
-			t = self:GetAttachment(self:LookupAttachment(v.name))
-			t.Pos = self:WorldToLocal(t.Pos)
-			t.Ang = self:WorldToLocalAngles(t.Ang)
-			tableinsert(self.TurretMuzzles,t)
-			
-		elseif startsWith(v.name,"shelleject") then
-		
-			t = self:GetAttachment(self:LookupAttachment(v.name))
-			t.Pos = self:WorldToLocal(t.Pos)
-			t.Ang = self:WorldToLocalAngles(t.Ang)
-			tableinsert(self.TurretEjects,t)
-		end
-	end
-end
-
 function ENT:ViewCalc(ply, pos, angles, fov)
-	if self:GetShooter() != ply then return end
+	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = Angle(ang.r,ang.y+270,ang.p)
-		view.fov = 35
+		view.angles = self:GetAngles()
+		view.fov = 20
 		view.drawviewer = false
 
 		return view
+	end
+end
+function ENT:HUDPaint(ply,viewmode)
+	if viewmode == 1 then
+		local ScrW,ScrH = ScrW(),ScrH()
+		-- surface.SetDrawColor(255,255,255,255)
+		-- surface.SetTexture(surface.GetTextureID(self.SightTexture))
+		-- surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+		return ScrW,ScrH
 	end
 end

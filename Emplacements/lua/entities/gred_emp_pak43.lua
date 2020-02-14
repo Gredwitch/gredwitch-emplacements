@@ -4,11 +4,11 @@ ENT.Type 				= "anim"
 ENT.Base 				= "gred_emp_base"
 
 ENT.Category			= "Gredwitch's Stuff"
-ENT.PrintName 			= "[EMP]88mm PaK 43"
+ENT.PrintName 			= "[EMP]88mm PaK 43/41"
 ENT.Author				= "Gredwitch"
 ENT.Spawnable			= true
 ENT.AdminSpawnable		= true
-ENT.NameToPrint			= "PaK 43"
+ENT.NameToPrint			= "PaK 43/41"
 
 ENT.MuzzleEffect		= "gred_arti_muzzle_blast"
 ENT.ShotInterval		= 4.8
@@ -68,18 +68,23 @@ ENT.ATReloadSound		= "big"
 
 ENT.ShootSound			= "^gred_emp/common/88mm.wav"
 
-ENT.MaxRotation			= Angle(27,65)
-ENT.HullModel			= "models/gredwitch/pak43/pak43_carriage.mdl"
+ENT.HullModel			= "models/gredwitch/pak43/pak43_carriage_open.mdl"
 ENT.TurretModel			= "models/gredwitch/pak43/pak43_gun.mdl"
+ENT.YawModel			= "models/gredwitch/pak43/pak43_shield.mdl"
 ENT.EmplacementType     = "Cannon"
 ENT.Spread				= 0.1
 
 ENT.WheelsModel			= "models/gredwitch/pak43/pak43_wheels.mdl"
-ENT.WheelsPos			= Vector(0,0,0)
+ENT.WheelsPos			= Vector(0,0,11.9288)
 ENT.Ammo				= -1
 ENT.MaxViewModes		= 1
 ENT.SightTexture		= "gredwitch/overlay_german_canonsight_02"
-ENT.SightPos			= Vector(17,20,33)
+ENT.YawPos				= Vector(0,0,13.7482)
+ENT.TurretPos			= Vector(0,0,22.1377)
+ENT.SightPos			= Vector(15,-14,12)
+ENT.MaxRotation			= Angle(38,56)
+ENT.MinRotation			= Angle(-5,-56)
+ENT.ToggleableCarriage	= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -95,18 +100,26 @@ end
 function ENT:ViewCalc(ply, pos, angles, fov)
 	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90
-		angles.r = -ang.p
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
+		view.angles = self:GetAngles()
 		view.fov = 20
 		view.drawviewer = false
 
 		return view
 	end
+end
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
+	
+	-- for i=0, yaw:GetBoneCount()-1 do
+		-- print( i, yaw:GetBoneName( i ) )
+	-- end
+	yaw:ManipulateBoneAngles(2,Angle(0,ang.p*15))
 end
 
 function ENT:HUDPaint(ply,viewmode)

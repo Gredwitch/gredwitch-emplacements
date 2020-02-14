@@ -69,18 +69,23 @@ ENT.AnimPlayTime		= 1.3
 
 ENT.ShootSound			= "^gred_emp/common/50mm.wav"
 
-ENT.MaxRotation			= Angle(27,65)
-ENT.HullModel			= "models/gredwitch/pak38/pak38_carriage.mdl"
+ENT.HullModel			= "models/gredwitch/pak38/pak38_carriage_open.mdl"
 ENT.TurretModel			= "models/gredwitch/pak38/pak38_gun.mdl"
+ENT.YawModel			= "models/gredwitch/pak38/pak38_shield.mdl"
 ENT.EmplacementType     = "Cannon"
 ENT.ATReloadSound		= "small"
 
 ENT.WheelsModel			= "models/gredwitch/pak38/pak38_wheels.mdl"
-ENT.WheelsPos			= Vector(2.5,7,0)
+ENT.WheelsPos			= Vector(19.3277,-2.89306,-4.23103)
+ENT.YawPos				= Vector(12.1486,0,1)
+ENT.TurretPos			= Vector(-5.41885,0,16.4508)
 ENT.Ammo				= -1
 ENT.MaxViewModes		= 1
 ENT.SightTexture		= "gredwitch/overlay_german_canonsight_02"
-ENT.SightPos			= Vector(-10,5,20)
+ENT.SightPos			= Vector(10,15,6)
+ENT.MaxRotation			= Angle(27,65)
+ENT.MinRotation			= Angle(-8,-65)
+ENT.ToggleableCarriage	= true
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
@@ -93,22 +98,30 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	ent:SetSkin(math.random(0,4))
 	return ent
 end
-
 function ENT:ViewCalc(ply, pos, angles, fov)
 	-- debugoverlay.Sphere(self:LocalToWorld(self.SightPos),5,0.1,Color(255,255,255))
 	if self:GetViewMode() == 1 then
-		local ang = self:GetAngles()
-		angles.p = -ang.r
-		angles.y = ang.y + 90
-		angles.r = -ang.p
 		local view = {}
 		view.origin = self:LocalToWorld(self.SightPos)
-		view.angles = angles
+		view.angles = self:GetAngles()
 		view.fov = 20
 		view.drawviewer = false
 
 		return view
 	end
+end
+function ENT:OnThinkCL()
+	local yaw = self:GetYaw()
+	if !IsValid(yaw) then return end
+	local hull = self:GetHull()
+	if !IsValid(hull) then return end
+	local ang = hull:WorldToLocalAngles(self:GetAngles())
+	
+	-- for i=0, yaw:GetBoneCount()-1 do
+		-- print( i, yaw:GetBoneName( i ) )
+	-- end
+	yaw:ManipulateBoneAngles(3,Angle(ang.y*15))
+	yaw:ManipulateBoneAngles(2,Angle(ang.p*15))
 end
 
 function ENT:HUDPaint(ply,viewmode)
