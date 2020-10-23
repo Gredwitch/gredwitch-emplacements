@@ -288,7 +288,10 @@ function ENT:Think()
 			self.LastShotTimerCreated = false
 			
 			self:PreFire(ammo,ct,ply,IsReloading)
-			self:OnShoot()
+			
+			if self.EmplacementType == "MG" then
+				self:OnShoot()
+			end
 		else
 			if ((ammo < 1 and self.Ammo > 0) or IsReloading) or not IsAttacking then
 				local LastShot = (ct - self.NextShot)

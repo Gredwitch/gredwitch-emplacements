@@ -875,9 +875,11 @@ function ENT:Think()
 					self.ShouldDoRecoil = true
 					self:PreFire(ammo,ct,ply,IsReloading)
 					
-					-- net.Start("gred_net_emp_onshoot")
-						-- net.WriteEntity(self)
-					-- net.Broadcast()
+					if self.EmplacementType != "MG" then
+						net.Start("gred_net_emp_onshoot")
+							net.WriteEntity(self)
+						net.Broadcast()
+					end
 				end
 			end
 			
