@@ -12,6 +12,13 @@ ENT.NextUse							=	0
 ENT.Mass							=	nil
 ENT.AutomaticFrameAdvance 			= true
 
+function ENT:SetupDataTables()
+	self:NetworkVar("Entity",0,"GredEMPBaseENT")
+	
+	self:NetworkVarNotify("GredEMPBaseENT",function(ent,name,oldval,newval)
+		self.GredEMPBaseENT = newval
+	end)
+end
 
 if SERVER then
 	function ENT:SpawnFunction( ply, tr, ClassName )
@@ -31,10 +38,12 @@ if SERVER then
 		self.Entity:SetSolid(SOLID_VPHYSICS)
 		self:SetUseType(SIMPLE_USE)
 		self.phys = self:GetPhysicsObject()
+		
 		if IsValid(self.phys) then
 			if self.Mass then self.phys:SetMass(self.Mass) end
 			self.phys:Wake()
 		end
+		
 		if IsValid(self.GredEMPBaseENT) then
 			self.EmplacementClass = self.GredEMPBaseENT:GetClass()
 		end
@@ -68,16 +77,6 @@ if SERVER then
 		if self.GredEMPBaseENT == nil or !IsValid(self.GredEMPBaseENT) then return end
 		if dmg:IsFallDamage() or dmg:IsExplosionDamage() then return end
 		self.GredEMPBaseENT:TakeDamageInfo(dmg)
-	end
-
-	function ENT:Think()
-		if not self.SentToClient and self.GredEMPBaseENT then
-			net.Start("gred_net_emp_prop")
-				net.WriteEntity(self)
-				net.WriteEntity(self.GredEMPBaseENT)
-			net.Broadcast()
-			self.SentToClient = true
-		end
 	end
 	
 	-------------------------------------

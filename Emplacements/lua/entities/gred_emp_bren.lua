@@ -46,8 +46,9 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
+local MagAngle = Angle(0,-90,0)
+
 function ENT:Reload(ply)
-	
 	self:ResetSequence(self:LookupSequence("reload"))
 	self.sounds.reload:Stop()
 	self.sounds.reload:Play()
@@ -58,11 +59,12 @@ function ENT:Reload(ply)
 		local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/bren/bren_mag.mdl")
-		prop:SetPos(att.Pos + self.TurretPos)
-		prop:SetAngles(att.Ang + Angle(0,180,0))
-		prop:SetModelScale(1.15)
+		prop:SetAngles(att.Ang + MagAngle)
+		prop:SetPos(att.Pos)
 		prop:Spawn()
-		prop:Activate()
+		prop:SetModelScale(1.15)
+		prop:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
+		
 		if self:GetAmmo() < 1 then prop:SetBodygroup(1,1) end
 		self.MagIn = false
 		local t = gred.CVars.gred_sv_shell_remove_time:GetInt()

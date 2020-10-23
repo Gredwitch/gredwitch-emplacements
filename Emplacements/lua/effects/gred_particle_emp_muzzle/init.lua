@@ -5,8 +5,8 @@ function EFFECT:Init(data)
 	canExtractShell = ent.EmplacementType == "MG" and GetConVar("gred_cl_shelleject"):GetInt() == 1 and table.Count(ent.TurretEjects) > 0
 	
 	if ent.Sequential then
-		ent:CheckMuzzle()
-		local v = ent:GetCurrentMuzzle()
+		local v = ent:GetMuzzle()
+		
 		attPos = ent.CustomShootPos and ent:LocalToWorld(ent.CustomShootPos[v]) or ent:LocalToWorld(ent.TurretMuzzles[v].Pos)
 		attAng = ent.CustomShootAng and ent:LocalToWorldAngles(ent.CustomShootAng[v]) or ent:LocalToWorldAngles(ent.TurretMuzzles[v].Ang)
 		

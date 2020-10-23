@@ -53,7 +53,7 @@ local ang = Angle(12)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
-	local SpawnPos = tr.HitPos + tr.HitNormal * 38
+	local SpawnPos = tr.HitPos + tr.HitNormal * 45
 	local ent = ents.Create(ClassName)
  	ent.Owner = ply
 	ent:SetPos(SpawnPos)

@@ -101,7 +101,7 @@ function ENT:OnThinkCL()
 	local ang = hull:WorldToLocalAngles(self:GetAngles())
 	
 	for i=0, yaw:GetBoneCount()-1 do
-		print( i, yaw:GetBoneName( i ) )
+		-- print( i, yaw:GetBoneName( i ) )
 	end
 	-- yaw:ManipulateBoneAngles(2,Angle(0,0,ang.y*15))
 	-- yaw:ManipulateBoneAngles(3,Angle(0,0,ang.p*15))

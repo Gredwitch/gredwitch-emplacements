@@ -80,12 +80,21 @@ function ENT:OnTick(ct,ply,botmode,IsShooting,canShoot,ammo,IsReloading,shouldSe
 			self.AutoFire = true
 		end
 	end
+	
 	if !IsShooting and self.AutoFire then
 		if self:CanShoot(ammo,ct,ply,IsReloading) then
 			self:PreFire(ammo,ct,ply)
 		end
+		
 		if self:GetAmmo() <= 0 then self.AutoFire = false end
 	end
+end
+
+function ENT:OnThinkCL(ct,ply,canShoot,ammo,IsReloading,IsAttacking)
+	ammo = ammo or self:GetAmmo()
+	IsReloading = IsReloading or self:GetIsReloading()
+	
+	self:OnTick(ct,ply,self:GetBotMode(),nil,canShoot or self:CanShoot(ammo,ct,ply,IsReloading),ammo,IsReloading,IsAttacking)
 end
 
 function ENT:PlayAnim()
@@ -114,7 +123,7 @@ function ENT:HUDPaint(ply,viewmode)
 		local ScrW,ScrH = ScrW(),ScrH()
 		-- surface.SetDrawColor(255,255,255,255)
 		-- surface.SetTexture(surface.GetTextureID(self.SightTexture))
-		-- surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+		-- surface.DrawTexturedRect((-(ScrW*1.25-ScrW)*0.5),(-(ScrW*1.25-ScrH)*0.5),ScrW*1.25,ScrW*1.25)
 		return ScrW,ScrH
 	end
 end

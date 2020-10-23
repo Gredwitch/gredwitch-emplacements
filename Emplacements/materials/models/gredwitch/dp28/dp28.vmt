@@ -1,0 +1,18 @@
+"VertexLitGeneric"
+{
+$basetexture				"models/gredwitch/dp28/dp28_c"
+$bumpmap				"models/gredwitch/dp28/dp28_b"
+
+// $alphatest					0
+// $nocull						0
+$envmap 					"env_cubemap"
+$normalmapalphaenvmapmask 	1
+$envmaptint 				"[0.1 0.1 0.1]"
+$lightwarptexture			 "models/gredwitch/common/lightwarp"
+$phong 						1
+$phongfresnelranges 		"[0.25 0.58 8]"
+$phongtint 					"[1 0.99 0.79]"
+$phongexponent 				31
+$phongboost 				2
+$phongalbedoboost 			1
+}

@@ -53,7 +53,7 @@ ENT.AmmunitionTypes		= {
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
-	local SpawnPos = tr.HitPos + tr.HitNormal * 4
+	local SpawnPos = tr.HitPos + tr.HitNormal * 10
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
  	ent.Owner = ply

@@ -53,13 +53,14 @@ function ENT:Reload(ply)
 	self.sounds.reload:Play()
 	self:SetIsReloading(true)
 	
-	timer.Simple(0.7, function() 
+	timer.Simple(0.55, function() 
 		if !IsValid(self) then return end
 		self:SetBodygroup(2,2) -- Ammo box hidden
 		local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/fnmag/m240b_mag.mdl")
 		prop:SetPos(att.Pos)
+		prop:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
 		prop:Spawn()
 		prop:Activate()

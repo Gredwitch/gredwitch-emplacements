@@ -45,9 +45,9 @@ function ENT:SwitchAmmoType(ply)
 	if ammotype <= 0 or ammotype > table.Count(self.AmmunitionTypes) then self:SetAmmoType(1) end
 	
 	local t = self.AmmunitionTypes[self:GetAmmoType()]
-	net.Start("gred_net_message_ply")
-		net.WriteString("["..self.NameToPrint.."] "..t[1].." mode selected")
-	net.Send(ply)
+	-- net.Start("gred_net_message_ply")
+		-- net.WriteString("["..self.NameToPrint.."] "..t[1].." mode selected")
+	-- net.Send(ply)
 	if t[1] == self.AmmunitionTypes[1][1] then
 		self.ShotInterval = 0.16
 	else
@@ -71,8 +71,9 @@ function ENT:SpawnFunction( ply, tr, ClassName )
 	return ent
 end
 
+local MagAngle = Angle(0,-90,0)
+
 function ENT:Reload(ply)
-	
 	self:ResetSequence(self:LookupSequence("reload"))
 	self.sounds.reload:Stop()
 	self.sounds.reload:Play()
@@ -85,10 +86,11 @@ function ENT:Reload(ply)
 		
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/bar/bar_mag.mdl")
-		prop:SetAngles(att.Ang + Angle(0,180,0))
-		prop:SetPos(att.Pos + self.TurretPos)
+		prop:SetAngles(att.Ang + MagAngle)
+		prop:SetPos(att.Pos)
 		prop:Spawn()
 		prop:SetModelScale(1.15)
+		prop:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 		prop:Activate()
 		self.MagIn = false
 		

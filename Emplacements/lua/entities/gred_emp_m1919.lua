@@ -34,7 +34,7 @@ ENT.CycleRate			= 0.6
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
-	local SpawnPos = tr.HitPos + tr.HitNormal * 7
+	local SpawnPos = tr.HitPos + tr.HitNormal * 12
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
  	ent.Owner = ply
@@ -59,9 +59,10 @@ function ENT:Reload(ply)
 			local prop = ents.Create("prop_physics")
 			prop:SetModel("models/gredwitch/m1919/m1919_belt.mdl")
 			prop:SetPos(att.Pos)
-			prop:SetAngles(att.Ang - Angle(0,90,0))
+			prop:SetAngles(att.Ang)
+			prop:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 			prop:Spawn()
-			prop:SetModelScale(1.1)
+			-- prop:SetModelScale(1.1)
 			prop:Activate()
 			local t = gred.CVars.gred_sv_shell_remove_time:GetInt()
 			if t > 0 then
@@ -71,7 +72,7 @@ function ENT:Reload(ply)
 			end
 		end
 		self.MagIn = false
-		self:SetBodygroup(1,1)
+		-- self:SetBodygroup(1,1)
 	end)
 	
 	if gred.CVars.gred_sv_manual_reload_mgs:GetInt() == 0 then

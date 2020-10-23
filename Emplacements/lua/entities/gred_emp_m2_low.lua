@@ -63,8 +63,9 @@ function ENT:Reload(ply)
 		
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/m2browning/m2_mag.mdl")
-		prop:SetPos(self:LocalToWorld(Vector(-15,3,5)))
+		prop:SetPos(self:LocalToWorld(Vector(-3,15,5)))
 		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
+		prop:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false

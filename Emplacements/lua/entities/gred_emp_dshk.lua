@@ -57,11 +57,13 @@ function ENT:Reload(ply)
 	
 	timer.Simple(0.7, function()
 		if !IsValid(self) then return end
-		-- local att = self:GetAttachment(self:LookupAttachment("mageject"))
+		local att = self:GetAttachment(self:LookupAttachment("mageject"))
+		
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/dhsk/dhsk_mag.mdl")
-		prop:SetPos(self:LocalToWorld(Vector(-10,-4,15)))
-		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
+		prop:SetPos(att.Pos)
+		prop:SetAngles(att.Ang)
+		prop:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false

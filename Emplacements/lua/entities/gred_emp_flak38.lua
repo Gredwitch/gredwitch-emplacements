@@ -63,8 +63,7 @@ function ENT:AddDataTables()
 	self:NetworkVar("Entity",10,"AimSight")
 end
 
-function ENT:OnInit()
-	local yaw = self:GetYaw()
+function ENT:AddOnPartsInit(pos,ang,hull,yaw)
 	local aimsight = ents.Create("gred_prop_emp")
 	aimsight.GredEMPBaseENT = self
 	aimsight:SetModel(self.AimsightModel)
@@ -90,8 +89,10 @@ if SERVER then
 	end
 end
 
+local magpos = Vector(0,20,2)
+local magang = Angle()
+
 function ENT:Reload(ply)
-	
 	self:ResetSequence(self:LookupSequence("reload"))
 	self.sounds.reload:Stop()
 	self.sounds.reload:Play()
@@ -100,10 +101,12 @@ function ENT:Reload(ply)
 	timer.Simple(0.7,function()
 		if !IsValid(self) then return end
 		local att = self:GetAttachment(self:LookupAttachment("mag"))
+		
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/flak38/flak38_mag.mdl")
-		prop:SetPos(att.Pos + self.TurretPos)
-		prop:SetAngles(att.Ang + Angle(0,180,0))
+		prop:SetPos(self:LocalToWorld(magpos))
+		prop:SetAngles(self:LocalToWorldAngles(magang))
+		prop:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 		prop:Spawn()
 		prop:Activate()
 		if self:GetAmmo() < 1 then prop:SetBodygroup(1,1) end
@@ -187,7 +190,7 @@ function ENT:HUDPaint(ply,viewmode)
 		local ScrW,ScrH = ScrW(),ScrH()
 		-- surface.SetDrawColor(255,255,255,255)
 		-- surface.SetTexture(surface.GetTextureID(self.SightTexture))
-		-- surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+		-- surface.DrawTexturedRect((-(ScrW*1.25-ScrW)*0.5),(-(ScrW*1.25-ScrH)*0.5),ScrW*1.25,ScrW*1.25)
 		return ScrW,ScrH
 	end
 end

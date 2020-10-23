@@ -10,6 +10,8 @@ ENT.AdminSpawnable			= false
 ENT.Editable 				= true
 ENT.AutomaticFrameAdvance 	= true
 
+ENT.IsEmplacement			= true
+
 ---------------------
 
 ENT.Entities				= {}
@@ -80,17 +82,26 @@ ENT.NextShootAnim			= 0
 ENT.NextSwitchTimeFuse		= 0
 ENT.NextSwitchAmmoType		= 0
 ENT.NextSwitchViewMode		= 0
-ENT.FuzeTime				= 0.01
+ENT.CurShot					= 0
+ENT.NextShot				= 0
+ENT.FuseTime				= 0.01
 ENT.MaxRotation				= Angle(180,180,180)
 ENT.MinRotation				= Angle(-180,-180,-180)
 
 ----------------------------------------
 
+
+
 local IsValid = IsValid
 local noColl = constraint.NoCollide
+local SERVER = SERVER
+local CLIENT = CLIENT
+
 local ok = {
 	["gred_prop_part"] = true,
 }
+
+
 
 function ENT:SetupDataTables()
 	self.OldMaxViewModes = self.MaxViewModes
@@ -104,40 +115,96 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Entity",6,"Wheels")
 	
 	self:NetworkVar("Int",0,"Ammo", { KeyName = "Ammo", Edit = { type = "Int", order = 0,min = 0, max = self.Ammo, category = "Ammo"} } )
-	self:NetworkVar("Int",1,"CurrentMuzzle")
-	self:NetworkVar("Int",2,"CurrentTracer")
+	-- self:NetworkVar("Int",1,"CurrentMuzzle")
+	-- self:NetworkVar("Int",2,"CurrentTracer")
 	self:NetworkVar("Int",3,"AmmoType", { KeyName = "Ammotype", Edit = { type = "Int", order = 0,min = 1, max = self.AmmunitionTypes and table.Count(self.AmmunitionTypes) or 0, category = "Ammo"} } )
-	self:NetworkVar("Int",4,"CurrentExtractor")
-	self:NetworkVar("Int",5,"ViewMode")
+	-- self:NetworkVar("Int",4,"CurrentExtractor")
+	self:NetworkVar("Int",2,"ViewMode") -- 5
+	self:NetworkVar("Int",4,"FuseTime")
+	-- self:NetworkVar("Int",4,"RandomSeed")
 	
-	self:NetworkVar("Float",0,"Recoil")
-	self:NetworkVar("Float",1,"NextShot")
-	self:NetworkVar("Float",2,"HP", { KeyName = "HP", Edit = { type = "Float", order = 0,min = 0, max = 1000} } )
+	-- self:NetworkVar("Float",0,"Recoil")
 	
 	self:NetworkVar("Bool",0,"BotMode", { KeyName = "BotMode", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
-	self:NetworkVar("Bool",1,"IsShooting")
+	-- self:NetworkVar("Bool",1,"IsShooting")
 	self:NetworkVar("Bool",2,"TargetValid")
 	self:NetworkVar("Bool",3,"IsReloading")
 	self:NetworkVar("Bool",4,"IsAntiAircraft", { KeyName = "IsAntiAircraft", Edit = {type = "Boolean", order = 0, category = "Bots"}})
 	self:NetworkVar("Bool",5,"IsAntiGroundVehicles", { KeyName = "IsAntiGroundVehicles", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
 	self:NetworkVar("Bool",6,"AttackPlayers", { KeyName = "AttackPlayers", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
 	self:NetworkVar("Bool",7,"ShouldNotCareAboutOwnersTeam", { KeyName = "ShouldNotCareAboutOwnersTeam", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
-	self:NetworkVar("Bool",8,"AttackNPCs", { KeyName = "AttackNPCs", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
-	self:NetworkVar("Bool",9,"ShouldSetAngles")
-	self:NetworkVar("Bool",10,"IsAttacking")
+	self:NetworkVar("Bool",1,"AttackNPCs", { KeyName = "AttackNPCs", Edit = {type = "Boolean", order = 0, category = "Bots"} } )
+	self:NetworkVar("Bool",9,"IsAttacking")
 	
 	
 	self:SetBotMode(false)
-	self:SetShouldSetAngles(true)
+	self.ShouldSetAngles = true
 	self:SetAttackPlayers(true)
 	self:SetAttackNPCs(true)
 	self:SetShouldNotCareAboutOwnersTeam(false)
 	self:SetIsAntiAircraft(self.IsAAA)
 	self:SetIsAntiGroundVehicles(self.EmplacementType == "Cannon")
-	self:SetHP(self.HP)
 	self:SetAmmoType(1)
 	self:SetAmmo(self.Ammo)
-	self:SetCurrentMuzzle(1)
+	
+	if CLIENT then
+		self:NetworkVarNotify("Shooter",function(ent,name,oldval,ply)
+			if oldval != ply then
+				self:OnPlayerTookEmplacement(ply)
+				
+				ply.Gred_Emp_Ent = self
+			end
+		end)
+		
+		self:NetworkVarNotify("PrevShooter",function(ent,name,oldval,ply)
+			if oldval != ply then
+				if IsValid(ply) and ply.Gred_Emp_Ent == ent then
+					ply.Gred_Emp_Ent = nil
+				end
+				
+				local ammo,IsReloading = ent:GetAmmo(),ent:GetIsReloading()
+				
+				ent:SetViewMode(0)
+				ent:StopSoundStuff(ply,ammo,IsReloading,ent:CanShoot(ammo,CurTime(),ply,IsReloading))
+			end
+		end)
+		
+		self:NetworkVarNotify("AmmoType",function(ent,name,oldval,newval)
+			if oldval != newval then
+				local ply = self:GetShooter()
+				
+				if ply == LocalPlayer() then
+					local t = self.AmmunitionTypes[newval]
+					ply:PrintMessage(HUD_PRINTCENTER,(t.ShellType or t[1]).." shells selected")
+				end
+			end
+		end)
+		
+		self:NetworkVarNotify("FuseTime",function(ent,name,oldval,newval)
+			if oldval != newval then
+				local ply = self:GetShooter()
+				
+				if ply == LocalPlayer() then
+					ply:PrintMessage(HUD_PRINTCENTER,"Time fuse set to "..(newval*0.01).." seconds")
+				end
+			end
+		end)
+	else
+		self:NetworkVarNotify("PrevShooter",function(ent,name,oldval,ply)
+			if oldval != ply then
+				if IsValid(ply) and ply.Gred_Emp_Ent == ent then
+					ply.Gred_Emp_Ent = nil
+				end
+			end
+		end)
+		self:NetworkVarNotify("Shooter",function(ent,name,oldval,ply)
+			if oldval != ply then
+				if IsValid(ply) then
+					ply.Gred_Emp_Ent = self
+				end
+			end
+		end)
+	end
 	
 	self:AddDataTables()
 end
@@ -147,26 +214,50 @@ function ENT:AddDataTables()
 end
 
 function ENT:AddEntity(ent)
-	table.insert(self.Entities,ent)
 	for k,v in pairs(self.Entities) do
 		noColl(v,ent,0,0)
 	end
+	
+	table.insert(self.Entities,ent)
 end
 
 function ENT:ShooterStillValid(ply,botmode)
-	return ply and (botmode or ((ply:IsPlayer() and ply:Alive()) and (!self.Seatable and ply:GetPos():DistToSqr(self:GetPos()) <= self.MaxUseDistance or self.Seatable)))
+	return IsValid(ply) and (botmode or ((ply:IsPlayer() and ply:Alive()) and (!self.Seatable and ply:GetPos():DistToSqr(self:GetPos()) <= self.MaxUseDistance or self.Seatable)))
 end
 
 
 ----------------------------------------
--- MATHS
+-- THINGS
 
-function ENT:CheckMuzzle()
-	local m = self:GetCurrentMuzzle()
-	if m <= 0 or m > table.Count(self.TurretMuzzles) then
-		self:SetCurrentMuzzle(1)
-	end
+local pi = math.pi*20
+
+function ENT:IsPairable()
+	return self.IsHowitzer or self.EmplacementType == "Mortar" or (self.EmplacementType == "Cannon" and gred.CVars.gred_sv_enable_cannon_artillery:GetBool())
 end
+
+function ENT:GetMuzzle()
+	local m = self:GetCurrentMuzzle()
+	
+	if m <= 0 or m > #self.TurretMuzzles or not self.TurretMuzzles[m] then
+		m = 1
+		
+		self:SetCurrentMuzzle(m)
+	end
+	
+	return m
+end
+
+function ENT:GetSharedRandom(componement,min,max)
+	return util.SharedRandom(self.ENT_INDEX..self.ClassName..componement.."_"..self._CurrentMuzzle,min,max,math.Round(CurTime()*pi,1))
+end
+
+function ENT:GetRandomSpreadAngle()
+	local spread = self["GetSpread"]
+	spread = Angle(self:GetSharedRandom(1,spread,-spread),self:GetSharedRandom(2,spread,-spread)+90,self:GetSharedRandom(3,spread,-spread))
+	
+	return spread
+end
+
 
 ----------------------------------------
 -- BOT
@@ -270,14 +361,196 @@ function ENT:KeyDown(key)
 		return self:GetTargetValid()
 	elseif key == 8192 then
 		local ammo = self:GetAmmo()
+		
 		if self.EmplacementType == "MG" then
 			return !(ammo > 0 or self.Ammo < 0)
 		else
-			return !(ammo > 0 or (self.Ammo < 0 and GetConVar("gred_sv_manual_reload"):GetInt() == 0))
+			return !(ammo > 0 or (self.Ammo < 0 and not gred.CVars["gred_sv_manual_reload"]:GetBool()))
 		end
-	elseif key == 524288 then
-		return false
 	else
 		return false
+	end
+end
+
+-----------------------------------------
+-- MORE THINGS
+
+
+ENT._CurrentMuzzle 		= 1
+-- ENT._IsAttacking		= false
+ENT._IsShooting			= false
+ENT._Recoil				= 0
+ENT._CurrentTracer		= 0
+
+function ENT:SetCurrentMuzzle(val)
+	self._CurrentMuzzle = val
+end
+
+function ENT:GetCurrentMuzzle()
+	return self._CurrentMuzzle
+end
+
+function ENT:SetCurrentTracer(val)
+	self._CurrentTracer = val
+end
+
+function ENT:GetCurrentTracer(val)
+	return self._CurrentTracer
+end
+
+-- function ENT:SetIsAttacking(val)
+	-- self._IsAttacking = val
+-- end
+
+-- function ENT:GetIsAttacking(val)
+	-- return self._IsAttacking
+-- end
+
+function ENT:SetIsShooting(val)
+	self._IsShooting = val
+end
+
+function ENT:GetIsShooting(val)
+	return self._IsShooting
+end
+
+function ENT:SetRecoil(val)
+	self._Recoil = val
+end
+
+function ENT:GetRecoil(val)
+	return self._Recoil
+end
+
+
+function ENT:UpdateTracers()
+	self:SetCurrentTracer(self:GetCurrentTracer() + 1)
+	
+	if self:GetCurrentTracer() >= gred.CVars.gred_sv_tracers:GetInt() then
+		self:SetCurrentTracer(0)
+		
+		return self.TracerColor
+	else
+		return false
+	end
+end
+
+function ENT:CalcSpread()
+	if self.Spread > 0 then
+		self.GetSpread = self.Spread
+	else
+		local ammotype = self.AmmunitionType or self.AmmunitionTypes[1][2]
+		if ammotype == "wac_base_7mm" then
+			self.GetSpread = 0.3
+		elseif ammotype == "wac_base_12mm" then
+			self.GetSpread = 0.5
+		elseif ammotype == "wac_base_20mm" then
+			self.GetSpread = 1.4
+		elseif ammotype == "wac_base_30mm" then
+			self.GetSpread = 1.6
+		elseif ammotype == "wac_base_40mm" then
+			self.GetSpread = 2
+		end
+	end
+end
+
+function ENT:CanShoot(ammo,ct,ply,IsReloading)
+	if self.EmplacementType != "MG" then
+		if self.EmplacementType == "Mortar" then
+			return (ammo > 0 or (self.Ammo < 0 and not gred.CVars.gred_sv_manual_reload:GetBool())) and self.NextShot <= ct and !IsReloading and self:CalcMortarCanShoot(ply,ct)
+		else
+			return (ammo > 0 or (self.Ammo < 0 and not gred.CVars.gred_sv_manual_reload:GetBool())) and self.NextShot <= ct and !IsReloading and (not self.CustomEyeTrace or self:CalcMortarCanShoot(ply,ct))
+		end
+	else
+		return (ammo > 0 or self.Ammo < 0) and self.NextShot <= ct and !IsReloading
+	end
+end
+
+function ENT:PreFire(ammo,ct,ply)
+	if self.Sequential then
+		local m = self:GetMuzzle()
+		
+		if self.EmplacementType == "MG" then
+			self:FireMG(ply,ammo,self.TurretMuzzles[m])
+		elseif self.EmplacementType == "Mortar" then
+			self:FireMortar(ply,ammo,self.TurretMuzzles[m])
+		elseif self.EmplacementType == "Cannon" then
+			if self.CustomEyeTrace then
+				self:FireMortar(ply,ammo,self.TurretMuzzles[m])
+			else
+				self:FireCannon(ply,ammo,self.TurretMuzzles[m])
+			end
+		end
+		
+		self:SetCurrentMuzzle(m + 1)
+		
+		if SERVER then
+			if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then -- if MG or Nebelwerfer
+				self:SetAmmo(ammo - (self.EmplacementType == "MG" and gred.CVars.gred_sv_limitedammo:GetInt() or 1))
+			else
+				self:SetAmmo(ammo > 0 and ammo - 1 or 0)
+			end
+		end
+		
+	else
+		for k,m in pairs(self.TurretMuzzles) do
+			if self.EmplacementType == "MG" then
+				self:FireMG(ply,ammo,m)
+			elseif self.EmplacementType == "Mortar" then
+				self:FireMortar(ply,ammo,m)
+			elseif self.EmplacementType == "Cannon" then
+				if self.CustomEyeTrace then
+					self:FireMortar(ply,ammo,m)
+				else
+					self:FireCannon(ply,ammo,m)
+				end
+			end
+			
+			if SERVER then
+				if self.EmplacementType == "MG" or (self.EmplacementType == "Cannon" and self.Ammo > 1) then -- if MG or Nebelwerfer
+					self:SetAmmo(ammo - (self.EmplacementType == "MG" and gred.CVars.gred_sv_limitedammo:GetInt() or 1))
+				else
+					self:SetAmmo(ammo > 0 and ammo - 1 or 0)
+				end
+			end
+		end
+	end
+	
+	if SERVER then
+		if self.CustomShootAnim then
+			self:CustomShootAnim(self:GetCurrentMuzzle()-1)
+		else
+			if self.ShootAnim then 
+				if self.AnimRestartTime and self.EmplacementType != "Cannon" then
+					if self.NextShootAnim < ct then
+						self:ResetSequence(self.ShootAnim)
+						self.NextShootAnim = ct + self.AnimRestartTime
+					end
+				else
+					self:ResetSequence(self.ShootAnim)
+				end
+			end
+		end
+	-- elseif self.EmplacementType == "Cannon" and ammo-1 <= 0 then
+		if self.EmplacementType == "Cannon" and ammo-1 <= 0 then
+			self:PlayAnim()
+		end
+	end
+	
+	self.NextShot = ct + self.ShotInterval
+end
+
+function ENT:HandleRecoil(ang)
+	if self.EmplacementType == "MG" and !self.Seatable and self.EnableRecoil:GetBool() then
+		if self.ShouldDoRecoil then
+			self.CurRecoil = self.Recoil
+		end
+		
+		self.CurRecoil = self.CurRecoil and self.CurRecoil + math.Clamp(0 - self.CurRecoil,-self.RecoilRate,self.RecoilRate) or 0
+		self:SetRecoil(self.CurRecoil)
+		
+		if ang then
+			ang.p = ang.p - self.CurRecoil
+		end
 	end
 end

@@ -35,6 +35,10 @@ ENT.TurretPos			= Vector(0,0,0)
 ENT.SightPos			= Vector(-40,0.63,5.5)
 ENT.MaxViewModes		= 1
 
+ENT.HasIK				= true
+ENT.IKLeftHandPos		= Vector(-28,3,1.5)
+ENT.IKRightHandPos		= Vector(-28,-2,1.5)
+
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
 	local SpawnPos = tr.HitPos + tr.HitNormal * 60
@@ -62,8 +66,9 @@ function ENT:Reload(ply)
 		
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/m2browning/m2_mag.mdl")
-		prop:SetPos(self:LocalToWorld(Vector(-15,3,5)))
+		prop:SetPos(self:LocalToWorld(Vector(-3,15,5)))
 		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
+		prop:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false

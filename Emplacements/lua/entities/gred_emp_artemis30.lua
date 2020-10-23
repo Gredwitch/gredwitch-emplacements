@@ -78,13 +78,13 @@ if CLIENT then
 	
 	hook.Add("RenderScene","gred_emp_artemis_rendersceen",function(pos,ang,fov)
 		ply = IsValid(ply) and ply or LocalPlayer()
-		if !IsValid(ply.GredActiveEMP) then return false end
+		if !IsValid(ply.GredActiveEMP) then return end
 		ply.GredActiveEMP:RenderScreen(pos,ang,fov)
 	end)
 	
 	hook.Add("PostDrawTranslucentRenderables","gred_emp_artemis_PostDrawTranslucentRenderables",function()
 		ply = IsValid(ply) and ply or LocalPlayer()
-		if !IsValid(ply.GredActiveEMP) then return false end
+		if !IsValid(ply.GredActiveEMP) then return end
 		ply.GredActiveEMP:Do3D2D()
 	end)
 	function ENT:Draw()
@@ -171,7 +171,7 @@ if CLIENT then
 			local ScrW,ScrH = ScrW(),ScrH()
 			-- surface.SetDrawColor(255,255,255,255)
 			-- surface.SetTexture(surface.GetTextureID(self.SightTexture))
-			-- surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+			-- surface.DrawTexturedRect((-(ScrW*1.25-ScrW)*0.5),(-(ScrW*1.25-ScrH)*0.5),ScrW*1.25,ScrW*1.25)
 			return ScrW,ScrH
 		end
 	end
@@ -199,8 +199,7 @@ else
 		aimsight:SetAngles(ang)
 	end
 
-	function ENT:OnInit()
-		local yaw = self:GetYaw()
+	function ENT:AddOnPartsInit(pos,ang,hull,yaw)
 		local aimsight = ents.Create("gred_prop_emp")
 		aimsight.GredEMPBaseENT = self
 		aimsight:SetModel(self.AimsightModel)

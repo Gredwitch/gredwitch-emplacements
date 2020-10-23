@@ -1,4 +1,6 @@
 
+-- THIS ENTIRE ADDON NEEDS TO BE REWORKED, LOOKIN AT IT NOW THIS CODE IS PURE SHIT
+
 local GRED_SVAR = { FCVAR_REPLICATED, FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE, FCVAR_NOTIFY }
 local CreateConVar = CreateConVar
 
@@ -21,13 +23,94 @@ gred.CVars["gred_sv_progressiveturn_mg"] 			= CreateConVar("gred_sv_progressivet
 gred.CVars["gred_sv_progressiveturn_cannon"] 		= CreateConVar("gred_sv_progressiveturn_cannon"		,  "1"  , GRED_SVAR)
 gred.CVars["gred_sv_enable_cannon_artillery"] 		= CreateConVar("gred_sv_enable_cannon_artillery"	,  "1"  , GRED_SVAR)
 gred.CVars["gred_sv_emplacement_artillery_time"]	= CreateConVar("gred_sv_emplacement_artillery_time"	, "60"  , GRED_SVAR)
-gred.EmplacementTool = {}
-gred.EmplacementTool.BlackList = {"gred_emp_nebelwerfer_tubes","gred_emp_m61","gred_emp_base",
-								-- "gred_emp_[whatyouwant]",  -- These emplacements won't show up in the menu
-}
+gred.CVars["gred_sv_firemissiontype"]				= CreateConVar("gred_sv_firemissiontype"			,  "0"  , GRED_SVAR)
+
+
 gred.EmplacementBinoculars = gred.EmplacementBinoculars or {}
 gred.EmplacementBinoculars.FireMissionID = gred.EmplacementBinoculars.FireMissionID or 124
 
+
+
+gred.Lang = gred.Lang or {}
+gred.Lang.fr = gred.Lang.fr or {}
+gred.Lang.en = gred.Lang.en or {}
+gred.Lang.fr.EmplacementTool = {
+	["control_init_base"] = "[Recharger] + [Intéragir] pour alterner entre les modes.",
+	["control_mode_construct"] = "Clique droit pour faire apparaître le menu, clique droit + [Utiliser] pour supprimer la selection, clique gauche pour spawn l'emplacement, recharger pour changer l'angle de l'emplacement.",
+	["info_emplacement_motion_1"] = "L'emplacement '",
+	["info_emplacement_motion_2"] = "' a été ",
+	["info_emplacement_freeze"] = "freeze",
+	["info_emplacement_unfreeze"] = "unfreeze",
+	["control_mode_edit"] = "Clique droit pour ouvrir le menu d'édition en visant un emplacement.",
+	["info_emplacement_destroyed_1"] = "L'emplacement '",
+	["info_emplacement_destroyed_2"] = "' a été détruit!",
+	["hud_curmode"] = "Mode:",
+	["hud_constructmode"] = "Construction",
+	["hud_editmode"] = "Edition",
+	["menu_copy_to_clipboard"] = "Copier vers le presse-papier",
+	["cant_edit_emplacement"] = "Vous ne pouvez pas modifier cet emplacement!",
+	["info_singleplayer"] = "ATTENTION! Ce SWEP ne fonctionne pas en mode solo! Pour l'utiliser, démarrez une partie en mode local ou Peer To Peer (comme ça: https://i.imgur.com/X3bCUcj.png).",
+	["menu_emplacement_selection"] = "Sélection de l'emplacement",
+	["menu_edit"] = "Menu d'édition",
+	["menu_move"] = "Déplacer",
+	["menu_destroy"] = "Détruire",
+	["menu_properties"] = "Propriétés",
+}
+gred.Lang.fr.EmplacementBinoculars = {
+	["control_init_base"] = "Appuyez sur RECHARGER + CLIQUE GAUCHE sur un emplacement pour le synchroniser.\nAppuyez sur CLIQUE GAUCHE pour lancer une demande d'artillerie.\nDemandez à quelqu'un d'aller dans l'emplacement que vous avez synchronisé et d'appuyez sur SUIT ZOOM jusqu'à ce qu'il voie votre demande d'artillerie.",
+	["info_emplacement_paired"] = "Vous avez synchronisé l'emplacement ",
+	["info_emplacement_unpaired"] = "Vous avez dé-synchronisé l'emplacement ",
+	["info_firemission"] = "Fire mission ID: ",
+	["info_invalidpos"] = "Coordonées invalides! Rien ne doit obstruer la cible!",
+	["emplacement_missionid"] = "DEMANDE N°: #",
+	["emplacement_caller"] = "SOUS L'ORDRE DE: ",
+	["emplacement_timeleft"] = "TEMPS RESTANT: ",
+	["info_nopairedemplacements"] = "Aucun emplacement synchronisé!",
+	["emplacement_requesttype"] = "TYPE DE FRAPPE DEMANDEE: ",
+	["emplacement_requesttype_1"] = "fumée",
+	["emplacement_requesttype_2"] = "explosive",
+	["emplacement_requesttype_3"] = "phosphore blanc",
+	["emp_player_requested"] = " a demandé une frappe de type ",
+	
+}
+gred.Lang.en.EmplacementTool = {
+	["control_init_base"] = "[Reload] + [Use] to toggle modes.",
+	["control_mode_construct"] = "Right click to show the menu, right click + [Use] to remove the selection, left click to spawn the emplacement and reload to change the emplacement's angle.",
+	["info_emplacement_motion_1"] = "The emplacement '",
+	["info_emplacement_motion_2"] = "' has been ",
+	["info_emplacement_freeze"] = "frozen",
+	["info_emplacement_unfreeze"] = "unfrozen",
+	["control_mode_edit"] = "Right click to open the edit menu while aiming at an emplacement.",
+	["info_emplacement_destroyed_1"] = "The emplacement '",
+	["info_emplacement_destroyed_2"] = "' has been destroyed!",
+	["hud_curmode"] = "Current mode:",
+	["hud_constructmode"] = "Construct mode",
+	["hud_editmode"] = "Edit mode",
+	["menu_copy_to_clipboard"] = "Copy to clipboard",
+	["cant_edit_emplacement"] = "You cannot edit this emplacement!",
+	["info_singleplayer"] = "WARNING! This SWEP doesn't work in single player mode! If you want to use it, you must start a local game or a Peer To Peer game (like this : https://i.imgur.com/X3bCUcj.png).",
+	["menu_emplacement_selection"] = "Emplacement selection",
+	["menu_edit"] = "Edit menu",
+	["menu_move"] = "Move",
+	["menu_destroy"] = "Destroy",
+	["menu_properties"] = "Properties",
+}
+gred.Lang.en.EmplacementBinoculars = {
+	["control_init_base"] = "Press RELOAD + LEFT CLICK on an emplacement to pair it.\nPress LEFT CLICK to request a fire mission.\nAsk someone to get in the emplacement(s) you have paired and to press the SUIT ZOOM key until he has your fire mission on his screen.",
+	["info_emplacement_paired"] = "You have paired ",
+	["info_emplacement_unpaired"] = "You have unpaired ",
+	["info_firemission"] = "Fire mission ID: ",
+	["info_invalidpos"] = "Invalid coordinates! Make sure nothing is obstructing your target!",
+	["emplacement_missionid"] = "FIRE MISSION ID: #",
+	["emplacement_caller"] = "CALLER: ",
+	["emplacement_timeleft"] = "TIME LEFT: ",
+	["info_nopairedemplacements"] = "No paired emplacements!",
+	["emplacement_requesttype"] = "REQUESTED STRIKE TYPE: ",
+	["emplacement_requesttype_8"] = "smoke strike",
+	["emplacement_requesttype_2"] = "HE strike",
+	["emplacement_requesttype_4"] = "WP strike",
+	["emp_player_requested"] = " requested a ",
+}
 
 
 local tableinsert = table.insert
@@ -35,269 +118,64 @@ gred.AddonList = gred.AddonList or {}
 tableinsert(gred.AddonList,1391460275) -- Emplacements
 tableinsert(gred.AddonList,1131455085) -- Base addon
 
-timer.Simple(0.1,function()
-	local tablehasvalue = table.HasValue
-	local startsWith = string.StartWith
-	
-	gred.EntsList = {}
-	for k,v in pairs (scripted_ents.GetList()) do
-		if (startsWith(k,"gred_emp") or k == "gred_prop_ammobox") and not tablehasvalue(gred.EmplacementTool.BlackList,k) then
-			gred.EntsList[k] = v
-		end
-	end
-	-- table.sort(gred.EntsList,function(a,b) return a.t.ClassName > b.t.ClassName end)
-end)
-
 
 if SERVER then
 	util.AddNetworkString("gred_net_emp_reloadsounds")
-	util.AddNetworkString("gred_net_emp_prop")
 	util.AddNetworkString("gred_net_emp_viewmode")
 	util.AddNetworkString("gred_net_emp_onshoot")
 	util.AddNetworkString("gred_net_emp_firemission")
 	util.AddNetworkString("gred_net_sendeyetrace")
 	util.AddNetworkString("gred_net_removeeyetrace")
 	
-	util.AddNetworkString("gred_net_send_emplacement_type")
-	util.AddNetworkString("gred_net_send_emplacement_zoffset")
-	util.AddNetworkString("gred_net_emplacement_builtpercent")
-	util.AddNetworkString("gred_net_modifyemplacement")
-	util.AddNetworkString("gred_net_freeze_unfreeze")
-	util.AddNetworkString("gred_net_getmotion")
-	util.AddNetworkString("gred_net_setmotion")
-	util.AddNetworkString("gred_net_move")
-	util.AddNetworkString("gred_net_remove")
+	util.AddNetworkString("gred_net_mortar_cantshoot_00")
+	util.AddNetworkString("gred_net_mortar_cantshoot_01")
+	util.AddNetworkString("gred_net_mortar_cantshoot_02")
+
 	
-	timer.Simple(0,function()
-		net.Receive("gred_net_sendeyetrace",function()
-			local self = net.ReadEntity()
-			local vec = net.ReadVector()
-			if !IsValid(self) then return end
-			
-			self.CustomEyeTrace = true
-			self.CustomEyeTraceHitPos = vec
-		end)
-		
-		net.Receive("gred_net_removeeyetrace",function()
-			local self = net.ReadEntity()
-			if !IsValid(self) then return end
-			
-			self.CustomEyeTrace = nil
-			self.CustomEyeTraceHitPos = nil
-		end)
-	end)
-	net.Receive("gred_net_emp_viewmode",function()
+	net.Receive("gred_net_sendeyetrace",function()
 		local self = net.ReadEntity()
-		local int = net.ReadInt(8)
+		local vec = net.ReadVector()
 		if !IsValid(self) then return end
 		
+		self.CustomEyeTrace = true
+		self.CustomEyeTraceHitPos = vec
+	end)
+	
+	net.Receive("gred_net_removeeyetrace",function()
+		local self = net.ReadEntity()
+		if !IsValid(self) then return end
+		
+		self.CustomEyeTrace = nil
+		self.CustomEyeTraceHitPos = nil
+	end)
+	
+	net.Receive("gred_net_emp_viewmode",function(len,ply)
+		local self = ply.Gred_Emp_Ent
+		local int = net.ReadUInt(7)
+		
+		if !IsValid(self) then return end
+		
+		local oldint = self:GetViewMode()
 		self:SetViewMode(int)
-		if int > self.OldMaxViewModes then
-			self:GetShooter():SetEyeAngles(Angle(90))
+		
+		if int > self.OldMaxViewModes and gred.CVars.gred_sv_firemissiontype:GetInt() == 0 then
+			ply:SetEyeAngles(Angle(90))
+		elseif oldint > self.OldMaxViewModes and int == 0 then
+			ply:SetEyeAngles(self:GetAngles())
 		end
 	end)
 	
-	net.Receive("gred_net_send_emplacement_type",function()
-		local self = net.ReadEntity()
-		self:SendWeaponAnim(ACT_VM_DEPLOY)
-		self:SetSelectedEmplacement(net.ReadString())
-	end)
-	
-	net.Receive("gred_net_send_emplacement_zoffset",function()
-		net.ReadEntity().Emplacement.ZOffset = net.ReadVector()
-	end)
-	
-	net.Receive("gred_net_getmotion",function()
-		local self = net.ReadEntity()
-		local ent = net.ReadEntity()
-		local p = ent:GetPhysicsObject()
-		if IsValid(p) then
-			net.Start("gred_net_setmotion")
-				net.WriteEntity(self)
-				net.WriteBool(p:IsMotionEnabled())
-			net.Broadcast()
-		end
-	end)
-	
-	net.Receive("gred_net_remove",function()
-		net.ReadEntity():Remove()
-	end)
-	
-	net.Receive("gred_net_move",function()
-		local self = net.ReadEntity()
-		local ent = net.ReadEntity()
-		
-		self:SendWeaponAnim(ACT_VM_DEPLOY)
-		self.Emplacement.ZOffset = nil
-		self:SetSelectedEmplacement(ent.ClassName)
-		self:SetIsMoving(true)
-		self:SetPrevBuiltPercent(ent.BuiltPercent or 999)
-		
-		-- self:SetGredEMPBaseENT(nil)
-		self:SetEditMode(false)
-		
-		ent:Remove()
-	end)
-	
-	net.Receive("gred_net_freeze_unfreeze",function()
-		local ent = net.ReadEntity()
-		local bool = net.ReadBool()
-		if ent.Entities then
-			for k,v in pairs(ent.Entities) do
-				local p = v:GetPhysicsObject()
-				if IsValid(p) then
-					p:EnableMotion(bool)
-				end
-			end
-		else
-			local p = ent:GetPhysicsObject()
-			if IsValid(p) then
-				p:EnableMotion(bool)
-			end
-		end
-	end)
 
 else
 	
 	local CreateClientConVar = CreateClientConVar
 	gred.CVars.gred_cl_shelleject = CreateClientConVar("gred_cl_shelleject","1", true,false)
-	gred.CVars.gred_cl_emp_mouse_sensitivity = CreateClientConVar("gred_cl_emp_mouse_sensitivity","1", true,false)
+	gred.CVars.gred_cl_emp_mouse_sensitivity = CreateClientConVar("gred_cl_emp_mouse_sensitivity","0.6", true,false)
 	gred.CVars.gred_cl_emp_mouse_invert_x = CreateClientConVar("gred_cl_emp_mouse_invert_x","0", true,false)
 	gred.CVars.gred_cl_emp_mouse_invert_y = CreateClientConVar("gred_cl_emp_mouse_invert_y","0", true,false)
 	gred.CVars.gred_cl_lang = CreateConVar("gred_cl_lang",system.GetCountry() == "FR" and "fr" or "en",FCVAR_USERINFO,"'fr' or 'en'")
 	-- CreateClientConVar("gred_cl_emp_volume","1", true,false)
 	
-	
-	local function DrawCircle( X, Y, radius )
-		local segmentdist = 360 / ( 2 * math.pi * radius / 2 )
-		
-		for a = 0, 360 - segmentdist, segmentdist do
-			surface.DrawLine( X + math.cos( math.rad( a ) ) * radius, Y - math.sin( math.rad( a ) ) * radius, X + math.cos( math.rad( a + segmentdist ) ) * radius, Y - math.sin( math.rad( a + segmentdist ) ) * radius )
-		end
-	end
-	
-	local function gred_settings_emplacements(Panel)
-		Panel:ClearControls()
-		
-		Created = true;
-		
-		local this = Panel:CheckBox("Should the cannons' carriage collide?","gred_sv_carriage_collision");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_carriage_collision",val)
-		end
-		
-		local this = Panel:CheckBox("Should the players be able to use multiple emplacements at once?","gred_sv_canusemultipleemplacements");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_canusemultipleemplacements",val)
-		end
-		
-		local this = Panel:CheckBox("Should the MGs have limited ammo?","gred_sv_limitedammo");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_limitedammo",val)
-		end
-		
-		local this = Panel:CheckBox("Should the players be able to take the MGs' tripods?","gred_sv_cantakemgbase");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_cantakemgbase",val)
-		end
-		
-		local this = Panel:CheckBox("Enable seats?","gred_sv_enable_seats");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_enable_seats",val)
-		end
-		
-		
-		local this = Panel:CheckBox("Should you be able to see the MGs' shells?","gred_cl_shelleject");
-		
-		-- if !ded then
-		
-		local this = Panel:CheckBox("Use a manual shell reload system?","gred_sv_manual_reload");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_manual_reload",val)
-		end
-		
-		local this = Panel:CheckBox("Use a manual reload system for the MGs?","gred_sv_manual_reload_mgs");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_manual_reload_mgs",val)
-		end
-		
-		local this = Panel:CheckBox("Should the emplacements explode?","gred_sv_enable_explosions");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_enable_explosions",val)
-		end
-		
-		local this = Panel:CheckBox("Enable recoil?","gred_sv_enable_recoil");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_enable_recoil",val)
-		end
-		
-		local this = Panel:CheckBox("Enable progressive rotation?","gred_sv_progressiveturn");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_progressiveturn",val)
-		end
-		
-		local this = Panel:CheckBox("Should every cannons be able to be used as artillery?","gred_sv_enable_cannon_artillery");
-		this.OnChange = function(this,val)
-			val = val and 1 or 0
-			gred.CheckConCommand("gred_sv_enable_cannon_artillery",val)
-		end
-		
-		local this = Panel:NumSlider( "Fire mission time", "gred_sv_emplacement_artillery_time", 1, 900, 0 );
-		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
-		this.OnValueChanged = function(this,val)
-			if this.ConVarChanging then return end
-			gred.CheckConCommand("gred_sv_emplacement_artillery_time",val)
-		end
-		
-		local this = Panel:NumSlider( "Progressive rotation multiplier (MGs)", "gred_sv_progressiveturn_mg", 0, 10, 2 );
-		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
-		this.OnValueChanged = function(this,val)
-			if this.ConVarChanging then return end
-			gred.CheckConCommand("gred_sv_progressiveturn_mg",val)
-		end
-		
-		local this = Panel:NumSlider( "Progressive rotation multiplier (Cannons)", "gred_sv_progressiveturn_cannon", 0, 10, 2 );
-		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
-		this.OnValueChanged = function(this,val)
-			if this.ConVarChanging then return end
-			gred.CheckConCommand("gred_sv_progressiveturn_cannon",val)
-		end
-		
-		local this = Panel:NumSlider( "Shell arrival time (for mortars)", "gred_sv_shell_arrival_time", 0, 10, 2 );
-		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
-		this.OnValueChanged = function(this,val)
-			if this.ConVarChanging then return end
-			gred.CheckConCommand("gred_sv_shell_arrival_time",val)
-		end
-		
-		local this = Panel:NumSlider( "Shell casing remove time", "gred_sv_shell_remove_time", 0, 120, 0 );
-		this.Scratch.OnValueChanged = function() this.ConVarChanging = true this:ValueChanged(this.Scratch:GetFloatValue()) this.ConVarChanging = false end
-		this.OnValueChanged = function(this,val)
-			if this.ConVarChanging then return end
-			gred.CheckConCommand("gred_sv_shell_remove_time",val)
-		end
-		
-		-- end
-		
-		local this = Panel:NumSlider( "Mouse sensitivity", "gred_cl_emp_mouse_sensitivity", 0.01, 0.99, 2 );
-		
-		-- local this = Panel:NumSlider( "Shoot sound volume", "gred_cl_emp_volume", 0, 1, 2 );
-		
-		local this = Panel:CheckBox("Invert X axis in seats?","gred_cl_emp_mouse_invert_x");
-		
-		local this = Panel:CheckBox("Invert Y axis in seats?","gred_cl_emp_mouse_invert_y");
-		
-	end
 	
 	surface.CreateFont( "GFont", {
 		font = "Arial", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
@@ -320,7 +198,7 @@ else
 	surface.CreateFont( "GFont_arti", {
 		font = "Arial", -- Use the font-name which is shown to you by your operating system Font Viewer, not the file name
 		extended = false,
-		size = (ScrW()/100 + ScrH()/100)*3,
+		size = (ScrW()*0.01 + ScrH()*0.01)*1.5,
 		weight = 500,
 		blursize = 0,
 		scanlines = 0,
@@ -335,76 +213,8 @@ else
 		outline = false,
 	} )
 	
-	net.Receive("gred_net_emplacement_builtpercent",function()
-		local ent = net.ReadEntity()
-		ent.BuiltPercent = net.ReadFloat()
-		ent.HP = net.ReadFloat()
-	end)
-	
-	net.Receive("gred_net_setmotion",function()
-		local self = net.ReadEntity()
-		self.EmplacementMotion = net.ReadBool()
-	end)
-	
-	net.Receive("gred_net_modifyemplacement",function()
-		
-		local emplacement = net.ReadEntity()
-		if !IsValid(emplacement) then return end
-		emplacement.BuiltPercent = emplacement.BuiltPercent or 0
-		
-		emplacement.Draw = function(self)
-			self:DrawModel()
-			
-			if self.ClassName == "gred_prop_ammobox" then
-				if self.BuiltPercent < 300 then
-					local ang = LocalPlayer():EyeAngles()
-					ang.p = 0
-					ang.y = ang.y - 90
-					ang.r = 90
-					local pos = self:GetPos()
-					pos.z = pos.z + 30
-					local mins,maxs = self:GetModelBounds()
-					
-					cam.Start3D2D(pos,ang,0.25)
-						surface.SetFont("Default")
-						surface.SetTextColor(0,0,0)
-						surface.SetTextPos(0,-maxs.x/2)
-						draw.DrawText(math.Round((self.BuiltPercent/300 * 100),1).."%","DermaDefault",0,offset,Color( 255, 255, 255, 255 ),TEXT_ALIGN_LEFT )
-					cam.End3D2D()
-				end
-			else
-				if self.BuiltPercent < self.HP then
-					local ang = LocalPlayer():EyeAngles()
-					ang.p = 0
-					ang.y = ang.y - 90
-					ang.r = 90
-					local pos = self:GetPos()
-					local mins,maxs = self:GetModelBounds()
-					local c = self:GetClass()
-					if c == "gred_emp_flak38" or c == "gred_emp_flakvierling38" or c == "gred_emp_bofors" or c == "gred_emp_artemis30" or c == "gred_emp_nebelwerfer" or c == "gred_emp_m60" or c == "gred_emp_mg42" or c == "gred_emp_mg81z" or c == "gred_emp_m2"  or c == "gred_emp_m2_low" or c == "gred_emp_vickers" then
-						pos.z = pos.z + 30
-					elseif c == "gred_emp_breda35" or c == "gred_emp_zsu23" or c == "gred_emp_kwk" or c == "gred_emp_zpu4_1949" or c == "gred_emp_bar" or c == "gred_emp_mg3" or c == "gred_emp_rpk" then
-						pos.z = pos.z + maxs.z*4
-					else
-						pos.z = pos.z + maxs.z*1.5
-					end
-					cam.Start3D2D(pos,ang,0.25)
-						surface.SetFont("Default")
-						surface.SetTextColor(0,0,0)
-						surface.SetTextPos(0,-maxs.x/2)
-						draw.DrawText(math.Round((self.BuiltPercent/self.HP * 100),1).."%","DermaDefault",0,offset,Color( 255, 255, 255, 255 ),TEXT_ALIGN_LEFT )
-					cam.End3D2D()
-				end
-			end
-		end
-	end)
-	
 	net.Receive("gred_net_emp_reloadsounds",function()
 		net.ReadEntity().ShotInterval = net.ReadFloat()
-	end)
-	
-	net.Receive("gred_net_emp_prop",function()
-		net.ReadEntity().GredEMPBaseENT = net.ReadEntity()
 	end)
 	
 	net.Receive("gred_net_emp_onshoot",function()
@@ -415,145 +225,188 @@ else
 	
 	net.Receive("gred_net_emp_firemission",function()
 		local ent = net.ReadEntity()
-		local id = net.ReadInt(14)
-		local tab = net.ReadTable()
+		
+		local tab = {
+			net.ReadEntity(),
+		    net.ReadVector(),
+		    net.ReadUInt(8),
+		    net.ReadFloat(),
+		    net.ReadUInt(2),
+		}
+		
+		-- if !IsValid(ent) or !IsValid(tab[1]) then return end
 		
 		if !IsValid(ent) then return end
 		
+		-- local wep = tab[1]:GetWeapon("gred_emp_binoculars")
+		
+		-- if !IsValid(wep) then return end
+		
 		gred = gred or {}
 		gred.EmplacementBinoculars = gred.EmplacementBinoculars or {}
-		gred.EmplacementBinoculars.FireMissionID = id
+		gred.EmplacementBinoculars.FireMissionID =  tab[3]
+		
 		ent.FireMissions = ent.FireMissions or {}
-		ent.FireMissions[id] = tab
-		ent.MaxViewModes = table.Count(ent.FireMissions) + ent.OldMaxViewModes
+		local id = table.insert(ent.FireMissions,tab)
+		ent.MaxViewModes = #ent.FireMissions + ent.OldMaxViewModes
 		
 		local shooter = ent:GetShooter()
+		
 		if LocalPlayer() == shooter then
-			LANGUAGE = gred.CVars.gred_cl_lang:GetString() or "en"
-			if not LANGUAGE then return end
-			shooter:ChatPrint(tab[1]:GetName()..gred.Lang[LANGUAGE].EmplacementBinoculars.emp_player_requested..gred.Lang[LANGUAGE].EmplacementBinoculars["emplacement_requesttype_"..tab[5]].."!")
+			local LANGUAGE = gred.CVars.gred_cl_lang:GetString()
+			LANGUAGE = gred.Lang[LANGUAGE] and LANGUAGE or "en"
+			
+			shooter:PrintMessage(HUD_PRINTCENTER,tab[1]:GetName()..gred.Lang[LANGUAGE].EmplacementBinoculars.emp_player_requested..gred.Lang[LANGUAGE].EmplacementBinoculars["emplacement_requesttype_"..tab[5]].."!")
 		end
 		
 		timer.Simple(gred.CVars.gred_sv_emplacement_artillery_time:GetFloat(),function()
 			if !IsValid(ent) then return end
+			
 			ent.FireMissions[id] = nil
-			ent.MaxViewModes = table.Count(ent.FireMissions) + ent.OldMaxViewModes
+			ent.MaxViewModes = #ent.FireMissions + ent.OldMaxViewModes
 		end)
 	end)
 	
-	
-	hook.Add("AdjustMouseSensitivity", "gred_emp_mouse", function(s)
+	net.Receive("gred_net_mortar_cantshoot_00",function()
 		local ply = LocalPlayer()
-		local ent = ply.Gred_Emp_Ent
-		if not IsValid(ent) then ply.Gred_Emp_Ent = nil return end
-		if string.StartWith(ent.ClassName,"gred_emp") then
-			if IsValid(ent:GetSeat()) and ply == ent:GetShooter() then
-				return gred.CVars.gred_cl_emp_mouse_sensitivity:GetFloat()
-			end
-		end
+		local self = ply.Gred_Emp_Ent
+		
+		if !IsValid(self) then return end
+		
+		ply:PrintMessage(HUD_PRINTCENTER,"Nothing must block the mortar's muzzle!")
 	end)
 	
-	hook.Add("CalcView","gred_emp_calcview",function(ply, pos, angles, fov)
-		if ply:GetViewEntity() != ply then return end
-		if !ply:Alive() then return end
-		if !ply.Gred_Emp_Ent then return end
-		if !IsValid(ply.Gred_Emp_Ent) then return end
+	net.Receive("gred_net_mortar_cantshoot_01",function()
+		local ply = LocalPlayer()
+		local self = ply.Gred_Emp_Ent
 		
-		return ply.Gred_Emp_Ent:View(ply,pos,angles,fov)
+		if !IsValid(self) then return end
+		
+		ply:PrintMessage(HUD_PRINTCENTER,"Maximum traverse reached!")
 	end)
 	
-	hook.Add("HUDPaint","gred_emp_hudpaint",function()
+	net.Receive("gred_net_mortar_cantshoot_02",function()
 		local ply = LocalPlayer()
-		if not ply.Gred_Emp_Ent then return end
+		local self = ply.Gred_Emp_Ent
 		
-		local ent = ply.Gred_Emp_Ent
-		if !IsValid(ent) then return end
-		if ent:GetShooter() != ply then return end
+		if !IsValid(self) then return end
 		
-		local ScrW,ScrH = ent:PaintHUD(ply,ent:GetViewMode())
-		if ScrW and ScrH then
-			local startpos = ent:LocalToWorld(ent.SightPos)
-			local scr = util.TraceLine({
-				start = startpos,
-				endpos = (startpos + ply:EyeAngles():Forward() * 1000),
-				filter = ent.Entities
-			}).HitPos:ToScreen()
-			scr.x = scr.x > ScrW and ScrW or (scr.x < 0 and 0 or scr.x)
-			scr.y = scr.y > ScrH and ScrH or (scr.y < 0 and 0 or scr.y)
+		ply:PrintMessage(HUD_PRINTCENTER,"There is a roof blocking the way!")
+	end)
+	
+	
+
+	local EmplacementMaterial = Material("gredwitch/emplacementicon.png")
+	
+	hook.Add("GredOptionsAddLateralMenuOption","AddEmplacement",function(DFrame,DPanel,DScrollPanel,X,Y,X_DPanel,y_DPanel)
+		local CreateOptions				= gred.Menu.CreateOptions
+		local CreateCheckBoxPanel   	= gred.Menu.CreateCheckBoxPanel
+		local CreateSliderPanel     	= gred.Menu.CreateSliderPanel
+		local DrawEmptyRect         	= gred.Menu.DrawEmptyRect
+		local CreateBindPanel       	= gred.Menu.CreateBindPanel
+		local COL_WHITE					= gred.Menu.COL_WHITE					
+		local COL_GREY					= gred.Menu.COL_GREY					
+		local COL_LIGHT_GREY			= gred.Menu.COL_LIGHT_GREY			
+		local COL_LIGHT_GREY1			= gred.Menu.COL_LIGHT_GREY1			
+		local COL_RED					= gred.Menu.COL_RED					
+		local COL_GREEN					= gred.Menu.COL_GREEN					
+		local COL_DARK_GREY 			= gred.Menu.COL_DARK_GREY 			
+		local COL_DARK_GREY1 			= gred.Menu.COL_DARK_GREY1 			
+		local COL_BLUE_HIGHLIGHT		= gred.Menu.COL_BLUE_HIGHLIGHT		
+		local COL_DARK_BLUE_HIGHLIGHT	= gred.Menu.COL_DARK_BLUE_HIGHLIGHT
+		local COL_TRANSPARENT_GREY 		= gred.Menu.COL_TRANSPARENT_GREY
+		
+		local DButton = DScrollPanel:Add("DButton")
+		DButton:SetText("")
+		DButton:Dock(TOP)
+		DButton:DockMargin(0,0,0,10)
+		DButton:SetSize(X_DPanel,y_DPanel*0.15)
+		DButton.Paint = function(DButton,w,h)
+			local col = DButton:IsHovered() and COL_BLUE_HIGHLIGHT or COL_WHITE
+			surface.SetDrawColor(col.r,col.g,col.b,col.a)
+			DrawEmptyRect(0,0,w,h,2,2,0)
+			surface.SetMaterial(EmplacementMaterial)
+			local H = h - 24
+			surface.DrawTexturedRect((w - H)*0.5,0,H,H)
 			
-			
-			surface.SetDrawColor(255,255,255)
-			DrawCircle(scr.x,scr.y,19)
-			surface.SetDrawColor(0,0,0)
-			DrawCircle(scr.x,scr.y,20)
+			draw.DrawText("EMPLACEMENT OPTIONS","Trebuchet24",w*0.5,h-24,col,TEXT_ALIGN_CENTER)
 		end
-	end)
-	
-	hook.Add("InputMouseApply", "gred_emp_move",function(cmd,x,y,angle)
-		local ply = LocalPlayer()
-		local ent = ply.Gred_Emp_Ent
-		if not IsValid(ent) then ply.Gred_Emp_Ent = nil return end
-		if string.StartWith(ent.ClassName,"gred_emp") then
-			if IsValid(ent:GetSeat()) or ent:GetViewMode() != 0 then
-				if ply == ent:GetShooter() then
-					local InvertX = gred.CVars.gred_cl_emp_mouse_invert_x:GetInt() == 1
-					local InvertY = gred.CVars.gred_cl_emp_mouse_invert_y:GetInt() == 1
-					local sensitivity = gred.CVars.gred_cl_emp_mouse_sensitivity:GetFloat()
-					
-					x = x * sensitivity
-					y = y * sensitivity
-					
-					if InvertX then
-						angle.yaw = angle.yaw + x / 50
-					else
-						angle.yaw = angle.yaw - x / 50
-					end
-					if InvertY then
-						angle.pitch = math.Clamp( angle.pitch - y / 50, -89, 89 )
-					else
-						angle.pitch = math.Clamp( angle.pitch + y / 50, -89, 89 )
-					end
-					
-					cmd:SetViewAngles( angle )
-                   
-					return true
-				end
-			end
+		DButton.DoClick = function()
+			DFrame:SelectLateralMenuOption("EMPLACEMENT OPTIONS")
+			DPanel.ToggleButton:DoClick(true)
 		end
-	end)
-	
-	hook.Add( "PopulateToolMenu", "gred_menu_emplacements", function()
-		spawnmenu.AddToolMenuOption("Options",						-- Tab
-									"Gredwitch's Stuff",			-- Sub-tab
-									"gred_settings_emplacements",	-- Identifier
-									"Emplacement Pack",			-- Name of the sub-sub-tab
-									"",								-- Command
-									"",								-- Config (deprecated)
-									gred_settings_emplacements		-- Function
-		)
-	end)
-	
-	gred = gred or {}
-	gred.TakeScreenShot = function()
-		local t = os.clock()
-		print("Capturing...")
-		render.CapturePixels()
 		
-		local ScrW,ScrH = ScrW(),ScrH()
-		local tab = {}
-		local r,g,b
-		print("Running...")
-		for x = 0,ScrW do
-			-- local y = 500
-			for y = 0,ScrH do
-				r,g,b = render.ReadPixel(x,y)
-				print(r,g,b)
-				-- tab[x.." "..y] = {r = r,g = g,b = b}
-			end
+		DFrame.LateralOptionList["EMPLACEMENT OPTIONS"] = function(DFrame,DPanel,X,Y)
+			CreateOptions(DFrame,DPanel,X,Y,{
+				["CLIENT"] = {
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_cl_shelleject","Shell ejection on machineguns","",false)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_cl_emp_mouse_invert_x","Invert the X axis in sight mode","",false)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_cl_emp_mouse_invert_y","Invert the Y axis in sight mode","",false)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateSliderPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_cl_emp_mouse_sensitivity","Mouse sensitivity in sight mode","",0.01,1,2,false)
+					end,
+				},
+				["SERVER"] = {
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_carriage_collision","Cannons' carriage collide with players","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_limitedammo","Infinite machinegun ammo","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_cantakemgbase","Allow players to take the MG's tripod","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_enable_seats","Enable seats","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_enable_explosions","Destructible emplacements","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_manual_reload","Manual reload wtih cannons","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_manual_reload_mgs","Manual reload wtih MGs","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_canusemultipleemplacements","Allow usage of several emplacements at a time","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_canusemultipleemplacements","Allow usage of several emplacements at a time","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_enable_recoil","Recoil with MGs","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_progressiveturn","Progressive turning (master)","",true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateCheckBoxPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_firemissiontype","Alternative fire mission view","Disables the bird's eye view",true)
+					end,
+					
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateSliderPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_progressiveturn_cannon","Progressive turn rate with cannons","",0.1,10,1,true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateSliderPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_progressiveturn_mg","Progressive trun rate with MGs","",0.1,10,1,true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateSliderPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_shell_arrival_time","Shell arrival time with mortars / in fire missions","",1,10,0,true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateSliderPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_emplacement_artillery_time","Fire mission duration","",30,600,0,true)
+					end,
+					function(DFrame,DPanel,DScrollPanel,Panel,x,y)
+						CreateSliderPanel(DFrame,DPanel,DScrollPanel,Panel,x,y,"gred_sv_shell_remove_time","Cannon shell casing removal time","",0,60,1,true)
+					end,
+				}
+			})
 		end
-		print("Writing...")
-		-- file.Write("screenshot.json",util.TableToJSON(tab))
-		PrintTable(tab)
-		print("Done in "..(os.clock() - t).."s!")
-	end
+	end)
 end

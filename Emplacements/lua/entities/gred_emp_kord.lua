@@ -54,13 +54,14 @@ function ENT:Reload(ply)
 	self.sounds.reload:Play()
 	self:SetIsReloading(true)
 	
-	timer.Simple(1, function()
+	timer.Simple(1,function()
 		if !IsValid(self) then return end
 		-- local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/kord/kord_mag.mdl")
-		prop:SetPos(self:LocalToWorld(Vector(15,-10,0)))
+		prop:SetPos(self:LocalToWorld(Vector(-15,-10,0)))
 		prop:SetAngles(self:LocalToWorldAngles(Angle(0,0,0)))
+		prop:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 		prop:Spawn()
 		prop:Activate()
 		self.MagIn = false

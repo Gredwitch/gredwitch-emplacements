@@ -40,7 +40,7 @@ ENT.MinRotation			= Angle(-30,-30)
 
 function ENT:SpawnFunction( ply, tr, ClassName )
 	if (  !tr.Hit ) then return end
-	local SpawnPos = tr.HitPos + tr.HitNormal * 8
+	local SpawnPos = tr.HitPos + tr.HitNormal * 13
 	local ent = ents.Create(ClassName)
 	ent:SetPos(SpawnPos)
  	ent.Owner = ply
@@ -63,8 +63,9 @@ function ENT:Reload(ply)
 		local att = self:GetAttachment(self:LookupAttachment("mageject"))
 		local prop = ents.Create("prop_physics")
 		prop:SetModel("models/gredwitch/mg34/mg34_mag.mdl")
+		prop:SetCollisionGroup(COLLISION_GROUP_PASSABLE_DOOR)
 		prop:SetPos(att.Pos)
-		prop:SetAngles(att.Ang)
+		prop:SetAngles(att.Ang + Angle(-120,-90,0))
 		prop:Spawn()
 		prop:SetModelScale(1.15)
 		prop:Activate()

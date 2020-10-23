@@ -68,8 +68,7 @@ function ENT:AddDataTables()
 	self:NetworkVar("Entity",11,"AimSight2")
 end
 
-function ENT:OnInit()
-	local yaw = self:GetYaw()
+function ENT:AddOnPartsInit(pos,ang,hull,yaw)
 	local ang = yaw:GetAngles()
 	local aimsight = ents.Create("gred_prop_emp")
 	aimsight.GredEMPBaseENT = self
@@ -190,7 +189,7 @@ function ENT:HUDPaint(ply,viewmode)
 		local ScrW,ScrH = ScrW(),ScrH()
 		-- surface.SetDrawColor(255,255,255,255)
 		-- surface.SetTexture(surface.GetTextureID(self.SightTexture))
-		-- surface.DrawTexturedRect(0,-(ScrW-ScrH)*0.5,ScrW,ScrW)
+		-- surface.DrawTexturedRect((-(ScrW*1.25-ScrW)*0.5),(-(ScrW*1.25-ScrH)*0.5),ScrW*1.25,ScrW*1.25)
 		return ScrW,ScrH
 	end
 end
